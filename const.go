@@ -27,3 +27,9 @@ const (
 	cfgCoreIgnoreCase        = "ignorecase"
 	cfgCorePrecomposeUnicode = "precomposeunicode"
 )
+
+// list of file extentions
+const (
+	ExtPackfile = ".pack"
+	ExtIndex    = ".idx"
+)
