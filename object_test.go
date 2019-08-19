@@ -54,7 +54,7 @@ commit footer`)
 
 		o := &Object{
 			ID:      oid,
-			content: []byte(rawData),
+			content: rawData,
 			size:    len(rawData),
 			typ:     ObjectTypeCommit,
 		}

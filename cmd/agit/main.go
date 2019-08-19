@@ -57,19 +57,19 @@ func initCmd() error {
 
 func newCatFileCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "cat-file TYPE OBJECT",
+		Use:   "cat-file OBJECT",
 		Short: "Provide content or type and size information for repository objects",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(1),
 	}
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		return catFileCmd(args[0], args[1])
+		return catFileCmd(args[0])
 	}
 
 	return cmd
 }
 
-func catFileCmd(typ, sha string) error {
+func catFileCmd(sha string) error {
 	pwd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -101,16 +101,15 @@ func newHashObjectCmd() *cobra.Command {
 	}
 
 	typ := cmd.Flags().StringP("type", "t", "blob", "Specify the type")
-	write := cmd.Flags().BoolP("write", "w", false, "Actually write the object into the object database")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		return hashObjectCmd(args[0], *typ, *write)
+		return hashObjectCmd(args[0], *typ)
 	}
 
 	return cmd
 }
 
-func hashObjectCmd(filePath, typ string, write bool) error {
+func hashObjectCmd(filePath, typ string) error {
 	content, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return err

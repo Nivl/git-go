@@ -37,7 +37,7 @@ func NewSignatureFromBytes(b []byte) (*Signature, error) {
 	// "User Name " (with the extra space)
 	data := readTo(b, '<')
 	if len(data) == 0 {
-		return nil, errors.New("couldn't retreive the name")
+		return nil, errors.New("couldn't retrieve the name")
 	}
 	sig.Name = strings.TrimSpace(string(data))
 	offset := len(data) + 1 // +1 to skip the "<"
@@ -48,7 +48,7 @@ func NewSignatureFromBytes(b []byte) (*Signature, error) {
 	// Now we get the email, which is between "<" and ">"
 	data = readTo(b[offset:], '>')
 	if len(data) == 0 {
-		return nil, errors.New("couldn't retreive the email")
+		return nil, errors.New("couldn't retrieve the email")
 	}
 	sig.Email = string(data)
 	// +2 to skip the "> "
@@ -60,7 +60,7 @@ func NewSignatureFromBytes(b []byte) (*Signature, error) {
 	// Next is the timestamp and the timezone
 	timestamp := readTo(b[offset:], ' ')
 	if len(data) == 0 {
-		return nil, errors.New("couldn't retreive the timestamp")
+		return nil, errors.New("couldn't retrieve the timestamp")
 	}
 	offset += len(timestamp) + 1 // +1 to skip the " "
 	if offset >= len(b) {

@@ -139,10 +139,13 @@ func (idx *PackIndex) GetObjectOffset(oid Oid) (uint64, error) {
 	// Now that we have the cumul, the count and the total, we can
 	// find the index of our oid in layer2.
 	// Because the data are always ordered in the same way in every layers
-	// the index will be use to retreive the data in the other layer.
+	// the index will be use to retrieve the data in the other layer.
 	// For example, if our oid is the 3rd in layer2, it will also be the
 	// 3rd in layer3 and layer4.
 	oidIdx, err := idx.index(oid, objCount, cumul)
+	if err != nil {
+		return 0, errors.Wrap(err, "could not oid index")
+	}
 
 	// Now we can lookup in layer4 for the object's offset in the packfile
 	layer2offset := len(indexHeader) + layer1Size

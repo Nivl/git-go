@@ -144,11 +144,16 @@ func (o *Object) Compress() (oid Oid, data []byte, err error) {
 
 	compressedContent := new(bytes.Buffer)
 	zw := zlib.NewWriter(compressedContent)
-	defer zw.Close()
-	if _, err := zw.Write(fileContent); err != nil {
+	defer func() {
+		closeErr := zw.Close()
+		if err == nil {
+			err = closeErr
+		}
+	}()
+	if _, err = zw.Write(fileContent); err != nil {
 		return NullOid, nil, errors.Wrapf(err, "could not zlib the object")
 	}
-	if err := zw.Close(); err != nil {
+	if err = zw.Close(); err != nil {
 		return NullOid, nil, errors.Wrapf(err, "could not close the compressor")
 	}
 	return o.ID, compressedContent.Bytes(), nil

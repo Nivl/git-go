@@ -98,6 +98,7 @@ func TestNewSignatureFromBytes(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
 			sig, err := NewSignatureFromBytes([]byte(tc.signature))
 			if tc.expectsError {

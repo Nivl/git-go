@@ -28,7 +28,7 @@ const (
 	cfgCorePrecomposeUnicode = "precomposeunicode"
 )
 
-// list of file extentions
+// list of file extensions
 const (
 	ExtPackfile = ".pack"
 	ExtIndex    = ".idx"

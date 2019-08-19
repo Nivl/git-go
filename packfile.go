@@ -42,7 +42,7 @@ var (
 //          The very first byte of the metadata contains:
 //          - The MSB (1 bit)
 //          - The type of the object (3 bits)
-//          - the begining of the size (4 bits)
+//          - the beginning of the size (4 bits)
 //          The subsequent bytes contains:
 //          - The MSB (1 bit)
 //			- The next part of the size (7 bits)
@@ -99,7 +99,7 @@ func NewPackFromFile(repo *Repository, filePath string) (*Pack, error) {
 // getRawObjectAt return the raw object located at the given offset,
 // including its base info if the object is a delta
 func (pck *Pack) getRawObjectAt(oid Oid, objectOffset uint64) (o *Object, deltaBaseSHA Oid, deltaBaseOffset uint64, err error) {
-	_, err = pck.r.Seek(int64(objectOffset), os.SEEK_SET)
+	_, err = pck.r.Seek(int64(objectOffset), io.SeekStart)
 	if err != nil {
 		return nil, NullOid, 0, errors.Wrapf(err, "could not seek from 0 to object offset %d", objectOffset)
 	}
@@ -110,7 +110,7 @@ func (pck *Pack) getRawObjectAt(oid Oid, objectOffset uint64) (o *Object, deltaB
 	// 1 first byte that contains
 	//   - a MSB (1 bit)
 	//   - the Object type (3 bits)
-	//   - the begining of the object size (4 bits)
+	//   - the beginning of the object size (4 bits)
 	// X more bytes that contains:
 	//   - a MSB (a bit)
 	//   - the next part of the size (7 bits)
@@ -227,7 +227,12 @@ func (pck *Pack) getRawObjectAt(oid Oid, objectOffset uint64) (o *Object, deltaB
 	if err != nil {
 		return nil, NullOid, 0, errors.Wrap(err, "could not get zlib reader")
 	}
-	defer zlibR.Close()
+	defer func() {
+		closeErr := zlibR.Close()
+		if err == nil {
+			err = closeErr
+		}
+	}()
 
 	objectData := bytes.Buffer{}
 	_, err = io.Copy(&objectData, zlibR)
@@ -260,7 +265,7 @@ func (pck *Pack) getObjectAt(oid Oid, objectOffset uint64) (*Object, error) {
 		return o, nil
 	}
 
-	// we retreive the base object
+	// we retrieve the base object
 	var base *Object
 	if baseOid != NullOid {
 		base, err = pck.repo.GetObject(baseOid)
@@ -327,7 +332,7 @@ func (pck *Pack) getObjectAt(oid Oid, objectOffset uint64) (*Object, error) {
 				}
 			}
 			offset = binary.LittleEndian.Uint32(offsetBytes)
-			i += int(byteRead)
+			i += byteRead
 
 			// the next 3 bits of the byte after the MSB contains
 			// information about how many bytes to read to get the size
@@ -350,8 +355,8 @@ func (pck *Pack) getObjectAt(oid Oid, objectOffset uint64) (*Object, error) {
 			}
 			copyLenBytes[3] = 0
 			copyLen = binary.LittleEndian.Uint32(copyLenBytes)
-			i += int(byteRead)
-			out.Write(baseContent[offset : offset+uint32(copyLen)])
+			i += byteRead
+			out.Write(baseContent[offset : offset+copyLen])
 		case false: // INSERT
 			// $instr contains the amount of bytes we need to copy from
 			// the delta to the output
@@ -464,7 +469,7 @@ func (pck *Pack) readDeltaOffset(data []byte) (offset uint64, bytesRead int, err
 // base   = 1110101011111100
 // chunk  = 10101011
 // Result = 101010111110101011111100 [chunk][base]
-func (pck *Pack) insertLittleEndian7(base uint64, chunk uint8, position uint8) uint64 {
+func (pck *Pack) insertLittleEndian7(base uint64, chunk, position uint8) uint64 {
 	// To build the final number in little endian, we first need to
 	// add x*7 new bits to the right of the new chunk with "<< position*7"
 	// (7, because our chunk is encoded on 7 bits because of the MSB)

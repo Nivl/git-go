@@ -1,0 +1,59 @@
+run:
+  deadline: 10m
+
+issues:
+  max-same-issues: 0
+  max-per-linter: 0
+  exclude-use-default: false
+
+  # we remove a few annoying gosec rules:
+  # G104 is used for errcheck. It gets triggered on places that don't
+  #      don't need it like (*bytes.Buffer).Write(), and we already have
+  #      errcheck.
+  # G304 is used to warn about file inclusion via variable. It basically
+  #      blocks every `os.File(variable)`
+  exclude-rules:
+    - linters:
+      - gosec
+      text: "G104|G304"
+
+    # we remove a few annoying things from our tests, because they
+    # don't provide much beside complexity
+    - path: _test\.go
+      linters:
+        - errcheck
+        - gosec
+
+    # we need to exclude gosec from this file because it's
+    # using SHA1 which is considered unsecured
+    - path: oid\.go
+      linters:
+        - gosec
+
+linters:
+  enable-all: true
+  disable:
+    - dupl
+    - goconst
+    - gocyclo
+    - maligned
+    - depguard
+    - lll
+    - nakedret
+    - gochecknoglobals
+
+
+linters-settings:
+  gocritic:
+    enabled-tags:
+      - performance
+      - diagnostic
+      - style
+      - experimental
+      - opinionated
+
+
+    disabled-checks:
+      - sloppyReassign
+      - emptyFallthrough
+

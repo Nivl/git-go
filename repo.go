@@ -41,7 +41,8 @@ func NewRepository(projectPath string) *Repository {
 // config file, and returns a Repository instance
 func LoadRepository(projectPath string) (*Repository, error) {
 	r := NewRepository(projectPath)
-	return r, r.Load()
+	err := r.Load()
+	return r, err
 }
 
 // InitRepository initialize a new git repository by creating the .git
@@ -50,7 +51,8 @@ func LoadRepository(projectPath string) (*Repository, error) {
 // https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain#ch10-git-internals
 func InitRepository(projectPath string) (*Repository, error) {
 	r := NewRepository(projectPath)
-	return r, r.Init()
+	err := r.Init()
+	return r, err
 }
 
 // Init initialize a new git repository by creating the .git directory
@@ -74,7 +76,7 @@ func (r *Repository) Init() error {
 	}
 	for _, d := range dirs {
 		fullPath := filepath.Join(r.path, d)
-		if err := os.MkdirAll(fullPath, 0755); err != nil {
+		if err := os.MkdirAll(fullPath, 0750); err != nil {
 			return errors.Wrapf(err, "could not create directory %s", d)
 		}
 	}
@@ -174,14 +176,24 @@ func (r *Repository) getDanglingObject(oid Oid) (*Object, error) {
 		}
 		return nil, errors.Wrapf(err, "could not find object %s at path %s", strOid, p)
 	}
-	defer f.Close()
+	defer func() {
+		closeErr := f.Close()
+		if err == nil {
+			err = closeErr
+		}
+	}()
 
 	// Objects are zlib encoded
 	zlibReader, err := zlib.NewReader(f)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not decompress parts of object %s at path %s", strOid, p)
 	}
-	defer zlibReader.Close()
+	defer func() {
+		closeErr := zlibReader.Close()
+		if err == nil {
+			err = closeErr
+		}
+	}()
 
 	// We directly read the entire file since most of it is the content we
 	// need, this allows us to be able to easily store the object's content
@@ -199,7 +211,6 @@ func (r *Repository) getDanglingObject(oid Oid) (*Object, error) {
 	// the type of the object starts at offset 0 and ends a the first
 	// space character that we'll need to trim
 	typ := readTo(buff, ' ')
-	// typ, err := objectData.ReadString(' ')
 	if typ == nil {
 		return nil, errors.Wrapf(err, "could not find object type for %s at path %s", strOid, p)
 	}
