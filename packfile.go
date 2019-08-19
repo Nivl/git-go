@@ -30,7 +30,7 @@ var (
 // Header: 12 bytes
 //         The first 4 bytes contain the magic ('P', 'A', 'C', 'K')
 //         The next 4 bytes contains the version (0, 0, 0, 2)
-//         The last for bytes contains the number of objects in the packfile
+//         The last 4 bytes contains the number of objects in the packfile
 // Content: Variable size
 //          The content contains all the objects of the packfile, each zlib
 //          compressed.
@@ -319,13 +319,23 @@ func (pck *Pack) getObjectAt(oid Oid, objectOffset uint64) (*Object, error) {
 			// Example: if the last 4 bits are 1010, we need to read
 			// 2 bytes (count the 1), and we'll have to insert to bytes
 			// of 0 in the numbers. [first_byte, byte(0), second_byte, byte(0)]
+			// TODO(melvin): go 1.13
+			// offsetInfo := uint((instr & 0b00001111))
 			offsetInfo := uint((instr & 0xF))
 			var offset uint32
 			offsetBytes := make([]byte, 4)
 			byteRead := 0
+			// our offset will be stored in $offsetBytes
+			// We need to loop over the 4 bits of info we have, find the
+			// bits that are 1 and insert the correct bytes at the correct
+			// index.
+			// For example, with 1010 we need to insert our bytes at
+			// offsetBytes[0] and offsetBytes[2], and zeros at [1] and [3].
 			for j := uint(0); j < 4; j++ {
 				offsetBytes[j] = 0
 
+				// we move the current bit to the very left and check that
+				// its value is one
 				if (offsetInfo >> j & 1) == 1 {
 					offsetBytes[j] = instructions[i+1+byteRead]
 					byteRead++
@@ -340,19 +350,31 @@ func (pck *Pack) getObjectAt(oid Oid, objectOffset uint64) (*Object, error) {
 			// Example: if the 3 bits are 110, we need to read
 			// 2 bytes (count the 1), and we'll have to insert to bytes
 			// of 0 in the numbers. [first_byte, byte(0), second_byte, byte(0)]
+			// TODO(melvin): go 1.13
+			// offsetInfo := uint((instr & 0b01110000))
 			copyLenInfo := uint((instr & 0x70) >> 4)
 			var copyLen uint32
 			copyLenBytes := make([]byte, 4)
 			byteRead = 0
-			// TODO(melvin): doc
+			// our size will be stored in $copyLenInfo
+			// We need to loop over the 3 bits of info we have, find the
+			// bits that are 1 and insert the correct bytes at the correct
+			// index.
+			// For example, with 101 we need to insert our bytes at
+			// copyLenInfo[0] and copyLenInfo[2], and a zero at copyLenInfo[1].
 			for j := uint(0); j < 3; j++ {
 				copyLenBytes[j] = 0
 
+				// we move the current bit to the very left and check that
+				// its value is one
 				if (copyLenInfo >> j & 1) == 1 {
 					copyLenBytes[j] = instructions[i+1+byteRead]
 					byteRead++
 				}
 			}
+			// we're working on a 32 bit number (4 bytes) but the size
+			// is only stored on 3 bits. We need to make sure the 4th byte
+			// is always set to 0
 			copyLenBytes[3] = 0
 			copyLen = binary.LittleEndian.Uint32(copyLenBytes)
 			i += byteRead
