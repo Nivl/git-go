@@ -136,25 +136,19 @@ func (pck *Pack) getRawObjectAt(oid Oid, objectOffset uint64) (o *Object, deltaB
 	// To extract it (bits 2, 3, and 4) we apply a mask to unset
 	// all the bits we don't want, then we move our 3 bits to the
 	// right with ">> 4"
-	// value       : MTTTSSSS // M = MSB ; T = type ; S = size
-	// & 01110000  : 0TTT0000
-	// >> 4        : 00000TTT
-	// 0x70 is the hex representation of 01110000
-	// TODO(melvin): go 1.13
-	// objectType := ObjectType((metadata[0] & 0b01110000) >> 4)
-	objectType := ObjectType((metadata[0] & 0x70) >> 4)
+	// value       : MTTT_SSSS // M = MSB ; T = type ; S = size
+	// & 0111_0000 : 0TTT_0000
+	// >> 4        : 0000_0TTT
+	objectType := ObjectType((metadata[0] & 0b_0111_0000) >> 4)
 	if !objectType.IsValid() {
 		return nil, NullOid, 0, errors.Errorf("unknown object type %d", objectType)
 	}
 
 	// The first part of the size is on the last 4 bits of the byte.
 	// We can use a mask to only keep the bits we want
-	// value       : MTTTSSSS // M = MSB ; T = type; S = size
-	// & 00001111  : 0000SSSS
-	// 0xF is the hex representation of 00001111
-	// TODO(melvin): go 1.13
-	// objectSize := uint64(metadata[0] & 0b00001111)
-	objectSize := uint64(metadata[0] & 0xF)
+	// value       : MTTT_SSSS // M = MSB ; T = type; S = size
+	// & 0000_1111  : 0000_SSSS
+	objectSize := uint64(metadata[0] & 0b_0000_1111)
 	metadataSize := 1
 
 	// To know if we need to read more bytes, we need to check the MSB
@@ -168,8 +162,8 @@ func (pck *Pack) getRawObjectAt(oid Oid, objectOffset uint64) (o *Object, deltaB
 		// we add 4bits to the right of $size, then we merge everything with |
 		// Example:
 		// with size = 1001 and objectsize = 1011
-		// << 4    : 10010000
-		// | size  : 10011011
+		// size << 4  : 1001_0000
+		// | size     : 1001_1011
 		objectSize |= (size << 4)
 	}
 
@@ -319,9 +313,7 @@ func (pck *Pack) getObjectAt(oid Oid, objectOffset uint64) (*Object, error) {
 			// Example: if the last 4 bits are 1010, we need to read
 			// 2 bytes (count the 1), and we'll have to insert to bytes
 			// of 0 in the numbers. [first_byte, byte(0), second_byte, byte(0)]
-			// TODO(melvin): go 1.13
-			// offsetInfo := uint((instr & 0b00001111))
-			offsetInfo := uint((instr & 0xF))
+			offsetInfo := uint(instr & 0b_0000_1111)
 			var offset uint32
 			offsetBytes := make([]byte, 4)
 			byteRead := 0
@@ -350,9 +342,7 @@ func (pck *Pack) getObjectAt(oid Oid, objectOffset uint64) (*Object, error) {
 			// Example: if the 3 bits are 110, we need to read
 			// 2 bytes (count the 1), and we'll have to insert to bytes
 			// of 0 in the numbers. [first_byte, byte(0), second_byte, byte(0)]
-			// TODO(melvin): go 1.13
-			// offsetInfo := uint((instr & 0b01110000))
-			copyLenInfo := uint((instr & 0x70) >> 4)
+			copyLenInfo := uint((instr & 0b_0111_0000) >> 4)
 			var copyLen uint32
 			copyLenBytes := make([]byte, 4)
 			byteRead = 0
@@ -488,9 +478,9 @@ func (pck *Pack) readDeltaOffset(data []byte) (offset uint64, bytesRead int, err
 // insertLittleEndian7 inserts $chunk into $base from the left.
 // Only the 7 most right bits will be inserted.
 // Example:
-// base   = 1110101011111100
-// chunk  = 10101011
-// Result = 101010111110101011111100 [chunk][base]
+// base   = 1110_1010_1111_1100
+// chunk  = 1010_1011
+// Result = 1010_1011_1110_1010_1111_1100 [chunk][base]
 func (pck *Pack) insertLittleEndian7(base uint64, chunk, position uint8) uint64 {
 	// To build the final number in little endian, we first need to
 	// add x*7 new bits to the right of the new chunk with "<< position*7"
@@ -501,45 +491,35 @@ func (pck *Pack) insertLittleEndian7(base uint64, chunk, position uint8) uint64 
 	//
 	// That might sound confusing so here's an example:
 	// Assuming that:
-	// - Our current base is 0000000000111010
-	// - We're inserting 0110011 (position=1, because it's the second chunk)
+	// - Our current base is 0000_0000_0011_1010
+	// - We're inserting 011_0011 (position=1, because it's the second chunk)
 	//
-	// 0110011 << 1*7  = 1100110000000 // we make enough space on the left for $base
-	// | base          = 0001100110111010 // we insert base
+	// 011_0011 << 1*7  = 0001_1001_1000_0000    // we make enough space on the left for $base
+	// | base           = 0001_1001_1011_1010 // we insert base
 	return (uint64(chunk) << (position * 7)) | base
 }
 
 // insertBigEndian7 inserts $chunk into $base from the right
 // Only the 7 most right bits will be inserted.
 // Example:
-// base   = 1110101011111100
-// chunk  = 10101011
-// Result = 111010101111110010101011 [base][chunk]
+// base   = 1110_1010_1111_1100
+// chunk  = 1010_1011
+// Result = 1110_1010_1111_1100_1010_1011 [base][chunk]
 func (pck *Pack) insertBigEndian7(base uint64, chunk uint8) uint64 {
 	return base<<7 | uint64(chunk)
 }
 
 // isMSBSet checks if the MSB of a byte is set to 1.
+// The MSB is the first bit on the left
 func (pck *Pack) isMSBSet(b byte) bool {
-	// TODO(melvin): go 1.13
-	// return b >= 0b10000000 {
-
-	// Because a byte is 8 bits and the MSB is the most
-	// left bit, a byte with the MSB set will always be >= to 128
-	// because 128 in binary is 10000000
-	// So if the byte is below 128 it means we're done reading
-	return b >= 128
+	return b >= 0b_1000_0000
 }
 
 // unsetMSB set the most left bit of the byte to 0
 func (pck *Pack) unsetMSB(b byte) byte {
 	// To make any bit turn to 0 we can use a mask and a AND operator.
 	// Example:
-	// value      : XXXXXXXX
-	// & 01111111 : 0XXXXXXX
-	// TODO(melvin): go 1.13
-	// return b & 0b0111111
-
-	// 0x7F is the hex representation of 01111111
-	return b & 0x7F
+	// value       : XXXX_XXXX
+	// & 0111_1111 : 0XXX_XXXX
+	return b & 0b_0111_1111
 }

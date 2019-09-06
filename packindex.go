@@ -178,10 +178,7 @@ func (idx *PackIndex) GetObjectOffset(oid Oid) (uint64, error) {
 	// To do so we can use a binary mask with a AND. We use 0 for the
 	// bits we want to change to 0, and 1 for the bits we want to stay at
 	// their current value.
-	// TODO(melvin): go 1.13:
-	// msb := entry & 0b01111111111111111111111111111111
-	offset := entry & 0x7FFFFFFF
-
+	offset := entry & 0b01111111111111111111111111111111
 	// if the msb is not set, then the offset is valid, and we're done
 	if !msb {
 		return uint64(offset), nil
