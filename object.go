@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/pkg/errors"
+	"errors"
+
+	"golang.org/x/xerrors"
 )
 
 // ErrObjectUnknown represents an error when encoutering an unknown object
@@ -151,10 +153,10 @@ func (o *Object) Compress() (oid Oid, data []byte, err error) {
 		}
 	}()
 	if _, err = zw.Write(fileContent); err != nil {
-		return NullOid, nil, errors.Wrapf(err, "could not zlib the object")
+		return NullOid, nil, xerrors.Errorf("could not zlib the object: %w", err)
 	}
 	if err = zw.Close(); err != nil {
-		return NullOid, nil, errors.Wrapf(err, "could not close the compressor")
+		return NullOid, nil, xerrors.Errorf("could not close the compressor: %w", err)
 	}
 	return o.ID, compressedContent.Bytes(), nil
 }
@@ -186,7 +188,7 @@ func (o *Object) AsBlob() *Blob {
 // - The gpgsig is optional
 func (o *Object) AsCommit() (*Commit, error) {
 	if o.typ != ObjectTypeCommit {
-		return nil, errors.Errorf("type %s is not a commit", o.typ)
+		return nil, xerrors.Errorf("type %s is not a commit", o.typ)
 	}
 	ci := &Commit{ID: o.ID}
 	offset := 0
@@ -208,25 +210,25 @@ func (o *Object) AsCommit() (*Commit, error) {
 		case "tree":
 			oid, err := NewOidFromBytes(kv[1])
 			if err != nil {
-				return nil, errors.Wrapf(err, "could not parse tree id %#v", kv[1])
+				return nil, xerrors.Errorf("could not parse tree id %#v: %w", kv[1], err)
 			}
 			ci.TreeID = oid
 		case "parent":
 			oid, err := NewOidFromBytes(kv[1])
 			if err != nil {
-				return nil, errors.Wrapf(err, "could not parse parent id %#v", kv[1])
+				return nil, xerrors.Errorf("could not parse parent id %#v: %w", kv[1], err)
 			}
 			ci.ParentIDs = append(ci.ParentIDs, oid)
 		case "author":
 			sig, err := NewSignatureFromBytes(kv[1])
 			if err != nil {
-				return nil, errors.Wrapf(err, "could not parse signature [%s]", string(kv[1]))
+				return nil, xerrors.Errorf("could not parse signature [%s]: %w", string(kv[1]), err)
 			}
 			ci.Author = sig
 		case "committer":
 			sig, err := NewSignatureFromBytes(kv[1])
 			if err != nil {
-				return nil, errors.Wrapf(err, "could not parse signature [%s]", string(kv[1]))
+				return nil, xerrors.Errorf("could not parse signature [%s]: %w", string(kv[1]), err)
 			}
 			ci.Committer = sig
 		case "gpgsig":

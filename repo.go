@@ -7,8 +7,10 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"errors"
+
 	"github.com/go-ini/ini"
-	"github.com/pkg/errors"
+	"golang.org/x/xerrors"
 )
 
 // List of errors returned by the Repository struct
@@ -77,7 +79,7 @@ func (r *Repository) Init() error {
 	for _, d := range dirs {
 		fullPath := filepath.Join(r.path, d)
 		if err := os.MkdirAll(fullPath, 0750); err != nil {
-			return errors.Wrapf(err, "could not create directory %s", d)
+			return xerrors.Errorf("could not create directory %s: %w", d, err)
 		}
 	}
 
@@ -100,12 +102,12 @@ func (r *Repository) Init() error {
 	for _, f := range files {
 		fullPath := filepath.Join(r.path, f.path)
 		if err := ioutil.WriteFile(fullPath, f.content, 0644); err != nil {
-			return errors.Wrapf(err, "could not create file %s", f)
+			return xerrors.Errorf("could not create file %s: %w", f, err)
 		}
 	}
 
 	if err := r.setDefaultCfg(); err != nil {
-		return errors.Wrap(err, "could not create config file")
+		return xerrors.Errorf("could not create config file: %w", err)
 	}
 
 	return nil
@@ -118,7 +120,7 @@ func (r *Repository) Load() error {
 	_, err := os.Stat(r.path)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			return errors.Wrapf(err, "could not check for %s directory", DotGitPath)
+			return xerrors.Errorf("could not check for %s directory: %w", DotGitPath, err)
 		}
 		return ErrRepositoryNotExist
 	}
@@ -127,7 +129,7 @@ func (r *Repository) Load() error {
 	// https://git-scm.com/docs/git-config
 	cfg, err := ini.Load(filepath.Join(r.path, ConfigPath))
 	if err != nil {
-		return errors.Wrapf(err, "could not read config file")
+		return xerrors.Errorf("could not read config file: %w", err)
 	}
 
 	// Validate the config
@@ -147,7 +149,7 @@ func (r *Repository) setDefaultCfg() error {
 	// Core
 	core, err := cfg.NewSection(cfgCore)
 	if err != nil {
-		return errors.Wrap(err, "could not create core section")
+		return xerrors.Errorf("could not create core section: %w", err)
 	}
 	coreCfg := map[string]string{
 		cfgCoreFormatVersion:     "0",
@@ -159,7 +161,7 @@ func (r *Repository) setDefaultCfg() error {
 	}
 	for k, v := range coreCfg {
 		if _, err := core.NewKey(k, v); err != nil {
-			return errors.Wrapf(err, "could not set %s", k)
+			return xerrors.Errorf("could not set %s: %w", k, err)
 		}
 	}
 	return cfg.SaveTo(filepath.Join(r.path, ConfigPath))
@@ -174,7 +176,7 @@ func (r *Repository) getDanglingObject(oid Oid) (*Object, error) {
 		if os.IsNotExist(err) {
 			return nil, err
 		}
-		return nil, errors.Wrapf(err, "could not find object %s at path %s", strOid, p)
+		return nil, xerrors.Errorf("could not find object %s at path %s: %w", strOid, p, err)
 	}
 	defer func() {
 		closeErr := f.Close()
@@ -186,7 +188,7 @@ func (r *Repository) getDanglingObject(oid Oid) (*Object, error) {
 	// Objects are zlib encoded
 	zlibReader, err := zlib.NewReader(f)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not decompress parts of object %s at path %s", strOid, p)
+		return nil, xerrors.Errorf("could not decompress parts of object %s at path %s: %w", strOid, p, err)
 	}
 	defer func() {
 		closeErr := zlibReader.Close()
@@ -199,7 +201,7 @@ func (r *Repository) getDanglingObject(oid Oid) (*Object, error) {
 	// need, this allows us to be able to easily store the object's content
 	buff, err := ioutil.ReadAll(zlibReader)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not read object %s at path %s", strOid, p)
+		return nil, xerrors.Errorf("could not read object %s at path %s: %w", strOid, p, err)
 	}
 
 	o := &Object{
@@ -212,12 +214,12 @@ func (r *Repository) getDanglingObject(oid Oid) (*Object, error) {
 	// space character that we'll need to trim
 	typ := readTo(buff, ' ')
 	if typ == nil {
-		return nil, errors.Wrapf(err, "could not find object type for %s at path %s", strOid, p)
+		return nil, xerrors.Errorf("could not find object type for %s at path %s: %w", strOid, p, err)
 	}
 
 	o.typ, err = NewObjectTypeFromString(string(typ))
 	if err != nil {
-		return nil, errors.Errorf("unsupported type %s for object %s at path %s", string(typ), strOid, p)
+		return nil, xerrors.Errorf("unsupported type %s for object %s at path %s", string(typ), strOid, p)
 	}
 	pointerPos += len(typ)
 	pointerPos++ // one more for the space
@@ -228,11 +230,11 @@ func (r *Repository) getDanglingObject(oid Oid) (*Object, error) {
 	// type "man ascii" in a terminal for more information
 	size := readTo(buff[pointerPos:], 0)
 	if size == nil {
-		return nil, errors.Wrapf(err, "could not find object size for %s at path %s", strOid, p)
+		return nil, xerrors.Errorf("could not find object size for %s at path %s: %w", strOid, p, err)
 	}
 	o.size, err = strconv.Atoi(string(size))
 	if err != nil {
-		return nil, errors.Wrapf(err, "invalid size %s for object %s at path %s", size, strOid, p)
+		return nil, xerrors.Errorf("invalid size %s for object %s at path %s: %w", size, strOid, p, err)
 	}
 	pointerPos += len(size)
 	pointerPos++ // one more for the NULL char
@@ -281,13 +283,13 @@ func (r *Repository) getObjectFromPackfile(oid Oid) (*Object, error) {
 		packFilePath := filepath.Join(p, filename)
 		pf, err := NewPackFromFile(r, packFilePath)
 		if err != nil {
-			return nil, errors.Wrap(err, "could not open packfile")
+			return nil, xerrors.Errorf("could not open packfile: %w", err)
 		}
 		do, err := pf.GetObject(oid)
 		if err == nil {
 			return do, nil
 		}
-		if errors.Cause(err) == ErrObjectNotFound {
+		if errors.Is(err, ErrObjectNotFound) {
 			continue
 		}
 		return nil, err
@@ -306,7 +308,7 @@ func (r *Repository) GetObject(oid Oid) (*Object, error) {
 		return o, nil
 	}
 	if !os.IsNotExist(err) {
-		return nil, errors.Wrap(err, "failed looking for danglin object")
+		return nil, xerrors.Errorf("failed looking for danglin object: %w", err)
 	}
 
 	o, err = r.getObjectFromPackfile(oid)
@@ -320,14 +322,14 @@ func (r *Repository) GetObject(oid Oid) (*Object, error) {
 func (r *Repository) WriteObject(o *Object) (Oid, error) {
 	oid, data, err := o.Compress()
 	if err != nil {
-		return NullOid, errors.Errorf("unsupported object type %s", o.Type())
+		return NullOid, xerrors.Errorf("unsupported object type %s", o.Type())
 	}
 
 	// Persist the data on disk
 	sha := oid.String()
 	p := r.danglingObjectPath(sha)
 	if err = ioutil.WriteFile(p, data, 0644); err != nil {
-		return NullOid, errors.Wrapf(err, "could not persist object %s at path %s", sha, p)
+		return NullOid, xerrors.Errorf("could not persist object %s at path %s: %w", sha, p, err)
 	}
 
 	return oid, nil

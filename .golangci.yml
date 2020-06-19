@@ -67,7 +67,7 @@ linters:
     - gochecknoinits
     - whitespace
     - goprintffuncname
-    # - goerr113 need to switch to a lib compatible with go 1.13 errors
+    - goerr113
     # - exhaustive need golangci-lint 1.28
     - nolintlint
 

@@ -5,7 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
+	"errors"
+
+	"golang.org/x/xerrors"
 )
 
 // ErrSignatureInvalid is an error thrown when the signature of a commit
@@ -41,39 +43,39 @@ func NewSignatureFromBytes(b []byte) (*Signature, error) {
 	// "User Name " (with the extra space)
 	data := readTo(b, '<')
 	if len(data) == 0 {
-		return nil, errors.Wrap(ErrSignatureInvalid, "couldn't retrieve the name")
+		return nil, xerrors.Errorf("couldn't retrieve the name: %w", ErrSignatureInvalid)
 	}
 	sig.Name = strings.TrimSpace(string(data))
 	offset := len(data) + 1 // +1 to skip the "<"
 	if offset >= len(b) {
-		return nil, errors.Wrap(ErrSignatureInvalid, "signature stopped after the name")
+		return nil, xerrors.Errorf("signature stopped after the name: %w", ErrSignatureInvalid)
 	}
 
 	// Now we get the email, which is between "<" and ">"
 	data = readTo(b[offset:], '>')
 	if len(data) == 0 {
-		return nil, errors.Wrap(ErrSignatureInvalid, "couldn't retrieve the email")
+		return nil, xerrors.Errorf("couldn't retrieve the email: %w", ErrSignatureInvalid)
 	}
 	sig.Email = string(data)
 	// +2 to skip the "> "
 	offset += len(data) + 2
 	if offset >= len(b) {
-		return nil, errors.Wrap(ErrSignatureInvalid, "signature stopped after the email")
+		return nil, xerrors.Errorf("signature stopped after the email: %w", ErrSignatureInvalid)
 	}
 
 	// Next is the timestamp and the timezone
 	timestamp := readTo(b[offset:], ' ')
 	if len(data) == 0 {
-		return nil, errors.Wrap(ErrSignatureInvalid, "couldn't retrieve the timestamp")
+		return nil, xerrors.Errorf("couldn't retrieve the timestamp: %w", ErrSignatureInvalid)
 	}
 	offset += len(timestamp) + 1 // +1 to skip the " "
 	if offset >= len(b) {
-		return nil, errors.Wrap(ErrSignatureInvalid, "signature stopped after the timestamp")
+		return nil, xerrors.Errorf("signature stopped after the timestamp: %w", ErrSignatureInvalid)
 	}
 
 	t, err := strconv.ParseInt(string(timestamp), 10, 64)
 	if err != nil {
-		return nil, errors.Wrapf(err, "invalid timestamp %s", timestamp)
+		return nil, xerrors.Errorf("invalid timestamp %s: %w", timestamp, err)
 	}
 	sig.Time = time.Unix(t, 0)
 
@@ -82,7 +84,7 @@ func NewSignatureFromBytes(b []byte) (*Signature, error) {
 	timezone := b[offset:]
 	tz, err := time.Parse("-0700", string(timezone))
 	if err != nil {
-		return nil, errors.Wrapf(err, "invalid timezone format %s", timezone)
+		return nil, xerrors.Errorf("invalid timezone format %s: %w", timezone, err)
 	}
 	sig.Time = sig.Time.In(tz.Location())
 	return sig, nil

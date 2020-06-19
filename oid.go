@@ -4,7 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 
-	"github.com/pkg/errors"
+	"errors"
 )
 
 const (
@@ -17,7 +17,7 @@ var (
 	NullOid = Oid{}
 
 	// ErrInvalidOid is returned when a given value isn't a valid Oid
-	ErrInvalidOid = errors.New("Invalid Oid")
+	ErrInvalidOid = errors.New("invalid Oid")
 )
 
 // Oid represents an object id
