@@ -8,6 +8,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+// ErrSignatureInvalid is an error thrown when the signature of a commit
+// couldn't be parsed
+var ErrSignatureInvalid = errors.New("commit signature is invalid")
+
 // Signature represents the author/committer and time of a commit
 type Signature struct {
 	Name  string
@@ -37,34 +41,34 @@ func NewSignatureFromBytes(b []byte) (*Signature, error) {
 	// "User Name " (with the extra space)
 	data := readTo(b, '<')
 	if len(data) == 0 {
-		return nil, errors.New("couldn't retrieve the name")
+		return nil, errors.Wrap(ErrSignatureInvalid, "couldn't retrieve the name")
 	}
 	sig.Name = strings.TrimSpace(string(data))
 	offset := len(data) + 1 // +1 to skip the "<"
 	if offset >= len(b) {
-		return nil, errors.New("signature stopped after the name")
+		return nil, errors.Wrap(ErrSignatureInvalid, "signature stopped after the name")
 	}
 
 	// Now we get the email, which is between "<" and ">"
 	data = readTo(b[offset:], '>')
 	if len(data) == 0 {
-		return nil, errors.New("couldn't retrieve the email")
+		return nil, errors.Wrap(ErrSignatureInvalid, "couldn't retrieve the email")
 	}
 	sig.Email = string(data)
 	// +2 to skip the "> "
 	offset += len(data) + 2
 	if offset >= len(b) {
-		return nil, errors.New("signature stopped after the email")
+		return nil, errors.Wrap(ErrSignatureInvalid, "signature stopped after the email")
 	}
 
 	// Next is the timestamp and the timezone
 	timestamp := readTo(b[offset:], ' ')
 	if len(data) == 0 {
-		return nil, errors.New("couldn't retrieve the timestamp")
+		return nil, errors.Wrap(ErrSignatureInvalid, "couldn't retrieve the timestamp")
 	}
 	offset += len(timestamp) + 1 // +1 to skip the " "
 	if offset >= len(b) {
-		return nil, errors.New("signature stopped after the timestamp")
+		return nil, errors.Wrap(ErrSignatureInvalid, "signature stopped after the timestamp")
 	}
 
 	t, err := strconv.ParseInt(string(timestamp), 10, 64)
@@ -86,16 +90,16 @@ func NewSignatureFromBytes(b []byte) (*Signature, error) {
 
 // Commit represents a commit object
 type Commit struct {
-	ID Oid
+	Author    *Signature
+	Committer *Signature
+
+	gpgSig  string
+	Message string
 
 	// SHA of all the parent commits, if any
 	// A regular commit usually has 1 parent, a merge commit has 2 or more,
 	// and the very first commit has none
 	ParentIDs []Oid
-
+	ID        Oid
 	TreeID    Oid
-	Author    *Signature
-	Committer *Signature
-	gpgSig    string
-	Message   string
 }

@@ -287,7 +287,7 @@ func (r *Repository) getObjectFromPackfile(oid Oid) (*Object, error) {
 		if err == nil {
 			return do, nil
 		}
-		if err == ErrObjectNotFound {
+		if errors.Cause(err) == ErrObjectNotFound {
 			continue
 		}
 		return nil, err

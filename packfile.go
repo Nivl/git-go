@@ -25,6 +25,12 @@ var (
 	packfileVersion = []byte{0, 0, 0, 2}
 )
 
+var (
+	// ErrIntOverflow is an error thrown when the packfile couldn't
+	// be parsed because some data couldn't fit in an int64
+	ErrIntOverflow = errors.New("int64 overflow")
+)
+
 // Pack represents a Packfile
 // The packfile contains a header, a content, and a footer
 // Header: 12 bytes
@@ -244,7 +250,6 @@ func (pck *Pack) getRawObjectAt(oid Oid, objectOffset uint64) (o *Object, deltaB
 		size:    objectData.Len(),
 		content: objectData.Bytes(),
 	}, baseObjectOid, baseObjectOffset, nil
-
 }
 
 // getObjectAt return the object located at the given offset
@@ -391,7 +396,7 @@ func (pck *Pack) getObjectAt(oid Oid, objectOffset uint64) (*Object, error) {
 func (pck *Pack) GetObject(oid Oid) (*Object, error) {
 	objectOffset, err := pck.idx.GetObjectOffset(oid)
 	if err != nil {
-		if err != ErrObjectNotFound {
+		if errors.Cause(err) != ErrObjectNotFound {
 			return nil, errors.Wrap(err, "could not get object index")
 		}
 		return nil, err
@@ -432,7 +437,7 @@ func (pck *Pack) readSize(data []byte) (objectSize uint64, bytesRead int, err er
 	// if the last byte read has its MSB set it means that we have an
 	// overflow (bytesRead - 1 is also == to len(data))
 	if pck.isMSBSet(data[bytesRead-1]) {
-		return 0, 0, errors.New("int64 overflow")
+		return 0, 0, ErrIntOverflow
 	}
 
 	return objectSize, bytesRead, nil
@@ -469,7 +474,7 @@ func (pck *Pack) readDeltaOffset(data []byte) (offset uint64, bytesRead int, err
 	// if the last byte read has its MSB set it means that we have an
 	// overflow (bytesRead-1 is also == to len(data))
 	if pck.isMSBSet(data[bytesRead-1]) {
-		return 0, 0, errors.New("int64 overflow")
+		return 0, 0, ErrIntOverflow
 	}
 
 	return offset, bytesRead, nil
