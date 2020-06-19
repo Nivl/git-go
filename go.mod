@@ -1,4 +1,4 @@
-module github.com/goabstract/git
+module github.com/Nivl/git-go
 
 go 1.14
 

@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/goabstract/git"
+	"github.com/Nivl/git-go"
 	"github.com/pkg/errors"
 
 	"github.com/spf13/cobra"
