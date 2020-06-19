@@ -9,7 +9,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/pkg/errors"
+	"errors"
+
+	"golang.org/x/xerrors"
 )
 
 const (
@@ -73,26 +75,26 @@ type Pack struct {
 func NewPackFromFile(repo *Repository, filePath string) (*Pack, error) {
 	f, err := os.Open(filePath)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not open %s", filePath)
+		return nil, xerrors.Errorf("could not open %s: %w", filePath, err)
 	}
 
 	// Let's validate the header
 	header := make([]byte, packfileHeaderSize)
 	_, err = f.ReadAt(header, 0)
 	if err != nil {
-		return nil, errors.Wrap(err, "could read header of index file")
+		return nil, xerrors.Errorf("could read header of index file: %w", err)
 	}
 	if !bytes.Equal(header[0:4], packfileMagic) {
-		return nil, errors.Wrap(err, "invalid magic")
+		return nil, xerrors.Errorf("invalid magic: %w", err)
 	}
 	if !bytes.Equal(header[4:8], packfileVersion) {
-		return nil, errors.Wrap(err, "invalid version")
+		return nil, xerrors.Errorf("invalid version: %w", err)
 	}
 
 	IndexFilePath := strings.TrimSuffix(filePath, ExtPackfile) + ExtIndex
 	idx, err := NewPackIndexFromFile(IndexFilePath)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not open index file at %s", IndexFilePath)
+		return nil, xerrors.Errorf("could not open index file at %s: %w", IndexFilePath, err)
 	}
 
 	return &Pack{
@@ -107,7 +109,7 @@ func NewPackFromFile(repo *Repository, filePath string) (*Pack, error) {
 func (pck *Pack) getRawObjectAt(oid Oid, objectOffset uint64) (o *Object, deltaBaseSHA Oid, deltaBaseOffset uint64, err error) {
 	_, err = pck.r.Seek(int64(objectOffset), io.SeekStart)
 	if err != nil {
-		return nil, NullOid, 0, errors.Wrapf(err, "could not seek from 0 to object offset %d", objectOffset)
+		return nil, NullOid, 0, xerrors.Errorf("could not seek from 0 to object offset %d: %w", objectOffset, err)
 	}
 	buf := bufio.NewReader(pck.r)
 
@@ -134,7 +136,7 @@ func (pck *Pack) getRawObjectAt(oid Oid, objectOffset uint64) (o *Object, deltaB
 	// Total: 10 bytes
 	metadata, err := buf.Peek(10)
 	if err != nil {
-		return nil, NullOid, 0, errors.Wrap(err, "could not get object meta")
+		return nil, NullOid, 0, xerrors.Errorf("could not get object meta: %w", err)
 	}
 
 	// We now need to extract the type of the object. The type is a number
@@ -147,7 +149,7 @@ func (pck *Pack) getRawObjectAt(oid Oid, objectOffset uint64) (o *Object, deltaB
 	// >> 4        : 0000_0TTT
 	objectType := ObjectType((metadata[0] & 0b_0111_0000) >> 4)
 	if !objectType.IsValid() {
-		return nil, NullOid, 0, errors.Errorf("unknown object type %d", objectType)
+		return nil, NullOid, 0, xerrors.Errorf("unknown object type %d", objectType)
 	}
 
 	// The first part of the size is on the last 4 bits of the byte.
@@ -162,7 +164,7 @@ func (pck *Pack) getRawObjectAt(oid Oid, objectOffset uint64) (o *Object, deltaB
 	if pck.isMSBSet(metadata[0]) {
 		size, byteRead, err := pck.readSize(metadata[1:])
 		if err != nil {
-			return nil, NullOid, 0, errors.Wrap(err, "couldn't read object size")
+			return nil, NullOid, 0, xerrors.Errorf("couldn't read object size: %w", err)
 		}
 		metadataSize += byteRead
 		// we add 4bits to the right of $size, then we merge everything with |
@@ -177,7 +179,7 @@ func (pck *Pack) getRawObjectAt(oid Oid, objectOffset uint64) (o *Object, deltaB
 	// size), we now need to discard the right amount of bytes to move
 	// our internal cursor to the object data
 	if _, err = buf.Discard(metadataSize); err != nil {
-		return nil, NullOid, 0, errors.Wrap(err, "could not skip the metadata")
+		return nil, NullOid, 0, xerrors.Errorf("could not skip the metadata: %w", err)
 	}
 
 	// Some objects are deltified and need extra parsing before getting to
@@ -194,11 +196,11 @@ func (pck *Pack) getRawObjectAt(oid Oid, objectOffset uint64) (o *Object, deltaB
 		baseObjectSHA := make([]byte, OidSize)
 		_, err = buf.Read(baseObjectSHA)
 		if err != nil {
-			return nil, NullOid, 0, errors.Wrap(err, "could not get base object SHA")
+			return nil, NullOid, 0, xerrors.Errorf("could not get base object SHA: %w", err)
 		}
 		baseObjectOid, err = NewOidFromBytes(baseObjectSHA)
 		if err != nil {
-			return nil, NullOid, 0, errors.Wrapf(err, "could not parse base object SHA %#v", baseObjectSHA)
+			return nil, NullOid, 0, xerrors.Errorf("could not parse base object SHA %#v: %w", baseObjectSHA, err)
 		}
 	case ObjectDeltaOFS:
 		// we're assuming the offset is no bigger than 9 bytes to fit an int64.
@@ -206,11 +208,11 @@ func (pck *Pack) getRawObjectAt(oid Oid, objectOffset uint64) (o *Object, deltaB
 		// so we need to read an extra byte
 		offsetParts, err := buf.Peek(9)
 		if err != nil {
-			return nil, NullOid, 0, errors.Wrap(err, "could not get base object offset")
+			return nil, NullOid, 0, xerrors.Errorf("could not get base object offset: %w", err)
 		}
 		offset, bytesRead, err := pck.readDeltaOffset(offsetParts)
 		if err != nil {
-			return nil, NullOid, 0, errors.Wrap(err, "couldn't read base object offset")
+			return nil, NullOid, 0, xerrors.Errorf("couldn't read base object offset: %w", err)
 		}
 		baseObjectOffset = objectOffset - offset
 
@@ -218,14 +220,14 @@ func (pck *Pack) getRawObjectAt(oid Oid, objectOffset uint64) (o *Object, deltaB
 		// now need to discard the right amount of bytes to move our internal
 		// cursor to the object data
 		if _, err = buf.Discard(bytesRead); err != nil {
-			return nil, NullOid, 0, errors.Wrap(err, "could not skip the offset")
+			return nil, NullOid, 0, xerrors.Errorf("could not skip the offset: %w", err)
 		}
 	}
 
 	// We can now fetch the actual data of the object, which is zlib encoded
 	zlibR, err := zlib.NewReader(buf)
 	if err != nil {
-		return nil, NullOid, 0, errors.Wrap(err, "could not get zlib reader")
+		return nil, NullOid, 0, xerrors.Errorf("could not get zlib reader: %w", err)
 	}
 	defer func() {
 		closeErr := zlibR.Close()
@@ -237,11 +239,11 @@ func (pck *Pack) getRawObjectAt(oid Oid, objectOffset uint64) (o *Object, deltaB
 	objectData := bytes.Buffer{}
 	_, err = io.Copy(&objectData, zlibR)
 	if err != nil {
-		return nil, NullOid, 0, errors.Wrap(err, "could not decompress")
+		return nil, NullOid, 0, xerrors.Errorf("could not decompress: %w", err)
 	}
 
 	if objectData.Len() != int(objectSize) {
-		return nil, NullOid, 0, errors.Errorf("object size not valid. expecting %d, got %d", objectSize, objectData.Len())
+		return nil, NullOid, 0, xerrors.Errorf("object size not valid. expecting %d, got %d", objectSize, objectData.Len())
 	}
 
 	return &Object{
@@ -269,13 +271,13 @@ func (pck *Pack) getObjectAt(oid Oid, objectOffset uint64) (*Object, error) {
 	if baseOid != NullOid {
 		base, err = pck.repo.GetObject(baseOid)
 		if err != nil {
-			return nil, errors.Wrapf(err, "could not get base object %s", baseOid.String())
+			return nil, xerrors.Errorf("could not get base object %s: %w", baseOid.String(), err)
 		}
 	} else {
 		// we pass NullOid because we don't know the SHA of the base
 		base, err = pck.getObjectAt(NullOid, baseOffset)
 		if err != nil {
-			return nil, errors.Wrapf(err, "could not get base object at offset %d", baseOffset)
+			return nil, xerrors.Errorf("could not get base object at offset %d: %w", baseOffset, err)
 		}
 	}
 
@@ -287,14 +289,14 @@ func (pck *Pack) getObjectAt(oid Oid, objectOffset uint64) (*Object, error) {
 	delta := o.Bytes()
 	sourceSize, sourceSizeLen, err := pck.readSize(delta)
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't read source size of delta")
+		return nil, xerrors.Errorf("couldn't read source size of delta: %w", err)
 	}
 	if int(sourceSize) != base.Size() {
-		return nil, errors.Wrapf(err, "invalid base object size. expected %d, got %d", base.Size(), sourceSize)
+		return nil, xerrors.Errorf("invalid base object size. expected %d, got %d: %w", base.Size(), sourceSize, err)
 	}
 	_, tartgetSizeLen, err := pck.readSize(delta[sourceSizeLen:])
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't read target size of delta")
+		return nil, xerrors.Errorf("couldn't read target size of delta: %w", err)
 	}
 	headerSize := tartgetSizeLen + sourceSizeLen
 	instructions := delta[headerSize:]
@@ -396,8 +398,8 @@ func (pck *Pack) getObjectAt(oid Oid, objectOffset uint64) (*Object, error) {
 func (pck *Pack) GetObject(oid Oid) (*Object, error) {
 	objectOffset, err := pck.idx.GetObjectOffset(oid)
 	if err != nil {
-		if errors.Cause(err) != ErrObjectNotFound {
-			return nil, errors.Wrap(err, "could not get object index")
+		if !errors.Is(err, ErrObjectNotFound) {
+			return nil, xerrors.Errorf("could not get object index: %w", err)
 		}
 		return nil, err
 	}

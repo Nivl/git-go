@@ -6,7 +6,9 @@ import (
 	"os"
 	"sort"
 
-	"github.com/pkg/errors"
+	"errors"
+
+	"golang.org/x/xerrors"
 )
 
 var (
@@ -89,17 +91,17 @@ type PackIndex struct {
 func NewPackIndexFromFile(filePath string) (*PackIndex, error) {
 	f, err := os.Open(filePath)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not open %s", filePath)
+		return nil, xerrors.Errorf("could not open %s: %w", filePath, err)
 	}
 
 	// Let's validate the header
 	header := make([]byte, len(indexHeader))
 	_, err = f.Read(header)
 	if err != nil {
-		return nil, errors.Wrap(err, "could read header of index file")
+		return nil, xerrors.Errorf("could read header of index file: %w", err)
 	}
 	if !bytes.Equal(header, indexHeader) {
-		return nil, errors.Wrap(err, "invalid header")
+		return nil, xerrors.Errorf("invalid header: %w", err)
 	}
 
 	return &PackIndex{
@@ -130,7 +132,7 @@ func (idx *PackIndex) GetObjectOffset(oid Oid) (uint64, error) {
 	// how many objects are in the packfile
 	objCount, cumul, totalObjects, err := idx.ObjectCountAt(oid[0])
 	if err != nil {
-		return 0, errors.Wrap(err, "could not get object count")
+		return 0, xerrors.Errorf("could not get object count: %w", err)
 	}
 	if objCount == 0 {
 		return 0, ErrObjectNotFound
@@ -144,7 +146,7 @@ func (idx *PackIndex) GetObjectOffset(oid Oid) (uint64, error) {
 	// 3rd in layer3 and layer4.
 	oidIdx, err := idx.index(oid, objCount, cumul)
 	if err != nil {
-		return 0, errors.Wrap(err, "could not oid index")
+		return 0, xerrors.Errorf("could not oid index: %w", err)
 	}
 
 	// Now we can lookup in layer4 for the object's offset in the packfile
@@ -158,7 +160,7 @@ func (idx *PackIndex) GetObjectOffset(oid Oid) (uint64, error) {
 	entryValue := make([]byte, layer4EntrySize)
 	_, err = idx.r.ReadAt(entryValue, entryOffset)
 	if err != nil {
-		return 0, errors.Wrapf(err, "could not read object offset in layer4 at offset %d", entryOffset)
+		return 0, xerrors.Errorf("could not read object offset in layer4 at offset %d: %w", entryOffset, err)
 	}
 	entry := binary.BigEndian.Uint32(entryValue)
 
@@ -193,7 +195,7 @@ func (idx *PackIndex) GetObjectOffset(oid Oid) (uint64, error) {
 	entryValue = make([]byte, layer5EntrySize)
 	_, err = idx.r.ReadAt(entryValue, entryOffset)
 	if err != nil {
-		return 0, errors.Wrapf(err, "could not read object offset in layer5 at offset %d", entryOffset)
+		return 0, xerrors.Errorf("could not read object offset in layer5 at offset %d: %w", entryOffset, err)
 	}
 	finalOffset := binary.BigEndian.Uint64(entryValue)
 
@@ -221,7 +223,7 @@ func (idx *PackIndex) ObjectCountAt(prefix byte) (count, cumul, total uint32, er
 	lastEntryOffset := 255 * entrySize
 	_, err = idx.r.ReadAt(entry, int64(layer1Offset+lastEntryOffset))
 	if err != nil {
-		return 0, 0, 0, errors.Wrap(err, "couldn't get the total number of objects")
+		return 0, 0, 0, xerrors.Errorf("couldn't get the total number of objects: %w", err)
 	}
 	total = binary.BigEndian.Uint32(entry)
 
@@ -235,7 +237,7 @@ func (idx *PackIndex) ObjectCountAt(prefix byte) (count, cumul, total uint32, er
 	offset := int64(layer1Offset + int(prevPrefix)*entrySize)
 	_, err = idx.r.ReadAt(entry, offset)
 	if err != nil {
-		return 0, 0, 0, errors.Wrapf(err, "couldn't read previous entry at pos %d", offset)
+		return 0, 0, 0, xerrors.Errorf("couldn't read previous entry at pos %d: %w", offset, err)
 	}
 	prevCumul := binary.BigEndian.Uint32(entry)
 
@@ -259,7 +261,7 @@ func (idx *PackIndex) ObjectCountAt(prefix byte) (count, cumul, total uint32, er
 	offset += int64(entrySize)
 	_, err = idx.r.ReadAt(entry, offset)
 	if err != nil {
-		return 0, 0, 0, errors.Wrapf(err, "couldn't read current entry at pos %d", offset)
+		return 0, 0, 0, xerrors.Errorf("couldn't read current entry at pos %d: %w", offset, err)
 	}
 	cumul = binary.BigEndian.Uint32(entry)
 	count = cumul - prevCumul
@@ -284,7 +286,7 @@ func (idx *PackIndex) index(oid Oid, oidCount, oidCumul uint32) (int, error) {
 	rangeOffset := int64(layer2offset + listOffset)
 	_, err := idx.r.ReadAt(oidRange, rangeOffset)
 	if err != nil {
-		return 0, errors.Wrapf(err, "could not read %d oids in layer2 at offset %d", oidCount, rangeOffset)
+		return 0, xerrors.Errorf("could not read %d oids in layer2 at offset %d: %w", oidCount, rangeOffset, err)
 	}
 
 	// The next step is to do a binary search to find our oid in the list

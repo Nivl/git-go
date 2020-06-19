@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/Nivl/git-go"
-	"github.com/pkg/errors"
+	"golang.org/x/xerrors"
 
 	"github.com/spf13/cobra"
 )
@@ -81,7 +81,7 @@ func catFileCmd(sha string) error {
 
 	oid, err := git.NewOidFromStr(sha)
 	if err != nil {
-		return errors.Wrap(err, "failed parsing sha")
+		return xerrors.Errorf("failed parsing sha: %w", err)
 	}
 
 	o, err := r.GetObject(oid)
@@ -126,7 +126,7 @@ func hashObjectCmd(filePath, typ string) error {
 	case "tag":
 		fallthrough
 	default:
-		return errors.Errorf("unsupported object type %s", typ)
+		return xerrors.Errorf("unsupported object type %s", typ)
 	}
 
 	oid, _, err := o.Compress()
