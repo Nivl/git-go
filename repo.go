@@ -9,8 +9,8 @@ import (
 
 	"errors"
 
-	"github.com/go-ini/ini"
 	"golang.org/x/xerrors"
+	"gopkg.in/ini.v1"
 )
 
 // List of errors returned by the Repository struct
