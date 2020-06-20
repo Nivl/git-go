@@ -53,6 +53,5 @@ func TestNewFromFile(t *testing.T) {
 		require.Error(t, err)
 		assert.True(t, xerrors.Is(err, packfile.ErrInvalidMagic))
 		assert.Nil(t, pack)
-
 	})
 }
