@@ -17,6 +17,12 @@ import (
 	"golang.org/x/xerrors"
 )
 
+// This line generates a mock of the all the interfaces using gomock
+// (https://github.com/golang/mock). To regenerate the mocks, you'll need
+// gomock and mockgen installed, then run `go generate github.com/Nivl/git-go/plumbing/packfile`
+//
+//go:generate mockgen -package mockpackfile -destination ./mockpackfile/object_getter.go github.com/Nivl/git-go/plumbing/packfile ObjectGetter
+
 const (
 	// packfileHeaderSize contains the size of the header of a packfile.
 	// the first 4 bytes contain the magic, the 4 next bytes contains the
@@ -33,7 +39,9 @@ var (
 var (
 	// ErrIntOverflow is an error thrown when the packfile couldn't
 	// be parsed because some data couldn't fit in an int64
-	ErrIntOverflow = errors.New("int64 overflow")
+	ErrIntOverflow    = errors.New("int64 overflow")
+	ErrInvalidMagic   = errors.New("invalid magic")
+	ErrInvalidVersion = errors.New("invalid version")
 )
 
 // ObjectGetter is an hack with awful perf until we support parsing
@@ -79,9 +87,9 @@ type Pack struct {
 	idx          *PackIndex
 }
 
-// NewPackFromFile returns a pack object from the given file
+// NewFromFile returns a pack object from the given file
 // The pack will need to be closed using Close()
-func NewPackFromFile(objectGetter ObjectGetter, filePath string) (*Pack, error) {
+func NewFromFile(objectGetter ObjectGetter, filePath string) (*Pack, error) {
 	f, err := os.Open(filePath)
 	if err != nil {
 		return nil, xerrors.Errorf("could not open %s: %w", filePath, err)
@@ -94,14 +102,14 @@ func NewPackFromFile(objectGetter ObjectGetter, filePath string) (*Pack, error) 
 		return nil, xerrors.Errorf("could read header of index file: %w", err)
 	}
 	if !bytes.Equal(header[0:4], packfileMagic) {
-		return nil, xerrors.Errorf("invalid magic: %w", err)
+		return nil, xerrors.Errorf("invalid header: %w", ErrInvalidMagic)
 	}
 	if !bytes.Equal(header[4:8], packfileVersion) {
-		return nil, xerrors.Errorf("invalid version: %w", err)
+		return nil, xerrors.Errorf("invalid header: %w", ErrInvalidVersion)
 	}
 
 	IndexFilePath := strings.TrimSuffix(filePath, ExtPackfile) + ExtIndex
-	idx, err := NewPackIndexFromFile(IndexFilePath)
+	idx, err := NewIndexFromFile(IndexFilePath)
 	if err != nil {
 		return nil, xerrors.Errorf("could not open index file at %s: %w", IndexFilePath, err)
 	}

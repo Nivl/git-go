@@ -286,7 +286,7 @@ func (r *Repository) getObjectFromPackfile(oid plumbing.Oid) (*object.Object, er
 		// the idx extension
 
 		packFilePath := filepath.Join(p, filename)
-		pf, err := packfile.NewPackFromFile(r, packFilePath)
+		pf, err := packfile.NewFromFile(r, packFilePath)
 		if err != nil {
 			return nil, xerrors.Errorf("could not open packfile: %w", err)
 		}
