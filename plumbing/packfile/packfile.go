@@ -39,8 +39,12 @@ var (
 var (
 	// ErrIntOverflow is an error thrown when the packfile couldn't
 	// be parsed because some data couldn't fit in an int64
-	ErrIntOverflow    = errors.New("int64 overflow")
-	ErrInvalidMagic   = errors.New("invalid magic")
+	ErrIntOverflow = errors.New("int64 overflow")
+	// ErrInvalidMagic is an error thrown when a file doesn't have
+	// the expected magic.
+	ErrInvalidMagic = errors.New("invalid magic")
+	// ErrInvalidVersion is an error thrown when a file has an
+	// unsupported version
 	ErrInvalidVersion = errors.New("invalid version")
 )
 

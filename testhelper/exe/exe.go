@@ -1,3 +1,4 @@
+// Package exe contains helpers to help running commands
 package exe
 
 import (
@@ -7,18 +8,19 @@ import (
 	"strings"
 )
 
+// Run runs a command and return stderr as error
 func Run(name string, arg ...string) (string, error) {
-	cmd := exec.Command(name, arg...)
+	cmd := exec.Command(name, arg...) //nolint:gosec // using a variable is expected
 	stdout, stderr, err := execCmd(cmd)
 
 	if err != nil && stderr != "" {
-		return stdout, errors.New(stderr)
+		return stdout, errors.New(stderr) //nolint:goerr113 // the error is dynamically generated at runtime
 	}
 
 	return stdout, err
 }
 
-func execCmd(cmd *exec.Cmd) (stdout string, stderr string, err error) {
+func execCmd(cmd *exec.Cmd) (stdout, stderr string, err error) {
 	// we pipe stderr to get the error message if something goes wrong
 	stderrReader, err := cmd.StderrPipe()
 	if err != nil {
