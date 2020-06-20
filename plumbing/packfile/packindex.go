@@ -1,4 +1,4 @@
-package git
+package packfile
 
 import (
 	"bytes"
@@ -6,8 +6,7 @@ import (
 	"os"
 	"sort"
 
-	"errors"
-
+	"github.com/Nivl/git-go/plumbing"
 	"golang.org/x/xerrors"
 )
 
@@ -17,15 +16,11 @@ var (
 	// contains the version of the file
 	indexHeader     = []byte{255, 't', 'O', 'c', 0, 0, 0, 2}
 	layer1Size      = 1024
-	layer2EntrySize = OidSize
+	layer2EntrySize = plumbing.OidSize
 	layer3EntrySize = 4
 	layer4EntrySize = 4
 	layer5EntrySize = 8
 )
-
-// ErrObjectNotFound is an error corresponding to a git object not being
-// found
-var ErrObjectNotFound = errors.New("object not found")
 
 // PackIndex represents a packfile's PackIndex file (.idx)
 // The index contains data to help parsing the packfile
@@ -126,7 +121,7 @@ func (idx *PackIndex) Close() error {
 // - If the packfile is too big (> 2GB), we might need to look in layer5
 //   For the actual offset, because layer4 only store int32 offsets
 //   while layer5 stores int64 offsets
-func (idx *PackIndex) GetObjectOffset(oid Oid) (uint64, error) {
+func (idx *PackIndex) GetObjectOffset(oid plumbing.Oid) (uint64, error) {
 	// First we need to check how many objects in the packfile start by
 	// oid[0], how many objects are between 0x00 and oid[0] (cumul), and
 	// how many objects are in the packfile
@@ -135,7 +130,7 @@ func (idx *PackIndex) GetObjectOffset(oid Oid) (uint64, error) {
 		return 0, xerrors.Errorf("could not get object count: %w", err)
 	}
 	if objCount == 0 {
-		return 0, ErrObjectNotFound
+		return 0, plumbing.ErrObjectNotFound
 	}
 
 	// Now that we have the cumul, the count and the total, we can
@@ -271,7 +266,7 @@ func (idx *PackIndex) ObjectCountAt(prefix byte) (count, cumul, total uint32, er
 // index searches for the index of $oid in layer2.
 // $oidCount represents the number of oids at oid[0]
 // $oidCumul represents the number of oids from 0x00 to oid[0]
-func (idx *PackIndex) index(oid Oid, oidCount, oidCumul uint32) (int, error) {
+func (idx *PackIndex) index(oid plumbing.Oid, oidCount, oidCumul uint32) (int, error) {
 	// layer2offset corresponds to the beginning of layer2 in the file
 	layer2offset := len(indexHeader) + layer1Size
 	// First index corresponds to the index of the first oid starting by
@@ -282,7 +277,7 @@ func (idx *PackIndex) index(oid Oid, oidCount, oidCumul uint32) (int, error) {
 	listOffset := firstOidIndex * layer2EntrySize
 
 	// Now we grab all the oids that start by oid[0].
-	oidRange := make([]byte, oidCount*OidSize)
+	oidRange := make([]byte, oidCount*plumbing.OidSize)
 	rangeOffset := int64(layer2offset + listOffset)
 	_, err := idx.r.ReadAt(oidRange, rangeOffset)
 	if err != nil {
@@ -292,15 +287,15 @@ func (idx *PackIndex) index(oid Oid, oidCount, oidCumul uint32) (int, error) {
 	// The next step is to do a binary search to find our oid in the list
 	// (that's much faster than looping around everything on big packfile)
 	oidIdxRel := sort.Search(int(oidCount), func(i int) bool {
-		start := i * OidSize
-		currentOid := oidRange[start : start+OidSize]
+		start := i * plumbing.OidSize
+		currentOid := oidRange[start : start+plumbing.OidSize]
 		return bytes.Compare(oid.Bytes(), currentOid) <= 0
 	})
 
 	// We need to make sure we found our oid
-	start := oidIdxRel * OidSize
-	if oidIdxRel >= int(oidCount) || !bytes.Equal(oid.Bytes(), oidRange[start:start+OidSize]) {
-		return 0, ErrObjectNotFound
+	start := oidIdxRel * plumbing.OidSize
+	if oidIdxRel >= int(oidCount) || !bytes.Equal(oid.Bytes(), oidRange[start:start+plumbing.OidSize]) {
+		return 0, plumbing.ErrObjectNotFound
 	}
 
 	return firstOidIndex + oidIdxRel, nil

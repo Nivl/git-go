@@ -1,4 +1,4 @@
-package git
+package plumbing
 
 import (
 	"crypto/sha1"

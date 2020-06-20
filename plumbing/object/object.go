@@ -1,4 +1,5 @@
-package git
+// Package object contains methods and objects to work with git objects
+package object
 
 import (
 	"bytes"
@@ -8,35 +9,37 @@ import (
 
 	"errors"
 
+	"github.com/Nivl/git-go/internal/readutil"
+	"github.com/Nivl/git-go/plumbing"
 	"golang.org/x/xerrors"
 )
 
 // ErrObjectUnknown represents an error when encoutering an unknown object
 var ErrObjectUnknown = errors.New("unknown object")
 
-// ObjectType represents the type of an object as stored in a packfile
-type ObjectType int8
+// Type represents the type of an object as stored in a packfile
+type Type int8
 
 // List of all the possible object types
 const (
-	ObjectTypeCommit ObjectType = 1
-	ObjectTypeTree   ObjectType = 2
-	ObjectTypeBlob   ObjectType = 3
-	ObjectTypeTag    ObjectType = 4
+	TypeCommit Type = 1
+	TypeTree   Type = 2
+	TypeBlob   Type = 3
+	TypeTag    Type = 4
 	// 5 is reserved for future use
-	ObjectDeltaOFS ObjectType = 6
-	ObjectDeltaRef ObjectType = 7
+	ObjectDeltaOFS Type = 6
+	ObjectDeltaRef Type = 7
 )
 
-func (t ObjectType) String() string {
+func (t Type) String() string {
 	switch t {
-	case ObjectTypeCommit:
+	case TypeCommit:
 		return "commit"
-	case ObjectTypeTree:
+	case TypeTree:
 		return "tree"
-	case ObjectTypeBlob:
+	case TypeBlob:
 		return "blob"
-	case ObjectTypeTag:
+	case TypeTag:
 		return "tag"
 	case ObjectDeltaOFS:
 		return "osf-delta"
@@ -48,12 +51,12 @@ func (t ObjectType) String() string {
 }
 
 // IsValid check id the object type is an existing type
-func (t ObjectType) IsValid() bool {
+func (t Type) IsValid() bool {
 	switch t {
-	case ObjectTypeCommit,
-		ObjectTypeTree,
-		ObjectTypeBlob,
-		ObjectTypeTag,
+	case TypeCommit,
+		TypeTree,
+		TypeBlob,
+		TypeTag,
 		ObjectDeltaOFS,
 		ObjectDeltaRef:
 		return true
@@ -62,18 +65,18 @@ func (t ObjectType) IsValid() bool {
 	}
 }
 
-// NewObjectTypeFromString returns an ObjectType from its string
+// NewTypeFromString returns an Type from its string
 // representation
-func NewObjectTypeFromString(t string) (ObjectType, error) {
+func NewTypeFromString(t string) (Type, error) {
 	switch t {
 	case "commit":
-		return ObjectTypeCommit, nil
+		return TypeCommit, nil
 	case "tree":
-		return ObjectTypeTree, nil
+		return TypeTree, nil
 	case "blob":
-		return ObjectTypeBlob, nil
+		return TypeBlob, nil
 	case "tag":
-		return ObjectTypeTag, nil
+		return TypeTag, nil
 	default:
 		return 0, ErrObjectUnknown
 	}
@@ -86,17 +89,27 @@ func NewObjectTypeFromString(t string) (ObjectType, error) {
 // (kind of an optimized git database) located in .git/objects/packs
 // https://git-scm.com/book/en/v2/Git-Internals-Git-Objects
 type Object struct {
-	ID      Oid
-	typ     ObjectType
+	ID      plumbing.Oid
+	typ     Type
 	size    int
 	content []byte
 }
 
-// NewObject creates a new git object of the given type
+// New creates a new git object of the given type
 // The Object ID won't be calculated until Compress() is called
-func NewObject(typ ObjectType, content []byte) *Object {
+func New(typ Type, content []byte) *Object {
 	return &Object{
-		ID:      NullOid,
+		ID:      plumbing.NullOid,
+		typ:     typ,
+		size:    len(content),
+		content: content,
+	}
+}
+
+// NewWithID creates a new git object of the given type with the given ID
+func NewWithID(id plumbing.Oid, typ Type, content []byte) *Object {
+	return &Object{
+		ID:      id,
 		typ:     typ,
 		size:    len(content),
 		content: content,
@@ -108,8 +121,8 @@ func (o *Object) Size() int {
 	return o.size
 }
 
-// Type returns the ObjectType for this object
-func (o *Object) Type() ObjectType {
+// Type returns the Type for this object
+func (o *Object) Type() Type {
 	return o.typ
 }
 
@@ -124,7 +137,7 @@ func (o *Object) Bytes() []byte {
 // The type in ascii, followed by a space, followed by the size in ascii,
 // followed by a null character (0), followed by the object data
 // maybe we can move some code around
-func (o *Object) Compress() (oid Oid, data []byte, err error) {
+func (o *Object) Compress() (oid plumbing.Oid, data []byte, err error) {
 	// Quick reminder that the Write* methods on bytes.Buffer never fails,
 	// the error returned is always nil
 	w := new(bytes.Buffer)
@@ -142,7 +155,7 @@ func (o *Object) Compress() (oid Oid, data []byte, err error) {
 
 	// get the SHA of the file
 	fileContent := w.Bytes()
-	o.ID = NewOid(fileContent)
+	o.ID = plumbing.NewOid(fileContent)
 
 	compressedContent := new(bytes.Buffer)
 	zw := zlib.NewWriter(compressedContent)
@@ -153,10 +166,10 @@ func (o *Object) Compress() (oid Oid, data []byte, err error) {
 		}
 	}()
 	if _, err = zw.Write(fileContent); err != nil {
-		return NullOid, nil, xerrors.Errorf("could not zlib the object: %w", err)
+		return plumbing.NullOid, nil, xerrors.Errorf("could not zlib the object: %w", err)
 	}
 	if err = zw.Close(); err != nil {
-		return NullOid, nil, xerrors.Errorf("could not close the compressor: %w", err)
+		return plumbing.NullOid, nil, xerrors.Errorf("could not close the compressor: %w", err)
 	}
 	return o.ID, compressedContent.Bytes(), nil
 }
@@ -187,14 +200,14 @@ func (o *Object) AsBlob() *Blob {
 //   A merge commit has 2 or more parents
 // - The gpgsig is optional
 func (o *Object) AsCommit() (*Commit, error) {
-	if o.typ != ObjectTypeCommit {
+	if o.typ != TypeCommit {
 		return nil, xerrors.Errorf("type %s is not a commit", o.typ)
 	}
 	ci := &Commit{ID: o.ID}
 	offset := 0
 	objData := o.Bytes()
 	for {
-		line := readTo(objData[offset:], '\n')
+		line := readutil.ReadTo(objData[offset:], '\n')
 		offset += len(line) + 1 // +1 to count the \n
 
 		// if we got an empty line, it means everything from now to the end
@@ -208,13 +221,13 @@ func (o *Object) AsCommit() (*Commit, error) {
 		kv := bytes.SplitN(line, []byte{' '}, 2)
 		switch string(kv[0]) {
 		case "tree":
-			oid, err := NewOidFromBytes(kv[1])
+			oid, err := plumbing.NewOidFromBytes(kv[1])
 			if err != nil {
 				return nil, xerrors.Errorf("could not parse tree id %#v: %w", kv[1], err)
 			}
 			ci.TreeID = oid
 		case "parent":
-			oid, err := NewOidFromBytes(kv[1])
+			oid, err := plumbing.NewOidFromBytes(kv[1])
 			if err != nil {
 				return nil, xerrors.Errorf("could not parse parent id %#v: %w", kv[1], err)
 			}

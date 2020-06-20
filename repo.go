@@ -9,6 +9,10 @@ import (
 
 	"errors"
 
+	"github.com/Nivl/git-go/internal/readutil"
+	"github.com/Nivl/git-go/plumbing"
+	"github.com/Nivl/git-go/plumbing/object"
+	"github.com/Nivl/git-go/plumbing/packfile"
 	"golang.org/x/xerrors"
 	"gopkg.in/ini.v1"
 )
@@ -167,7 +171,7 @@ func (r *Repository) setDefaultCfg() error {
 	return cfg.SaveTo(filepath.Join(r.path, ConfigPath))
 }
 
-func (r *Repository) getDanglingObject(oid Oid) (*Object, error) {
+func (r *Repository) getDanglingObject(oid plumbing.Oid) (*object.Object, error) {
 	strOid := oid.String()
 
 	p := r.danglingObjectPath(strOid)
@@ -204,20 +208,17 @@ func (r *Repository) getDanglingObject(oid Oid) (*Object, error) {
 		return nil, xerrors.Errorf("could not read object %s at path %s: %w", strOid, p, err)
 	}
 
-	o := &Object{
-		ID: oid,
-	}
 	// we keep track of where we're at in the buffer
 	pointerPos := 0
 
 	// the type of the object starts at offset 0 and ends a the first
 	// space character that we'll need to trim
-	typ := readTo(buff, ' ')
+	typ := readutil.ReadTo(buff, ' ')
 	if typ == nil {
 		return nil, xerrors.Errorf("could not find object type for %s at path %s: %w", strOid, p, err)
 	}
 
-	o.typ, err = NewObjectTypeFromString(string(typ))
+	oType, err := object.NewTypeFromString(string(typ))
 	if err != nil {
 		return nil, xerrors.Errorf("unsupported type %s for object %s at path %s", string(typ), strOid, p)
 	}
@@ -228,22 +229,26 @@ func (r *Repository) getDanglingObject(oid Oid) (*Object, error) {
 	// That we'll need to trim.
 	// A NULL char is represented by 0 (dec), 000 (octal), or 0x00 (hex)
 	// type "man ascii" in a terminal for more information
-	size := readTo(buff[pointerPos:], 0)
+	size := readutil.ReadTo(buff[pointerPos:], 0)
 	if size == nil {
 		return nil, xerrors.Errorf("could not find object size for %s at path %s: %w", strOid, p, err)
 	}
-	o.size, err = strconv.Atoi(string(size))
+	oSize, err := strconv.Atoi(string(size))
 	if err != nil {
 		return nil, xerrors.Errorf("invalid size %s for object %s at path %s: %w", size, strOid, p, err)
 	}
 	pointerPos += len(size)
-	pointerPos++ // one more for the NULL char
-	o.content = buff[pointerPos:]
+	pointerPos++                  // one more for the NULL char
+	oContent := buff[pointerPos:] // sugar
 
-	return o, nil
+	if len(oContent) != oSize {
+		return nil, xerrors.Errorf("object marked as size %d, but has %d at path %s: %w", oSize, len(oContent), p, err)
+	}
+
+	return object.NewWithID(oid, oType, oContent), nil
 }
 
-func (r *Repository) getObjectFromPackfile(oid Oid) (*Object, error) {
+func (r *Repository) getObjectFromPackfile(oid plumbing.Oid) (*object.Object, error) {
 	// Not found? Let's find packfiles
 	p := filepath.Join(r.path, ObjectsPackPath)
 	packfiles := []string{}
@@ -265,7 +270,7 @@ func (r *Repository) getObjectFromPackfile(oid Oid) (*Object, error) {
 		}
 
 		// We're only interested in packfiles
-		if filepath.Ext(info.Name()) != ExtPackfile {
+		if filepath.Ext(info.Name()) != packfile.ExtPackfile {
 			return nil
 		}
 
@@ -281,7 +286,7 @@ func (r *Repository) getObjectFromPackfile(oid Oid) (*Object, error) {
 		// the idx extension
 
 		packFilePath := filepath.Join(p, filename)
-		pf, err := NewPackFromFile(r, packFilePath)
+		pf, err := packfile.NewPackFromFile(r, packFilePath)
 		if err != nil {
 			return nil, xerrors.Errorf("could not open packfile: %w", err)
 		}
@@ -289,19 +294,19 @@ func (r *Repository) getObjectFromPackfile(oid Oid) (*Object, error) {
 		if err == nil {
 			return do, nil
 		}
-		if errors.Is(err, ErrObjectNotFound) {
+		if errors.Is(err, plumbing.ErrObjectNotFound) {
 			continue
 		}
 		return nil, err
 	}
-	return nil, ErrObjectNotFound
+	return nil, plumbing.ErrObjectNotFound
 }
 
 // GetObject returns the object matching the given SHA
 // The format of an object is an ascii encoded type, an ascii encoded
 // space, then an ascii encoded length of the object, then a null
 // character, then the body of the object
-func (r *Repository) GetObject(oid Oid) (*Object, error) {
+func (r *Repository) GetObject(oid plumbing.Oid) (*object.Object, error) {
 	// First let's look for dangling objects
 	o, err := r.getDanglingObject(oid)
 	if err == nil {
@@ -319,17 +324,17 @@ func (r *Repository) GetObject(oid Oid) (*Object, error) {
 }
 
 // WriteObject writes an object on disk and return its Oid
-func (r *Repository) WriteObject(o *Object) (Oid, error) {
+func (r *Repository) WriteObject(o *object.Object) (plumbing.Oid, error) {
 	oid, data, err := o.Compress()
 	if err != nil {
-		return NullOid, xerrors.Errorf("unsupported object type %s", o.Type())
+		return plumbing.NullOid, xerrors.Errorf("unsupported object type %s", o.Type())
 	}
 
 	// Persist the data on disk
 	sha := oid.String()
 	p := r.danglingObjectPath(sha)
 	if err = ioutil.WriteFile(p, data, 0644); err != nil {
-		return NullOid, xerrors.Errorf("could not persist object %s at path %s: %w", sha, p, err)
+		return plumbing.NullOid, xerrors.Errorf("could not persist object %s at path %s: %w", sha, p, err)
 	}
 
 	return oid, nil

@@ -27,9 +27,3 @@ const (
 	cfgCoreIgnoreCase        = "ignorecase"
 	cfgCorePrecomposeUnicode = "precomposeunicode"
 )
-
-// list of file extensions
-const (
-	ExtPackfile = ".pack"
-	ExtIndex    = ".idx"
-)

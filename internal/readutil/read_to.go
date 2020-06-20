@@ -1,8 +1,8 @@
-package git
+package readutil
 
-// readTo reads from b until to is seen and returns the bytes between the start
+// ReadTo reads from b until to is seen and returns the bytes between the start
 // and to, exclusive of to. Returns nil if it's not found
-func readTo(b []byte, to byte) []byte {
+func ReadTo(b []byte, to byte) []byte {
 	var i int
 	for ; i < len(b) && b[i] != to; i++ {
 		// the conditions handle it all!

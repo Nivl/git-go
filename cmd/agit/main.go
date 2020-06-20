@@ -6,6 +6,8 @@ import (
 	"os"
 
 	"github.com/Nivl/git-go"
+	"github.com/Nivl/git-go/plumbing"
+	"github.com/Nivl/git-go/plumbing/object"
 	"golang.org/x/xerrors"
 
 	"github.com/spf13/cobra"
@@ -79,7 +81,7 @@ func catFileCmd(sha string) error {
 		return err
 	}
 
-	oid, err := git.NewOidFromStr(sha)
+	oid, err := plumbing.NewOidFromStr(sha)
 	if err != nil {
 		return xerrors.Errorf("failed parsing sha: %w", err)
 	}
@@ -115,14 +117,14 @@ func hashObjectCmd(filePath, typ string) error {
 		return err
 	}
 
-	var o *git.Object
+	var o *object.Object
 	switch typ {
 	case "blob":
-		o = git.NewObject(git.ObjectTypeBlob, content)
+		o = object.New(object.TypeBlob, content)
 	case "commit":
-		o = git.NewObject(git.ObjectTypeCommit, content)
+		o = object.New(object.TypeCommit, content)
 	case "tree":
-		o = git.NewObject(git.ObjectTypeTree, content)
+		o = object.New(object.TypeTree, content)
 	case "tag":
 		fallthrough
 	default:

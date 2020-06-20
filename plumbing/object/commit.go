@@ -1,4 +1,4 @@
-package git
+package object
 
 import (
 	"strconv"
@@ -7,6 +7,8 @@ import (
 
 	"errors"
 
+	"github.com/Nivl/git-go/internal/readutil"
+	"github.com/Nivl/git-go/plumbing"
 	"golang.org/x/xerrors"
 )
 
@@ -41,7 +43,7 @@ func NewSignatureFromBytes(b []byte) (*Signature, error) {
 
 	// First we get he name which will have the following format
 	// "User Name " (with the extra space)
-	data := readTo(b, '<')
+	data := readutil.ReadTo(b, '<')
 	if len(data) == 0 {
 		return nil, xerrors.Errorf("couldn't retrieve the name: %w", ErrSignatureInvalid)
 	}
@@ -52,7 +54,7 @@ func NewSignatureFromBytes(b []byte) (*Signature, error) {
 	}
 
 	// Now we get the email, which is between "<" and ">"
-	data = readTo(b[offset:], '>')
+	data = readutil.ReadTo(b[offset:], '>')
 	if len(data) == 0 {
 		return nil, xerrors.Errorf("couldn't retrieve the email: %w", ErrSignatureInvalid)
 	}
@@ -64,7 +66,7 @@ func NewSignatureFromBytes(b []byte) (*Signature, error) {
 	}
 
 	// Next is the timestamp and the timezone
-	timestamp := readTo(b[offset:], ' ')
+	timestamp := readutil.ReadTo(b[offset:], ' ')
 	if len(data) == 0 {
 		return nil, xerrors.Errorf("couldn't retrieve the timestamp: %w", ErrSignatureInvalid)
 	}
@@ -101,7 +103,7 @@ type Commit struct {
 	// SHA of all the parent commits, if any
 	// A regular commit usually has 1 parent, a merge commit has 2 or more,
 	// and the very first commit has none
-	ParentIDs []Oid
-	ID        Oid
-	TreeID    Oid
+	ParentIDs []plumbing.Oid
+	ID        plumbing.Oid
+	TreeID    plumbing.Oid
 }
