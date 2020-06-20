@@ -1,9 +1,11 @@
-package git
+package object_test
 
 import (
 	"bytes"
 	"testing"
 
+	"github.com/Nivl/git-go/plumbing"
+	"github.com/Nivl/git-go/plumbing/object"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,9 +15,9 @@ func TestAsCommit(t *testing.T) {
 	t.Run("regular commit with all the fields", func(t *testing.T) {
 		t.Parallel()
 
-		treeID, _ := NewOidFromStr("f0b577644139c6e04216d82f1dd4a5a63addeeca")
-		oid, _ := NewOidFromStr("0343d67ca3d80a531d0d163f0078a81c95c9085a")
-		parentID, _ := NewOidFromStr("9785af758bcc96cd7237ba65eb2c9dd1ecaa3321")
+		treeID, _ := plumbing.NewOidFromStr("f0b577644139c6e04216d82f1dd4a5a63addeeca")
+		oid, _ := plumbing.NewOidFromStr("0343d67ca3d80a531d0d163f0078a81c95c9085a")
+		parentID, _ := plumbing.NewOidFromStr("9785af758bcc96cd7237ba65eb2c9dd1ecaa3321")
 
 		var b bytes.Buffer
 		b.WriteString("tree ")
@@ -52,13 +54,7 @@ commit body
 commit footer`)
 		rawData := b.Bytes()
 
-		o := &Object{
-			ID:      oid,
-			content: rawData,
-			size:    len(rawData),
-			typ:     ObjectTypeCommit,
-		}
-
+		o := object.NewWithID(oid, object.TypeCommit, rawData)
 		expectedSigName := "Melvin Laplanche"
 		expectedSigEmail := "melvin.wont.reply@gmail.com"
 		expectedSigTimestamp := int64(1566115917)

@@ -1,4 +1,4 @@
-package git
+package object
 
 // Blob represents a blob object
 type Blob struct {
@@ -6,6 +6,6 @@ type Blob struct {
 }
 
 // Type returns the ObjectType for this object
-func (o *Blob) Type() ObjectType {
-	return ObjectTypeBlob
+func (o *Blob) Type() Type {
+	return TypeBlob
 }
