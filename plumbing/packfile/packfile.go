@@ -219,7 +219,7 @@ func (pck *Pack) getRawObjectAt(oid plumbing.Oid, objectOffset uint64) (o *objec
 		if err != nil {
 			return nil, plumbing.NullOid, 0, xerrors.Errorf("could not get base object SHA: %w", err)
 		}
-		baseObjectOid, err = plumbing.NewOidFromBytes(baseObjectSHA)
+		baseObjectOid, err = plumbing.NewOidFromHex(baseObjectSHA)
 		if err != nil {
 			return nil, plumbing.NullOid, 0, xerrors.Errorf("could not parse base object SHA %#v: %w", baseObjectSHA, err)
 		}

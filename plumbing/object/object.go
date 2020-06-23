@@ -176,7 +176,7 @@ func (o *Object) Compress() (oid plumbing.Oid, data []byte, err error) {
 
 // AsBlob parses the object as Blob
 func (o *Object) AsBlob() *Blob {
-	return &Blob{Object: o}
+	return NewBlob(o)
 }
 
 // AsCommit parses the object as Commit
@@ -221,13 +221,13 @@ func (o *Object) AsCommit() (*Commit, error) {
 		kv := bytes.SplitN(line, []byte{' '}, 2)
 		switch string(kv[0]) {
 		case "tree":
-			oid, err := plumbing.NewOidFromBytes(kv[1])
+			oid, err := plumbing.NewOidFromChars(kv[1])
 			if err != nil {
 				return nil, xerrors.Errorf("could not parse tree id %#v: %w", kv[1], err)
 			}
 			ci.TreeID = oid
 		case "parent":
-			oid, err := plumbing.NewOidFromBytes(kv[1])
+			oid, err := plumbing.NewOidFromChars(kv[1])
 			if err != nil {
 				return nil, xerrors.Errorf("could not parse parent id %#v: %w", kv[1], err)
 			}
