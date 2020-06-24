@@ -14,8 +14,15 @@ import (
 	"golang.org/x/xerrors"
 )
 
-// ErrObjectUnknown represents an error when encoutering an unknown object
-var ErrObjectUnknown = errors.New("unknown object")
+var (
+	// ErrObjectUnknown represents an error thrown when encoutering an
+	// unknown object
+	ErrObjectUnknown = errors.New("unknown object")
+
+	// ErrTreeInvalid represents an error thrown when parsing an invalid
+	// tree object
+	ErrTreeInvalid = errors.New("invalid tree")
+)
 
 // Type represents the type of an object as stored in a packfile
 type Type int8
@@ -177,6 +184,54 @@ func (o *Object) Compress() (oid plumbing.Oid, data []byte, err error) {
 // AsBlob parses the object as Blob
 func (o *Object) AsBlob() *Blob {
 	return NewBlob(o)
+}
+
+// AsTree parses the object as Tree
+//
+// A commit has following format:
+//
+// {octal_mode} {path_name}\0{encoded_sha}
+//
+// Note:
+// - a Tree may have multiple entries
+func (o *Object) AsTree() (*Tree, error) {
+	entries := []*TreeEntry{}
+
+	objData := o.Bytes()
+	offset := 0
+	var err error
+	for {
+		entry := &TreeEntry{}
+		data := readutil.ReadTo(objData[offset:], ' ')
+		if len(data) == 0 {
+			return nil, xerrors.Errorf("could not retrieve the mode: %w", ErrTreeInvalid)
+		}
+		offset += len(data) + 1 // +1 for the space
+		entry.Mode = string(data)
+
+		data = readutil.ReadTo(objData[offset:], 0)
+		if len(data) == 0 {
+			return nil, xerrors.Errorf("could not retrieve the path: %w", ErrTreeInvalid)
+		}
+		offset += len(data) + 1 // +1 for the \0
+		entry.Path = string(data)
+
+		if offset+20 > len(objData) {
+			return nil, xerrors.Errorf("not enough space to retrieve the ID: %w", ErrTreeInvalid)
+		}
+		entry.ID, err = plumbing.NewOidFromHex(objData[offset : offset+20])
+		if err != nil {
+			return nil, xerrors.Errorf("%s: %w", ErrTreeInvalid.Error(), err)
+		}
+		offset += 20
+
+		entries = append(entries, entry)
+		if len(objData) == offset {
+			break
+		}
+	}
+
+	return NewTree(o.ID, entries), nil
 }
 
 // AsCommit parses the object as Commit
