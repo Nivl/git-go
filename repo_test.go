@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/Nivl/git-go/testhelper"
 	"github.com/stretchr/testify/require"
 )
 
@@ -59,18 +60,14 @@ func TestInit(t *testing.T) {
 
 // TestLoad runs Load(), and expects no error
 func TestLoad(t *testing.T) {
-	// Setup
-	d, err := ioutil.TempDir("", t.Name()+"-")
-	require.NoError(t, err)
-	defer os.RemoveAll(d)
-	_, err = InitRepository(d)
-	require.NoError(t, err, "failed creating a repo")
+	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+	defer cleanup()
 
-	r, err := LoadRepository(d)
+	r, err := LoadRepository(repoPath)
 	require.NoError(t, err, "failed loading a repo")
 	require.NotNil(t, r, "repository should not be nil")
 
 	// assert returned repository
-	require.Equal(t, d, r.projectPath)
-	require.Equal(t, filepath.Join(d, DotGitPath), r.path)
+	require.Equal(t, repoPath, r.projectPath)
+	require.Equal(t, filepath.Join(repoPath, DotGitPath), r.path)
 }
