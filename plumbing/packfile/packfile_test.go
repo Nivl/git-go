@@ -5,11 +5,11 @@ import (
 	"testing"
 
 	"github.com/Nivl/git-go"
+	"github.com/Nivl/git-go/internal/mocks/mockpackfile"
+	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/Nivl/git-go/plumbing"
 	"github.com/Nivl/git-go/plumbing/object"
 	"github.com/Nivl/git-go/plumbing/packfile"
-	"github.com/Nivl/git-go/plumbing/packfile/mockpackfile"
-	"github.com/Nivl/git-go/testhelper"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

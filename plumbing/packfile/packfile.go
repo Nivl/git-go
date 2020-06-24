@@ -21,7 +21,7 @@ import (
 // (https://github.com/golang/mock). To regenerate the mocks, you'll need
 // gomock and mockgen installed, then run `go generate github.com/Nivl/git-go/plumbing/packfile`
 //
-//go:generate mockgen -package mockpackfile -destination ./mockpackfile/object_getter.go github.com/Nivl/git-go/plumbing/packfile ObjectGetter
+//go:generate mockgen -package mockpackfile -destination ../../internal/mocks/mockpackfile/object_getter.go github.com/Nivl/git-go/plumbing/packfile ObjectGetter
 
 const (
 	// packfileHeaderSize contains the size of the header of a packfile.
