@@ -20,7 +20,7 @@ func TestRun(t *testing.T) {
 		{
 			cmd:            "echo",
 			args:           []string{"this", "should be printed"},
-			expectedOutput: "tis should be printed",
+			expectedOutput: "this should be printed",
 			expectedError:  nil,
 		},
 		{
@@ -33,7 +33,7 @@ func TestRun(t *testing.T) {
 	for i, tc := range testCases {
 		tc := tc
 		i := i
-		t.Run(fmt.Sprintf("%d/%s %#v", i, tc.cmd, tc.args), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%d/%s %s", i, tc.cmd, tc.args), func(t *testing.T) {
 			out, err := exe.Run(tc.cmd, tc.args...)
 			if tc.expectedError != nil {
 				require.Error(t, err)
