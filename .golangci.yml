@@ -16,7 +16,7 @@ issues:
     - linters:
         - gosec
       # for G306: https://github.com/golangci/golangci-lint/issues/177
-      text: "G104|G304|G110|G306"
+      text: "G104|G304|G110|G306|G505|G401"
 
     - linters:
         - govet
@@ -28,12 +28,7 @@ issues:
       linters:
         - errcheck
         - gosec
-
-    # we need to exclude gosec from this file because it's
-    # using SHA1 which is considered unsecured
-    - path: oid\.go
-      linters:
-        - gosec
+        - goerr113
 
 linters:
   enable:
