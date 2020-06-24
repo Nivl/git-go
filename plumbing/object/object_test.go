@@ -21,11 +21,11 @@ func TestAsCommit(t *testing.T) {
 
 		var b bytes.Buffer
 		b.WriteString("tree ")
-		b.Write(treeID.Bytes())
+		b.WriteString(treeID.String())
 		b.WriteString("\n")
 
 		b.WriteString("parent ")
-		b.Write(parentID.Bytes())
+		b.WriteString(parentID.String())
 		b.WriteString("\n")
 
 		b.WriteString(`author Melvin Laplanche <melvin.wont.reply@gmail.com> 1566115917 -0700

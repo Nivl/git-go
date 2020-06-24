@@ -81,9 +81,9 @@ type PackIndex struct {
 	r *os.File
 }
 
-// NewPackIndexFromFile returns an index object from the given file
+// NewIndexFromFile returns an index object from the given file
 // The index will need to be closed using Close()
-func NewPackIndexFromFile(filePath string) (*PackIndex, error) {
+func NewIndexFromFile(filePath string) (*PackIndex, error) {
 	f, err := os.Open(filePath)
 	if err != nil {
 		return nil, xerrors.Errorf("could not open %s: %w", filePath, err)
@@ -96,7 +96,7 @@ func NewPackIndexFromFile(filePath string) (*PackIndex, error) {
 		return nil, xerrors.Errorf("could read header of index file: %w", err)
 	}
 	if !bytes.Equal(header, indexHeader) {
-		return nil, xerrors.Errorf("invalid header: %w", err)
+		return nil, xerrors.Errorf("invalid header: %w", ErrInvalidMagic)
 	}
 
 	return &PackIndex{
@@ -141,7 +141,7 @@ func (idx *PackIndex) GetObjectOffset(oid plumbing.Oid) (uint64, error) {
 	// 3rd in layer3 and layer4.
 	oidIdx, err := idx.index(oid, objCount, cumul)
 	if err != nil {
-		return 0, xerrors.Errorf("could not oid index: %w", err)
+		return 0, xerrors.Errorf("could not find oid index: %w", err)
 	}
 
 	// Now we can lookup in layer4 for the object's offset in the packfile

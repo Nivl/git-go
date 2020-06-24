@@ -39,8 +39,8 @@ func NewOid(bytes []byte) Oid {
 	return sha1.Sum(bytes)
 }
 
-// NewOidFromBytes returns an Oid from the provided byte encoded oid
-func NewOidFromBytes(id []byte) (Oid, error) {
+// NewOidFromHex returns an Oid from the provided byte-encoded oid
+func NewOidFromHex(id []byte) (Oid, error) {
 	if len(id) < OidSize {
 		return NullOid, ErrInvalidOid
 	}
@@ -50,9 +50,16 @@ func NewOidFromBytes(id []byte) (Oid, error) {
 	return oid, nil
 }
 
+// NewOidFromChars creates an Oid from the given char bytes
+// For the SHA {'9', 'b', '9', '1', 'd', 'a', ...}
+// the oid will be {0x9b, 0x91, 0xda, ...}
+func NewOidFromChars(id []byte) (Oid, error) {
+	return NewOidFromStr(string(id))
+}
+
 // NewOidFromStr creates an Oid from the given string
 // For the SHA 9b91da06e69613397b38e0808e0ba5ee6983251b
-// the oid will be {'9b', '91', 'da', ...}
+// the oid will be {0x9b, 0x91, 0xda, ...}
 func NewOidFromStr(id string) (Oid, error) {
 	bytes, decodeErr := hex.DecodeString(id)
 	if decodeErr != nil {
