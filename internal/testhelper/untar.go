@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Nivl/git-go/testhelper/exe"
+	"github.com/Nivl/git-go/internal/testhelper/exe"
 	"github.com/stretchr/testify/require"
 )
 
@@ -39,7 +39,7 @@ func UnTar(t *testing.T, repoName RepoName) (repoPath string, cleanup func()) {
 	if projectRootIndex == -1 {
 		require.FailNow(t, "could not find project root")
 	}
-	dataDir := filepath.Join(wd[:projectRootIndex], projectRootName, "testdata")
+	dataDir := filepath.Join(wd[:projectRootIndex], projectRootName, "internal", "testdata")
 
 	_, err = exe.Run("tar",
 		"-xzf", fmt.Sprintf("%s/%s.tar.gz", dataDir, repoName),
