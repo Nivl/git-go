@@ -22,6 +22,10 @@ var (
 	// ErrTreeInvalid represents an error thrown when parsing an invalid
 	// tree object
 	ErrTreeInvalid = errors.New("invalid tree")
+
+	// ErrCommitInvalid represents an error thrown when parsing an invalid
+	// commit object
+	ErrCommitInvalid = errors.New("invalid commit")
 )
 
 // Type represents the type of an object as stored in a packfile
@@ -264,6 +268,11 @@ func (o *Object) AsCommit() (*Commit, error) {
 	for {
 		line := readutil.ReadTo(objData[offset:], '\n')
 		offset += len(line) + 1 // +1 to count the \n
+
+		// If we didn't find anything then something is wrong
+		if len(line) == 0 && offset == 1 {
+			return nil, xerrors.Errorf("could not find commit first line: %w", ErrCommitInvalid)
+		}
 
 		// if we got an empty line, it means everything from now to the end
 		// will be the commit message
