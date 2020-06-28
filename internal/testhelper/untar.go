@@ -32,21 +32,24 @@ func UnTar(t *testing.T, repoName RepoName) (repoPath string, cleanup func()) {
 		}
 	}()
 
-	wd, err := os.Getwd()
-	require.NoError(t, err)
-	projectRootName := "git-go"
-	projectRootIndex := strings.LastIndex(wd, projectRootName)
-	if projectRootIndex == -1 {
-		require.FailNow(t, "could not find project root")
-	}
-	dataDir := filepath.Join(wd[:projectRootIndex], projectRootName, "internal", "testdata")
-
 	_, err = exe.Run("tar",
-		"-xzf", fmt.Sprintf("%s/%s.tar.gz", dataDir, repoName),
+		"-xzf", fmt.Sprintf("%s/%s.tar.gz", TestdataPath(t), repoName),
 		"-C", out,
 	)
 	require.NoError(t, err)
 	return out, func() {
 		require.NoError(t, os.RemoveAll(out))
 	}
+}
+
+// TestdataPath returns the absolute path to the testdata directory
+func TestdataPath(t *testing.T) string {
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+	projectRootName := "git-go"
+	projectRootIndex := strings.Index(wd, projectRootName)
+	if projectRootIndex == -1 {
+		require.FailNow(t, "could not find project root")
+	}
+	return filepath.Join(wd[:projectRootIndex], projectRootName, "internal", "testdata")
 }

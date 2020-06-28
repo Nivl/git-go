@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/golang/mock v1.4.3
+	github.com/magiconair/properties v1.8.0
 	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/spf13/cobra v1.0.0
 	github.com/stretchr/testify v1.6.1

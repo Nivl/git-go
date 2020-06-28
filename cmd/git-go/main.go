@@ -2,12 +2,10 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/Nivl/git-go"
 	"github.com/Nivl/git-go/plumbing"
-	"github.com/Nivl/git-go/plumbing/object"
 	"golang.org/x/xerrors"
 
 	"github.com/spf13/cobra"
@@ -24,11 +22,16 @@ func main() {
 
 func newRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "agit",
-		Short: "abstract's git implementation in pure Go",
+		Use:           "git-go",
+		Short:         "git implementation in pure Go",
+		SilenceErrors: true,
+		SilenceUsage:  true,
 	}
 
+	// porcelain
 	cmd.AddCommand(newInitCmd())
+
+	// plumbing
 	cmd.AddCommand(newCatFileCmd())
 	cmd.AddCommand(newHashObjectCmd())
 
@@ -92,50 +95,5 @@ func catFileCmd(sha string) error {
 	}
 
 	fmt.Print(string(o.Bytes()))
-	return nil
-}
-
-func newHashObjectCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "hash-object FILE",
-		Short: "Compute object ID and optionally creates a blob from a file",
-		Args:  cobra.ExactArgs(1),
-	}
-
-	typ := cmd.Flags().StringP("type", "t", "blob", "Specify the type")
-
-	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		return hashObjectCmd(args[0], *typ)
-	}
-
-	return cmd
-}
-
-func hashObjectCmd(filePath, typ string) error {
-	content, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		return err
-	}
-
-	var o *object.Object
-	switch typ {
-	case "blob":
-		o = object.New(object.TypeBlob, content)
-	case "commit":
-		o = object.New(object.TypeCommit, content)
-	case "tree":
-		o = object.New(object.TypeTree, content)
-	case "tag":
-		fallthrough
-	default:
-		return xerrors.Errorf("unsupported object type %s", typ)
-	}
-
-	oid, _, err := o.Compress()
-	if err != nil {
-		return err
-	}
-
-	fmt.Println(oid.String())
 	return nil
 }
