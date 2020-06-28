@@ -4,6 +4,19 @@ Basic git implementation in pure Go
 
 ## Current features
 
+### CLI
+
+#### Porcelain
+
+- [x] ini
+
+#### Plumbing
+
+- [x] hash-object
+- [x] cat-file
+
+### API
+
 - [x] Read packfile
 
 ## TODO (Short term)
