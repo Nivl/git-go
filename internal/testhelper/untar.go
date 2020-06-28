@@ -47,9 +47,19 @@ func TestdataPath(t *testing.T) string {
 	wd, err := os.Getwd()
 	require.NoError(t, err)
 	projectRootName := "git-go"
-	projectRootIndex := strings.Index(wd, projectRootName)
+	// We use LastIndex instead of Index because on the CI we create
+	// multiple "git-go" directory
+	projectRootIndex := strings.LastIndex(wd, projectRootName)
 	if projectRootIndex == -1 {
 		require.FailNow(t, "could not find project root")
+	}
+	// we have another go-git directory in the cmd dir. We need to make
+	// sure this isn't the one we're dealing with
+	if strings.HasSuffix(wd[:projectRootIndex], "cmd"+string(os.PathSeparator)) {
+		projectRootIndex = strings.LastIndex(wd[:projectRootIndex], projectRootName)
+		if projectRootIndex == -1 {
+			require.FailNow(t, "could not find project root")
+		}
 	}
 	return filepath.Join(wd[:projectRootIndex], projectRootName, "internal", "testdata")
 }
