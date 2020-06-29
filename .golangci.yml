@@ -30,6 +30,13 @@ issues:
         - gosec
         - goerr113
 
+    # No need to check for non-wrapped errors in cmd/ since most
+    # command might return inline errors
+    - path: cmd/
+      linters:
+        - goerr113
+      text: "do not define dynamic errors"
+
 linters:
   enable:
     - govet
