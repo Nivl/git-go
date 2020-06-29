@@ -5,8 +5,6 @@ import (
 	"os"
 
 	"github.com/Nivl/git-go"
-	"github.com/Nivl/git-go/plumbing"
-	"golang.org/x/xerrors"
 
 	"github.com/spf13/cobra"
 )
@@ -58,42 +56,4 @@ func initCmd() error {
 	}
 	_, err = git.InitRepository(pwd)
 	return err
-}
-
-func newCatFileCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "cat-file OBJECT",
-		Short: "Provide content or type and size information for repository objects",
-		Args:  cobra.ExactArgs(1),
-	}
-
-	cmd.RunE = func(cmd *cobra.Command, args []string) error {
-		return catFileCmd(args[0])
-	}
-
-	return cmd
-}
-
-func catFileCmd(sha string) error {
-	pwd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	r, err := git.LoadRepository(pwd)
-	if err != nil {
-		return err
-	}
-
-	oid, err := plumbing.NewOidFromStr(sha)
-	if err != nil {
-		return xerrors.Errorf("failed parsing sha: %w", err)
-	}
-
-	o, err := r.GetObject(oid)
-	if err != nil {
-		return err
-	}
-
-	fmt.Print(string(o.Bytes()))
-	return nil
 }
