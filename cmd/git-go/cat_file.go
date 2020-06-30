@@ -16,7 +16,7 @@ import (
 
 var errBadFile = errors.New("bad file")
 
-func newCatFileCmd() *cobra.Command {
+func newCatFileCmd(cfg *config) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cat-file [TYPE] OBJECT",
 		Short: "Provide content or type and size information for repository objects",
@@ -42,7 +42,7 @@ func newCatFileCmd() *cobra.Command {
 			p.typ = args[0]
 			p.sha = args[1]
 		}
-		return catFileCmd(cmd.OutOrStdout(), p)
+		return catFileCmd(cmd.OutOrStdout(), cfg, p)
 	}
 	return cmd
 }
@@ -55,7 +55,7 @@ type catFileParams struct {
 	typ         string
 }
 
-func catFileCmd(out io.Writer, p catFileParams) error {
+func catFileCmd(out io.Writer, cfg *config, p catFileParams) error {
 	// Validate options
 	if p.typ != "" && (p.typeOnly || p.sizeOnly || p.prettyPrint) {
 		return errors.New("type not supported with options -t, -s, -p")
@@ -76,11 +76,15 @@ func catFileCmd(out io.Writer, p catFileParams) error {
 	}
 
 	// run the command
-	root, err := pathutil.RepoRoot()
-	if err != nil {
-		return err
+	if *cfg.C == "" {
+		root, err := pathutil.RepoRoot()
+		if err != nil {
+			return err
+		}
+		cfg.C = &root
 	}
-	r, err := git.LoadRepository(root)
+
+	r, err := git.LoadRepository(*cfg.C)
 	if err != nil {
 		return err
 	}

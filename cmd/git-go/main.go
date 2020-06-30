@@ -9,6 +9,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type config struct {
+	C *string
+}
+
 func main() {
 	root := newRootCmd()
 	err := root.Execute()
@@ -26,11 +30,14 @@ func newRootCmd() *cobra.Command {
 		SilenceUsage:  true,
 	}
 
+	cfg := &config{}
+	cfg.C = cmd.PersistentFlags().StringP("C", "C", "", "Run as if git was started in the provided path instead of the current working directory.")
+
 	// porcelain
 	cmd.AddCommand(newInitCmd())
 
 	// plumbing
-	cmd.AddCommand(newCatFileCmd())
+	cmd.AddCommand(newCatFileCmd(cfg))
 	cmd.AddCommand(newHashObjectCmd())
 
 	return cmd
