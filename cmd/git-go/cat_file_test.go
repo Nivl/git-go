@@ -122,6 +122,7 @@ func TestCatFile(t *testing.T) {
 
 			outBuf := bytes.NewBufferString("")
 			cmd := newRootCmd()
+			cmd.SetOut(outBuf)
 			cmd.SetArgs(tc.args)
 
 			var err error
