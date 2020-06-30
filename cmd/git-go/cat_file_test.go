@@ -142,6 +142,8 @@ func TestCatFile(t *testing.T) {
 			tc := tc
 			i := i
 			t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
+				t.Parallel()
+
 				outBuf := bytes.NewBufferString("")
 				cmd := newRootCmd()
 				cmd.SetOut(outBuf)
