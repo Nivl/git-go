@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/Nivl/git-go"
-	"github.com/Nivl/git-go/internal/pathutil"
 	"github.com/Nivl/git-go/plumbing"
 	"github.com/Nivl/git-go/plumbing/object"
 	"github.com/spf13/cobra"
@@ -76,15 +75,7 @@ func catFileCmd(out io.Writer, cfg *config, p catFileParams) error {
 	}
 
 	// run the command
-	if *cfg.C == "" {
-		root, err := pathutil.RepoRoot()
-		if err != nil {
-			return err
-		}
-		cfg.C = &root
-	}
-
-	r, err := git.LoadRepository(*cfg.C)
+	r, err := git.LoadRepository(cfg.C)
 	if err != nil {
 		return err
 	}

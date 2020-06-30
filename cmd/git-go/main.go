@@ -5,12 +5,13 @@ import (
 	"os"
 
 	"github.com/Nivl/git-go"
+	"github.com/Nivl/git-go/internal/pathutil"
 
 	"github.com/spf13/cobra"
 )
 
 type config struct {
-	C *string
+	C string
 }
 
 func main() {
@@ -31,7 +32,19 @@ func newRootCmd() *cobra.Command {
 	}
 
 	cfg := &config{}
-	cfg.C = cmd.PersistentFlags().StringP("C", "C", "", "Run as if git was started in the provided path instead of the current working directory.")
+	c := cmd.PersistentFlags().StringP("C", "C", "", "Run as if git was started in the provided path instead of the current working directory.")
+
+	// Use a middleware to set the config
+	cmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		if *c != "" {
+			root, err := pathutil.RepoRoot()
+			if err != nil {
+				return err
+			}
+			cfg.C = root
+		}
+		return nil
+	}
 
 	// porcelain
 	cmd.AddCommand(newInitCmd())
