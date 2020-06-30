@@ -6,7 +6,6 @@ import (
 	"io"
 	"strconv"
 
-	"github.com/Nivl/git-go"
 	"github.com/Nivl/git-go/plumbing"
 	"github.com/Nivl/git-go/plumbing/object"
 	"github.com/spf13/cobra"
@@ -75,7 +74,7 @@ func catFileCmd(out io.Writer, cfg *config, p catFileParams) error {
 	}
 
 	// run the command
-	r, err := git.LoadRepository(cfg.C)
+	r, err := loadRepository(cfg)
 	if err != nil {
 		return err
 	}
