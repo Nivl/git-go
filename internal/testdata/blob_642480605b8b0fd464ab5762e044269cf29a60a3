@@ -1,0 +1,17 @@
+# git-go
+
+Basic git implementation in pure Go
+
+## Current features
+
+- [x] Read packfile
+
+## TODO (Short term)
+
+- [ ] Add tests
+- [ ] Add proper support for MIDX
+- [ ] Handle Short SHA
+- [ ] Add a command to test AsCommit()
+- [ ] Add support for trees with AsTree()
+- [ ] Add support for writing in packfile/dangling objects
+- [ ] Add Clone/Fetch support with HTTP (Started on branch [`ml/feat/clone`](https://github.com/Nivl/git-go/tree/ml/feat/clone))

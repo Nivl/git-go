@@ -34,21 +34,21 @@ func hashObjectCmd(out io.Writer, filePath, typ string) error {
 
 	var o *object.Object
 	switch typ {
-	case "blob":
+	case object.TypeBlob.String():
 		o = object.New(object.TypeBlob, content)
-	case "commit":
+	case object.TypeCommit.String():
 		o = object.New(object.TypeCommit, content)
 		_, err = o.AsCommit()
 		if err != nil {
 			return xerrors.Errorf("invalid commit file: %w", err)
 		}
-	case "tree":
+	case object.TypeTree.String():
 		o = object.New(object.TypeTree, content)
 		_, err = o.AsTree()
 		if err != nil {
 			return xerrors.Errorf("invalid tree file: %w", err)
 		}
-	case "tag":
+	case object.TypeTag.String():
 		fallthrough
 	default:
 		return xerrors.Errorf("unsupported object type %s", typ)

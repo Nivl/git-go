@@ -1,6 +1,7 @@
 package object
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -21,6 +22,10 @@ type Signature struct {
 	Name  string
 	Email string
 	Time  time.Time
+}
+
+func (s *Signature) String() string {
+	return fmt.Sprintf("%s <%s> %d %s", s.Name, s.Email, s.Time.Unix(), s.Time.Format("-0700"))
 }
 
 // NewSignature generates a signature at the current date and time
@@ -97,7 +102,7 @@ type Commit struct {
 	Author    *Signature
 	Committer *Signature
 
-	gpgSig  string
+	GPGSig  string
 	Message string
 
 	// SHA of all the parent commits, if any

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Nivl/git-go/internal/pathutil"
 	"github.com/Nivl/git-go/internal/testhelper/exe"
 	"github.com/stretchr/testify/require"
 )
@@ -44,22 +45,7 @@ func UnTar(t *testing.T, repoName RepoName) (repoPath string, cleanup func()) {
 
 // TestdataPath returns the absolute path to the testdata directory
 func TestdataPath(t *testing.T) string {
-	wd, err := os.Getwd()
+	root, err := pathutil.RepoRoot()
 	require.NoError(t, err)
-	projectRootName := "git-go"
-	// We use LastIndex instead of Index because on the CI we create
-	// multiple "git-go" directory
-	projectRootIndex := strings.LastIndex(wd, projectRootName)
-	if projectRootIndex == -1 {
-		require.FailNow(t, "could not find project root")
-	}
-	// we have another go-git directory in the cmd dir. We need to make
-	// sure this isn't the one we're dealing with
-	if strings.HasSuffix(wd[:projectRootIndex], "cmd"+string(os.PathSeparator)) {
-		projectRootIndex = strings.LastIndex(wd[:projectRootIndex], projectRootName)
-		if projectRootIndex == -1 {
-			require.FailNow(t, "could not find project root")
-		}
-	}
-	return filepath.Join(wd[:projectRootIndex], projectRootName, "internal", "testdata")
+	return filepath.Join(root, "internal", "testdata")
 }

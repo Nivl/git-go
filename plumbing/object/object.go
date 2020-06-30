@@ -17,7 +17,7 @@ import (
 var (
 	// ErrObjectUnknown represents an error thrown when encoutering an
 	// unknown object
-	ErrObjectUnknown = errors.New("unknown object")
+	ErrObjectUnknown = errors.New("invalid object type")
 
 	// ErrTreeInvalid represents an error thrown when parsing an invalid
 	// tree object
@@ -312,7 +312,7 @@ func (o *Object) AsCommit() (*Commit, error) {
 			begin := string(kv[1]) + "\n"
 			end := "-----END PGP SIGNATURE-----\n"
 			i := bytes.Index(objData[offset:], []byte(end))
-			ci.gpgSig = begin + string(objData[offset:offset+i]) + end
+			ci.GPGSig = begin + string(objData[offset:offset+i]) + end
 			offset += len(end) + i
 		}
 	}
