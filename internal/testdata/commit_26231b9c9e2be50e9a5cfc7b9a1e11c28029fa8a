@@ -1,0 +1,18 @@
+tree dae0b44acb495b68ffe0250ed884a3f8d5870b2b
+parent 54b70f907b900fd5acf582d38520ea50e4d1f6a4
+author Melvin <Nivl@users.noreply.github.com> 1593372067 -0700
+committer GitHub <noreply@github.com> 1593372067 -0700
+gpgsig -----BEGIN PGP SIGNATURE-----
+ 
+ wsBcBAABCAAQBQJe+O2jCRBK7hj4Ov3rIwAAdHIIAJixUcf254Oo/uZgj9XWD2h0
+ G2/x2DH+NeDhRFg6XhhsCjXEUq69nw/12oKGCUbjNmy0lGTKCCNoMG5AWhLcM5Rt
+ iVbLDBj+C6eEMXf591bse2eAXhHV9RDQs5G7uGyfKuokrSN4oD7XbYXjXA0zI9Qj
+ y5n89GFd8UvUPCSIuiADATQgX61cFLUYt7p6nOivbOfI4HU/4qCANnOD/p2rWwGB
+ N4cEW1vqwu39Aag5S3sIond22zEukEMBzcDLkGLUK9F7x/ZkIEXJTMRkpHlrFrmF
+ J3QaeaZ7+I5TCbL1k03BlVzYT6ac/2nCVnDYkW6zcrZmukTHzTkXcGwAZLN2WlE=
+ =dps6
+ -----END PGP SIGNATURE-----
+ 
+
+fix(cli,hash-object): fix tree and commit support (#5)
+

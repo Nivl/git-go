@@ -125,7 +125,7 @@ func catFileCmd(out io.Writer, p catFileParams) error {
 			fmt.Fprintf(out, "author %s\n", c.Author.String())
 			fmt.Fprintf(out, "committer %s\n", c.Committer.String())
 			if c.GPGSig != "" {
-				fmt.Fprintf(out, "gpgsig %s\n", c.GPGSig)
+				fmt.Fprintf(out, "gpgsig %s \n", c.GPGSig)
 			}
 			fmt.Fprintln(out, "")
 			fmt.Fprint(out, c.Message)
@@ -136,7 +136,7 @@ func catFileCmd(out io.Writer, p catFileParams) error {
 			}
 			for _, e := range tree.Entries {
 				// TODO(melvin): add the type
-				fmt.Fprintf(out, "%06s\t%s\t%s\n", e.Mode, e.ID.String(), e.Path)
+				fmt.Fprintf(out, "%06s %s\t%s\n", e.Mode, e.ID.String(), e.Path)
 			}
 		case object.TypeBlob:
 			fmt.Fprint(out, string(o.Bytes()))
