@@ -115,23 +115,23 @@ func TestCatFile(t *testing.T) {
 		},
 		{
 			desc:           "-s should print the size (commit)",
-			args:           []string{"cat-file", "-s", "26231b9c9e2be50e9a5cfc7b9a1e11c28029fa8a"},
-			expectedOutput: "742\n",
+			args:           []string{"cat-file", "-s", "05986554a371782e3523cb98fcba5cd12fd90669"},
+			expectedOutput: "733\n",
 		},
 		{
 			desc:           "-t should print the type (commit)",
-			args:           []string{"cat-file", "-t", "26231b9c9e2be50e9a5cfc7b9a1e11c28029fa8a"},
+			args:           []string{"cat-file", "-t", "05986554a371782e3523cb98fcba5cd12fd90669"},
 			expectedOutput: "commit\n",
 		},
 		{
 			desc:           "-p should pretty-print (commit)",
-			args:           []string{"cat-file", "-p", "26231b9c9e2be50e9a5cfc7b9a1e11c28029fa8a"},
-			expectedOutput: "file://commit_26231b9c9e2be50e9a5cfc7b9a1e11c28029fa8a",
+			args:           []string{"cat-file", "-p", "05986554a371782e3523cb98fcba5cd12fd90669"},
+			expectedOutput: "file://commit_05986554a371782e3523cb98fcba5cd12fd90669",
 		},
 		{
 			desc:           "default should print raw object (commit)",
-			args:           []string{"cat-file", "commit", "26231b9c9e2be50e9a5cfc7b9a1e11c28029fa8a"},
-			expectedOutput: "file://commit_26231b9c9e2be50e9a5cfc7b9a1e11c28029fa8a",
+			args:           []string{"cat-file", "commit", "05986554a371782e3523cb98fcba5cd12fd90669"},
+			expectedOutput: "file://commit_05986554a371782e3523cb98fcba5cd12fd90669",
 		},
 	}
 	for i, tc := range testCases {
