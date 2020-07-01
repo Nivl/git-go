@@ -43,4 +43,4 @@ jobs:
         run: go test -v -race -coverprofile c.out ./...
 
       - name: Report coverage
-        run: ./cc-test-reporter after-build
+        run: ./cc-test-reporter after-build -p github.com/Nivl/git-go/
