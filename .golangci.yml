@@ -29,6 +29,7 @@ issues:
         - errcheck
         - gosec
         - goerr113
+        - maligned
 
     # No need to check for non-wrapped errors in cmd/ since most
     # command might return inline errors

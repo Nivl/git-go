@@ -28,3 +28,4 @@ Basic git implementation in pure Go
 - [ ] Add object type to tree entries.
 - [ ] Add support for writing in packfile/dangling objects
 - [ ] Add Clone/Fetch support with HTTP (Started on branch [`ml/feat/clone`](https://github.com/Nivl/git-go/tree/ml/feat/clone))
+- [ ] Make objects immutable

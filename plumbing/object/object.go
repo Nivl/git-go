@@ -102,7 +102,6 @@ func NewTypeFromString(t string) (Type, error) {
 type Object struct {
 	ID      plumbing.Oid
 	typ     Type
-	size    int
 	content []byte
 }
 
@@ -112,7 +111,6 @@ func New(typ Type, content []byte) *Object {
 	return &Object{
 		ID:      plumbing.NullOid,
 		typ:     typ,
-		size:    len(content),
 		content: content,
 	}
 }
@@ -122,14 +120,13 @@ func NewWithID(id plumbing.Oid, typ Type, content []byte) *Object {
 	return &Object{
 		ID:      id,
 		typ:     typ,
-		size:    len(content),
 		content: content,
 	}
 }
 
 // Size returns the size of the object
 func (o *Object) Size() int {
-	return o.size
+	return len(o.content)
 }
 
 // Type returns the Type for this object
@@ -158,7 +155,7 @@ func (o *Object) Compress() (oid plumbing.Oid, data []byte, err error) {
 	// add the space
 	w.WriteRune(' ')
 	// write the size
-	w.WriteString(strconv.Itoa(o.size))
+	w.WriteString(strconv.Itoa(o.Size()))
 	// Write the NULL char
 	w.WriteByte(0)
 	// Write the content
@@ -187,7 +184,7 @@ func (o *Object) Compress() (oid plumbing.Oid, data []byte, err error) {
 
 // AsBlob parses the object as Blob
 func (o *Object) AsBlob() *Blob {
-	return NewBlob(o)
+	return NewBlob(o.ID, o.content)
 }
 
 // AsTree parses the object as Tree

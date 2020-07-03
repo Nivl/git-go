@@ -1,11 +1,26 @@
-package object
+package object_test
 
 import (
+	"fmt"
 	"testing"
+	"time"
 
+	"github.com/Nivl/git-go/plumbing/object"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestSignatureString(t *testing.T) {
+	sig := object.NewSignature("John Doe", "john@domain.tld")
+	// for the sake of the test we gonna cheat a little bit and force
+	// the time to be UTC. Otherwise the test would not be consistent
+	// on everyone's computer
+	now := time.Now().UTC()
+	sig.Time = now
+
+	expect := fmt.Sprintf("John Doe <john@domain.tld> %d +0000", now.Unix())
+	assert.Equal(t, expect, sig.String())
+}
 
 func TestNewSignatureFromBytes(t *testing.T) {
 	testCases := []struct {
@@ -100,7 +115,7 @@ func TestNewSignatureFromBytes(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
-			sig, err := NewSignatureFromBytes([]byte(tc.signature))
+			sig, err := object.NewSignatureFromBytes([]byte(tc.signature))
 			if tc.expectsError {
 				require.Error(t, err, "NewSignatureFromBytes should have failed")
 				return

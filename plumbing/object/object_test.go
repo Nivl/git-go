@@ -2,8 +2,12 @@ package object_test
 
 import (
 	"bytes"
+	"fmt"
+	"io/ioutil"
+	"path/filepath"
 	"testing"
 
+	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/Nivl/git-go/plumbing"
 	"github.com/Nivl/git-go/plumbing/object"
 	"github.com/stretchr/testify/assert"
@@ -82,5 +86,223 @@ commit footer`)
 
 		require.Len(t, ci.ParentIDs, 1, "invalid amount of parent")
 		assert.Equal(t, "9785af758bcc96cd7237ba65eb2c9dd1ecaa3321", ci.ParentIDs[0].String(), "invalid parent id")
+	})
+}
+
+func TestAsTree(t *testing.T) {
+	t.Parallel()
+
+	t.Run("regular tree", func(t *testing.T) {
+		t.Parallel()
+
+		treeSHA := "e5b9e846e1b468bc9597ff95d71dfacda8bd54e3"
+		treeID, _ := plumbing.NewOidFromStr(treeSHA)
+
+		testFile := fmt.Sprintf("tree_%s", treeSHA)
+		content, err := ioutil.ReadFile(filepath.Join(testhelper.TestdataPath(t), testFile))
+		require.NoError(t, err)
+
+		o := object.NewWithID(treeID, object.TypeTree, content)
+		tree, err := o.AsTree()
+		require.NoError(t, err)
+
+		assert.Equal(t, o.ID, tree.ID)
+		assert.Len(t, tree.Entries, 13)
+	})
+}
+
+func TestType(t *testing.T) {
+	t.Run("type.String()", func(t *testing.T) {
+		t.Parallel()
+
+		testCases := []struct {
+			desc           string
+			typ            object.Type
+			expected       string
+			expectsFailure bool
+		}{
+			{
+				desc:     "a commit should be displayed at commit",
+				typ:      object.TypeCommit,
+				expected: "commit",
+			},
+			{
+				desc:     "a tree should be displayed at tree",
+				typ:      object.TypeTree,
+				expected: "tree",
+			},
+			{
+				desc:     "a blob should be displayed at blob",
+				typ:      object.TypeBlob,
+				expected: "blob",
+			},
+			{
+				desc:     "a tag should be displayed at tag",
+				typ:      object.TypeTag,
+				expected: "tag",
+			},
+			{
+				desc:     "a osf-delta should be displayed at osf-delta",
+				typ:      object.ObjectDeltaOFS,
+				expected: "osf-delta",
+			},
+			{
+				desc:     "a ref-delta should be displayed at ref-delta",
+				typ:      object.ObjectDeltaRef,
+				expected: "ref-delta",
+			},
+			{
+				desc:           "Invalid type should panic",
+				typ:            object.Type(5),
+				expectsFailure: true,
+			},
+		}
+		for i, tc := range testCases {
+			tc := tc
+			i := i
+			t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
+				t.Parallel()
+
+				if tc.expectsFailure {
+					assert.Panics(t, func() {
+						tc.typ.String() //nolint:unusedresult // we just want a panic
+					})
+					return
+				}
+				assert.Equal(t, tc.expected, tc.typ.String())
+			})
+		}
+	})
+
+	t.Run("type.IsValid()", func(t *testing.T) {
+		t.Parallel()
+
+		// sugars
+		valid := true
+		invalid := false
+		testCases := []struct {
+			desc     string
+			typ      object.Type
+			expected bool
+		}{
+			{
+				desc:     "TypeCommit should be valid",
+				typ:      object.TypeCommit,
+				expected: valid,
+			},
+			{
+				desc:     "TypeTree should be valid",
+				typ:      object.TypeTree,
+				expected: valid,
+			},
+			{
+				desc:     "TypeBlob should be valid",
+				typ:      object.TypeBlob,
+				expected: valid,
+			},
+			{
+				desc:     "TypeTag should be valid",
+				typ:      object.TypeTag,
+				expected: valid,
+			},
+			{
+				desc:     "ObjectDeltaOFS should be valid",
+				typ:      object.ObjectDeltaOFS,
+				expected: valid,
+			},
+			{
+				desc:     "ObjectDeltaRef should be valid",
+				typ:      object.ObjectDeltaRef,
+				expected: valid,
+			},
+			{
+				desc:     "Invalid type should be invalid",
+				typ:      object.Type(5),
+				expected: invalid,
+			},
+		}
+		for i, tc := range testCases {
+			tc := tc
+			i := i
+			t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
+				t.Parallel()
+
+				assert.Equal(t, tc.expected, tc.typ.IsValid())
+			})
+		}
+	})
+
+	t.Run("NewTypeFromString", func(t *testing.T) {
+		t.Parallel()
+
+		testCases := []struct {
+			desc           string
+			typ            string
+			expected       object.Type
+			expectsFailure bool
+		}{
+			{
+				desc:     "TypeCommit should be valid",
+				typ:      "commit",
+				expected: object.TypeCommit,
+			},
+			{
+				desc:     "TypeTree should be valid",
+				typ:      "tree",
+				expected: object.TypeTree,
+			},
+			{
+				desc:     "TypeBlob should be valid",
+				typ:      "blob",
+				expected: object.TypeBlob,
+			},
+			{
+				desc:     "TypeTag should be valid",
+				typ:      "tag",
+				expected: object.TypeTag,
+			},
+			{
+				desc:           "Invalid type should be invalid",
+				typ:            "doesnt-exists",
+				expectsFailure: true,
+			},
+		}
+		for i, tc := range testCases {
+			tc := tc
+			i := i
+			t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
+				t.Parallel()
+
+				out, err := object.NewTypeFromString(tc.typ)
+				if tc.expectsFailure {
+					require.Equal(t, object.ErrObjectUnknown, err)
+					return
+				}
+
+				assert.Equal(t, tc.expected, out)
+			})
+		}
+	})
+}
+
+func TestCompress(t *testing.T) {
+	t.Parallel()
+
+	t.Run("tree", func(t *testing.T) {
+		t.Parallel()
+
+		treeSHA := "e5b9e846e1b468bc9597ff95d71dfacda8bd54e3"
+		treeID, _ := plumbing.NewOidFromStr(treeSHA)
+
+		testFile := fmt.Sprintf("tree_%s", treeSHA)
+		content, err := ioutil.ReadFile(filepath.Join(testhelper.TestdataPath(t), testFile))
+		require.NoError(t, err)
+
+		o := object.NewWithID(treeID, object.TypeTree, content)
+		oid, _, err := o.Compress()
+		require.NoError(t, err)
+		assert.Equal(t, treeSHA, oid.String())
+
+		// TODO(melvin): Test the compressed object
 	})
 }
