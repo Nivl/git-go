@@ -16,9 +16,11 @@ func NewBlob(id plumbing.Oid, data []byte) *Blob {
 	}
 }
 
-// Bytes returns the blob's contents
+// Bytes returns a copy of blob's contents
 func (b *Blob) Bytes() []byte {
-	return b.data[:]
+	out := make([]byte, len(b.data))
+	copy(out, b.data)
+	return out
 }
 
 // Size returns the size of the blob
