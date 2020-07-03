@@ -102,7 +102,6 @@ func NewTypeFromString(t string) (Type, error) {
 type Object struct {
 	ID      plumbing.Oid
 	typ     Type
-	size    int
 	content []byte
 }
 
@@ -156,7 +155,7 @@ func (o *Object) Compress() (oid plumbing.Oid, data []byte, err error) {
 	// add the space
 	w.WriteRune(' ')
 	// write the size
-	w.WriteString(strconv.Itoa(o.size))
+	w.WriteString(strconv.Itoa(o.Size()))
 	// Write the NULL char
 	w.WriteByte(0)
 	// Write the content
