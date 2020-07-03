@@ -112,7 +112,6 @@ func New(typ Type, content []byte) *Object {
 	return &Object{
 		ID:      plumbing.NullOid,
 		typ:     typ,
-		size:    len(content),
 		content: content,
 	}
 }
@@ -122,14 +121,13 @@ func NewWithID(id plumbing.Oid, typ Type, content []byte) *Object {
 	return &Object{
 		ID:      id,
 		typ:     typ,
-		size:    len(content),
 		content: content,
 	}
 }
 
 // Size returns the size of the object
 func (o *Object) Size() int {
-	return o.size
+	return len(o.content)
 }
 
 // Type returns the Type for this object
@@ -187,7 +185,7 @@ func (o *Object) Compress() (oid plumbing.Oid, data []byte, err error) {
 
 // AsBlob parses the object as Blob
 func (o *Object) AsBlob() *Blob {
-	return NewBlob(o)
+	return NewBlob(o.ID, o.content)
 }
 
 // AsTree parses the object as Tree
