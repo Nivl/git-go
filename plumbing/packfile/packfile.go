@@ -112,10 +112,10 @@ func NewFromFile(objectGetter ObjectGetter, filePath string) (*Pack, error) {
 		return nil, xerrors.Errorf("invalid header: %w", ErrInvalidVersion)
 	}
 
-	IndexFilePath := strings.TrimSuffix(filePath, ExtPackfile) + ExtIndex
-	idx, err := NewIndexFromFile(IndexFilePath)
+	indexFilePath := strings.TrimSuffix(filePath, ExtPackfile) + ExtIndex
+	idx, err := NewIndexFromFile(indexFilePath)
 	if err != nil {
-		return nil, xerrors.Errorf("could not open index file at %s: %w", IndexFilePath, err)
+		return nil, xerrors.Errorf("could not open index file at %s: %w", indexFilePath, err)
 	}
 
 	return &Pack{
