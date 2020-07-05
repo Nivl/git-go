@@ -31,10 +31,13 @@ const (
 	packfileHeaderSize = 12
 )
 
-var (
-	packfileMagic   = []byte{'P', 'A', 'C', 'K'}
-	packfileVersion = []byte{0, 0, 0, 2}
-)
+func packfileMagic() []byte {
+	return []byte{'P', 'A', 'C', 'K'}
+}
+
+func packfileVersion() []byte {
+	return []byte{0, 0, 0, 2}
+}
 
 var (
 	// ErrIntOverflow is an error thrown when the packfile couldn't
@@ -105,17 +108,17 @@ func NewFromFile(objectGetter ObjectGetter, filePath string) (*Pack, error) {
 	if err != nil {
 		return nil, xerrors.Errorf("could read header of index file: %w", err)
 	}
-	if !bytes.Equal(header[0:4], packfileMagic) {
+	if !bytes.Equal(header[0:4], packfileMagic()) {
 		return nil, xerrors.Errorf("invalid header: %w", ErrInvalidMagic)
 	}
-	if !bytes.Equal(header[4:8], packfileVersion) {
+	if !bytes.Equal(header[4:8], packfileVersion()) {
 		return nil, xerrors.Errorf("invalid header: %w", ErrInvalidVersion)
 	}
 
-	IndexFilePath := strings.TrimSuffix(filePath, ExtPackfile) + ExtIndex
-	idx, err := NewIndexFromFile(IndexFilePath)
+	indexFilePath := strings.TrimSuffix(filePath, ExtPackfile) + ExtIndex
+	idx, err := NewIndexFromFile(indexFilePath)
 	if err != nil {
-		return nil, xerrors.Errorf("could not open index file at %s: %w", IndexFilePath, err)
+		return nil, xerrors.Errorf("could not open index file at %s: %w", indexFilePath, err)
 	}
 
 	return &Pack{

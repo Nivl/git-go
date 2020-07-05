@@ -10,17 +10,20 @@ import (
 	"golang.org/x/xerrors"
 )
 
-var (
-	// indexHeader represents the header of an index file.
-	// the first 4 bytes contain the magic, the 4 next bytes
-	// contains the version of the file
-	indexHeader     = []byte{255, 't', 'O', 'c', 0, 0, 0, 2}
+const (
 	layer1Size      = 1024
 	layer2EntrySize = plumbing.OidSize
 	layer3EntrySize = 4
 	layer4EntrySize = 4
 	layer5EntrySize = 8
 )
+
+// indexHeader represents the header of an index file.
+// the first 4 bytes contain the magic, the 4 next bytes
+// contains the version of the file
+func indexHeader() []byte {
+	return []byte{255, 't', 'O', 'c', 0, 0, 0, 2}
+}
 
 // PackIndex represents a packfile's PackIndex file (.idx)
 // The index contains data to help parsing the packfile
@@ -90,12 +93,12 @@ func NewIndexFromFile(filePath string) (*PackIndex, error) {
 	}
 
 	// Let's validate the header
-	header := make([]byte, len(indexHeader))
+	header := make([]byte, len(indexHeader()))
 	_, err = f.Read(header)
 	if err != nil {
 		return nil, xerrors.Errorf("could read header of index file: %w", err)
 	}
-	if !bytes.Equal(header, indexHeader) {
+	if !bytes.Equal(header, indexHeader()) {
 		return nil, xerrors.Errorf("invalid header: %w", ErrInvalidMagic)
 	}
 
@@ -145,7 +148,7 @@ func (idx *PackIndex) GetObjectOffset(oid plumbing.Oid) (uint64, error) {
 	}
 
 	// Now we can lookup in layer4 for the object's offset in the packfile
-	layer2offset := len(indexHeader) + layer1Size
+	layer2offset := len(indexHeader()) + layer1Size
 	layer2Size := int64(totalObjects) * int64(layer2EntrySize)
 	layer3Size := int64(totalObjects) * int64(layer3EntrySize)
 	layer4Offset := int64(layer2offset) + layer2Size + layer3Size
@@ -210,7 +213,7 @@ func (idx *PackIndex) GetObjectOffset(oid plumbing.Oid) (uint64, error) {
 // Ex. For the object fde92e904ca4678cdf23e72582c27a50c310d96d
 // the prefix is "0xfd", and the count will be "${count at fd} - ${count at fc}"
 func (idx *PackIndex) ObjectCountAt(prefix byte) (count, cumul, total uint32, err error) {
-	layer1Offset := len(indexHeader)
+	layer1Offset := len(indexHeader())
 	entrySize := 4
 	entry := make([]byte, 4)
 
@@ -268,7 +271,7 @@ func (idx *PackIndex) ObjectCountAt(prefix byte) (count, cumul, total uint32, er
 // $oidCumul represents the number of oids from 0x00 to oid[0]
 func (idx *PackIndex) index(oid plumbing.Oid, oidCount, oidCumul uint32) (int, error) {
 	// layer2offset corresponds to the beginning of layer2 in the file
-	layer2offset := len(indexHeader) + layer1Size
+	layer2offset := len(indexHeader()) + layer1Size
 	// First index corresponds to the index of the first oid starting by
 	// oid[0]
 	firstOidIndex := int(oidCumul - oidCount)
