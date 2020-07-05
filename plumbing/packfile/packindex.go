@@ -207,7 +207,7 @@ func (idx *PackIndex) GetObjectOffset(oid plumbing.Oid) (uint64, error) {
 // the packfile has.
 //
 // The prefix corresponds of the 2 first chars of a SHA (similar to what
-// you can find in .git/objects for danglings objects).
+// you can find in .git/objects for loose objects).
 // Because the count is cumulative, to know how many items there is for
 // 0x88 (for example), we need to compare it with the count of 0x87
 // Ex. For the object fde92e904ca4678cdf23e72582c27a50c310d96d

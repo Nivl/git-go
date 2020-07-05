@@ -78,7 +78,7 @@ func TestLoad(t *testing.T) {
 func TestRepositoryGetObject(t *testing.T) {
 	t.Parallel()
 
-	t.Run("dangling object", func(t *testing.T) {
+	t.Run("loose object", func(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
