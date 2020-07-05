@@ -114,7 +114,7 @@ func TestGetObject(t *testing.T) {
 			require.Equal(t, object.TypeBlob, o.Type())
 
 			blob := o.AsBlob()
-			require.Equal(t, blobOid, blob.ID)
+			require.Equal(t, blobOid, blob.ID())
 			assert.Equal(t, 207, blob.Size())
 			assert.Equal(t, "# Binaries for programs and plugins", string(blob.Bytes()[:35]))
 		})

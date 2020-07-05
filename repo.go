@@ -325,19 +325,19 @@ func (r *Repository) GetObject(oid plumbing.Oid) (*object.Object, error) {
 
 // WriteObject writes an object on disk and return its Oid
 func (r *Repository) WriteObject(o *object.Object) (plumbing.Oid, error) {
-	oid, data, err := o.Compress()
+	data, err := o.Compress()
 	if err != nil {
 		return plumbing.NullOid, xerrors.Errorf("unsupported object type %s", o.Type())
 	}
 
 	// Persist the data on disk
-	sha := oid.String()
+	sha := o.ID.String()
 	p := r.danglingObjectPath(sha)
 	if err = ioutil.WriteFile(p, data, 0644); err != nil {
 		return plumbing.NullOid, xerrors.Errorf("could not persist object %s at path %s: %w", sha, p, err)
 	}
 
-	return oid, nil
+	return o.ID, nil
 }
 
 // danglingObjectPath returns the absolute path of an object
@@ -346,4 +346,15 @@ func (r *Repository) WriteObject(o *object.Object) (plumbing.Oid, error) {
 // .git/objects/fc/fe68a0e44e04bd7fd564fc0b75f1ae457e18b3
 func (r *Repository) danglingObjectPath(sha string) string {
 	return filepath.Join(r.path, ObjectsPath, sha[:2], sha[2:])
+}
+
+// NewBlob creates, stores, and returns a new Blob object
+func (r *Repository) NewBlob(data []byte) (*object.Blob, error) {
+	o := object.New(object.TypeBlob, data)
+	_, err := o.Compress()
+	if err != nil {
+		return nil, xerrors.Errorf("could not compress object: %w", err)
+	}
+	// TODO(melvin): actually store the data
+	return object.NewBlob(o), nil
 }

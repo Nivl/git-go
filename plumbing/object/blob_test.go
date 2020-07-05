@@ -12,34 +12,48 @@ func TestBlob(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		// TODO(melvin): add actual test once where the NewBlob actually
-		// returns an OID
-		sha := "37a85621591d08c17487c6fcfa4b20510c241952"
 		data := "this is a fake content"
-
-		oid, _ := plumbing.NewOidFromStr(sha)
-		blob := object.NewBlob(oid, []byte(data))
+		o := object.New(object.TypeBlob, []byte(data))
+		blob := object.NewBlob(o)
 
 		assert.Equal(t, 22, blob.Size())
 		assert.Equal(t, []byte(data), blob.Bytes())
+		assert.Equal(t, []byte(data), blob.BytesCopy())
+		assert.False(t, blob.IsPersisted())
+		assert.Equal(t, plumbing.NullOid, blob.ID())
+
+		assert.Equal(t, o, blob.AsObject())
 	})
 
-	t.Run(".Bytes() should return immutable data", func(t *testing.T) {
+	t.Run(".BytesCopy() should return immutable data", func(t *testing.T) {
 		t.Parallel()
 
-		// TODO(melvin): add actual test once where the NewBlob actually
-		// returns an OID
-		sha := "37a85621591d08c17487c6fcfa4b20510c241952"
 		data := "this is a fake content"
+		o := object.New(object.TypeBlob, []byte(data))
+		blob := object.NewBlob(o)
 
-		oid, _ := plumbing.NewOidFromStr(sha)
-		blob := object.NewBlob(oid, []byte(data))
+		assert.Equal(t, []byte(data), blob.BytesCopy())
+
+		// We update the data, and make sure it hasn't actually
+		// updates anything
+		blob.BytesCopy()[0] = '0'
+		assert.Equal(t, []byte(data), blob.BytesCopy())
+	})
+
+	t.Run(".Bytes() should return mutable data", func(t *testing.T) {
+		t.Parallel()
+
+		data := "this is a fake content"
+		expected := "0his is a fake content"
+		o := object.New(object.TypeBlob, []byte(data))
+		blob := object.NewBlob(o)
 
 		assert.Equal(t, []byte(data), blob.Bytes())
 
 		// We update the data, and make sure it hasn't actually
 		// updates anything
 		blob.Bytes()[0] = '0'
-		assert.Equal(t, []byte(data), blob.Bytes())
+		assert.NotEqual(t, []byte(data), blob.Bytes())
+		assert.Equal(t, expected, string(blob.Bytes()))
 	})
 }

@@ -54,11 +54,11 @@ func hashObjectCmd(out io.Writer, filePath, typ string) error {
 		return xerrors.Errorf("unsupported object type %s", typ)
 	}
 
-	oid, _, err := o.Compress()
+	_, err = o.Compress()
 	if err != nil {
 		return err
 	}
 
-	fmt.Fprintln(out, oid.String())
+	fmt.Fprintln(out, o.ID.String())
 	return nil
 }

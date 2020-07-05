@@ -145,7 +145,7 @@ func (o *Object) Bytes() []byte {
 // The type in ascii, followed by a space, followed by the size in ascii,
 // followed by a null character (0), followed by the object data
 // maybe we can move some code around
-func (o *Object) Compress() (oid plumbing.Oid, data []byte, err error) {
+func (o *Object) Compress() (data []byte, err error) {
 	// Quick reminder that the Write* methods on bytes.Buffer never fails,
 	// the error returned is always nil
 	w := new(bytes.Buffer)
@@ -174,17 +174,17 @@ func (o *Object) Compress() (oid plumbing.Oid, data []byte, err error) {
 		}
 	}()
 	if _, err = zw.Write(fileContent); err != nil {
-		return plumbing.NullOid, nil, xerrors.Errorf("could not zlib the object: %w", err)
+		return nil, xerrors.Errorf("could not zlib the object: %w", err)
 	}
 	if err = zw.Close(); err != nil {
-		return plumbing.NullOid, nil, xerrors.Errorf("could not close the compressor: %w", err)
+		return nil, xerrors.Errorf("could not close the compressor: %w", err)
 	}
-	return o.ID, compressedContent.Bytes(), nil
+	return compressedContent.Bytes(), nil
 }
 
 // AsBlob parses the object as Blob
 func (o *Object) AsBlob() *Blob {
-	return NewBlob(o.ID, o.content)
+	return NewBlob(o)
 }
 
 // AsTree parses the object as Tree
