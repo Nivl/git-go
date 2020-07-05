@@ -26,6 +26,6 @@ Basic git implementation in pure Go
 - [ ] Handle Short SHA
 - [x] Add support for trees with AsTree()
 - [ ] Add object type to tree entries.
-- [ ] Add support for writing in packfile/dangling objects
+- [ ] Add support for writing in packfile/loose objects
 - [ ] Add Clone/Fetch support with HTTP (Started on branch [`ml/feat/clone`](https://github.com/Nivl/git-go/tree/ml/feat/clone))
 - [ ] Make objects immutable

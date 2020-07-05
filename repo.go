@@ -171,10 +171,10 @@ func (r *Repository) setDefaultCfg() error {
 	return cfg.SaveTo(filepath.Join(r.path, ConfigPath))
 }
 
-func (r *Repository) getDanglingObject(oid plumbing.Oid) (*object.Object, error) {
+func (r *Repository) getLooseObject(oid plumbing.Oid) (*object.Object, error) {
 	strOid := oid.String()
 
-	p := r.danglingObjectPath(strOid)
+	p := r.looseObjectPath(strOid)
 	f, err := os.Open(p)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -307,13 +307,13 @@ func (r *Repository) getObjectFromPackfile(oid plumbing.Oid) (*object.Object, er
 // space, then an ascii encoded length of the object, then a null
 // character, then the body of the object
 func (r *Repository) GetObject(oid plumbing.Oid) (*object.Object, error) {
-	// First let's look for dangling objects
-	o, err := r.getDanglingObject(oid)
+	// First let's look for loose objects
+	o, err := r.getLooseObject(oid)
 	if err == nil {
 		return o, nil
 	}
 	if !os.IsNotExist(err) {
-		return nil, xerrors.Errorf("failed looking for danglin object: %w", err)
+		return nil, xerrors.Errorf("failed looking for loose object: %w", err)
 	}
 
 	o, err = r.getObjectFromPackfile(oid)
@@ -332,7 +332,7 @@ func (r *Repository) WriteObject(o *object.Object) (plumbing.Oid, error) {
 
 	// Persist the data on disk
 	sha := o.ID.String()
-	p := r.danglingObjectPath(sha)
+	p := r.looseObjectPath(sha)
 	if err = ioutil.WriteFile(p, data, 0644); err != nil {
 		return plumbing.NullOid, xerrors.Errorf("could not persist object %s at path %s: %w", sha, p, err)
 	}
@@ -340,11 +340,11 @@ func (r *Repository) WriteObject(o *object.Object) (plumbing.Oid, error) {
 	return o.ID, nil
 }
 
-// danglingObjectPath returns the absolute path of an object
+// looseObjectPath returns the absolute path of an object
 // .git/object/first_2_chars_of_sha/remaining_chars_of_sha
 // Ex. path of fcfe68a0e44e04bd7fd564fc0b75f1ae457e18b3 is:
 // .git/objects/fc/fe68a0e44e04bd7fd564fc0b75f1ae457e18b3
-func (r *Repository) danglingObjectPath(sha string) string {
+func (r *Repository) looseObjectPath(sha string) string {
 	return filepath.Join(r.path, ObjectsPath, sha[:2], sha[2:])
 }
 
