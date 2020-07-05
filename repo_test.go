@@ -75,7 +75,7 @@ func TestLoad(t *testing.T) {
 	require.Equal(t, filepath.Join(repoPath, DotGitPath), r.path)
 }
 
-func TestGetObject(t *testing.T) {
+func TestRepositoryGetObject(t *testing.T) {
 	t.Parallel()
 
 	t.Run("dangling object", func(t *testing.T) {
@@ -118,4 +118,18 @@ func TestGetObject(t *testing.T) {
 		assert.Equal(t, oid, obj.ID)
 		assert.Equal(t, object.TypeCommit, obj.Type())
 	})
+}
+
+func TestRepositoryNewBlob(t *testing.T) {
+	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+	defer cleanup()
+
+	r, err := LoadRepository(repoPath)
+	require.NoError(t, err, "failed loading a repo")
+
+	data := "abcdefghijklmnopqrstuvwxyz"
+	blob, err := r.NewBlob([]byte(data))
+	require.NoError(t, err)
+	assert.NotEqual(t, plumbing.NullOid, blob.ID())
+	assert.Equal(t, []byte(data), blob.Bytes())
 }

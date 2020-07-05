@@ -299,9 +299,9 @@ func TestCompress(t *testing.T) {
 		require.NoError(t, err)
 
 		o := object.NewWithID(treeID, object.TypeTree, content)
-		oid, _, err := o.Compress()
+		_, err = o.Compress()
 		require.NoError(t, err)
-		assert.Equal(t, treeSHA, oid.String())
+		assert.Equal(t, treeSHA, o.ID.String())
 
 		// TODO(melvin): Test the compressed object
 	})
