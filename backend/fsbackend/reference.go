@@ -2,6 +2,7 @@ package fsbackend
 
 import (
 	"bufio"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -18,17 +19,7 @@ func (b *Backend) Reference(name string) (*plumbing.Reference, error) {
 	var packedRef map[string]string
 
 	finder := func(name string) ([]byte, error) {
-		p := ""
-		switch os.PathSeparator {
-		case '/':
-			p = filepath.Join(b.root, name)
-		default:
-			parts := strings.Split(name, "/")
-			p = filepath.Join(parts...)
-			p = filepath.Join(b.root, p)
-		}
-
-		data, err := ioutil.ReadFile(p)
+		data, err := ioutil.ReadFile(b.nameToPath(name))
 		if err != nil {
 			if !os.IsNotExist(err) {
 				return nil, xerrors.Errorf("could not read reference content: %w", err)
@@ -50,6 +41,19 @@ func (b *Backend) Reference(name string) (*plumbing.Reference, error) {
 		return data, nil
 	}
 	return plumbing.ResolveReference(name, finder)
+}
+
+// nameToPath returns a path from a ref name
+// Ex.: On windows refs/heads/master would return refs\heads\master
+func (b *Backend) nameToPath(name string) string {
+	switch os.PathSeparator {
+	case '/':
+		return filepath.Join(b.root, name)
+	default:
+		parts := strings.Split(name, "/")
+		p := filepath.Join(parts...)
+		return filepath.Join(b.root, p)
+	}
 }
 
 // parsePackedRefs parsed the packed-refs file and returns a map
@@ -90,14 +94,54 @@ func (b *Backend) parsePackedRefs() (map[string]string, error) {
 	return refs, nil
 }
 
-// WriteReference writes the given reference on disk
-// ErrRefExists is returned if the reference already exists
+// WriteReference writes the given reference on disk. If the
+// reference already exists it will be overwritten
 func (b *Backend) WriteReference(ref *plumbing.Reference) error {
+	if !plumbing.IsRefNameValid(ref.Name()) {
+		return plumbing.ErrRefNameInvalid
+	}
+
+	target := ""
+	switch ref.Type() {
+	case plumbing.SymbolicReference:
+		target = fmt.Sprintf("ref: %s\n", ref.SymbolicTarget())
+	case plumbing.OidReference:
+		target = fmt.Sprintf("%s\n", ref.Target().String())
+	default:
+		return xerrors.Errorf("reference type %d: %w", ref.Type(), plumbing.ErrUnknownRefType)
+	}
+	err := ioutil.WriteFile(b.nameToPath(ref.Name()), []byte(target), 0644)
+	if err != nil {
+		return xerrors.Errorf("could not persist reference to disk: %w", err)
+	}
 	return nil
 }
 
-// OverwriteReference writes the given reference on disk. If the
-// reference already exists it will be overwritten
-func (b *Backend) OverwriteReference(ref *plumbing.Reference) error {
-	return nil
+// WriteReferenceSafe writes the given reference in the db
+// ErrRefExists is returned if the reference already exists
+func (b *Backend) WriteReferenceSafe(ref *plumbing.Reference) error {
+	if !plumbing.IsRefNameValid(ref.Name()) {
+		return plumbing.ErrRefNameInvalid
+	}
+
+	// First we check if the reference is on disk
+	p := b.nameToPath(ref.Name())
+	_, err := os.Stat(p)
+	if !os.IsNotExist(err) {
+		if err != nil {
+			return xerrors.Errorf("could not check if reference exists on disk: %w", err)
+		}
+		return plumbing.ErrRefExists
+	}
+
+	// Now we check if the reference is on the packed-refs file
+	refs, err := b.parsePackedRefs()
+	if err != nil {
+		return xerrors.Errorf("could not check %s: %w", gitpath.PackedRefsPath, err)
+	}
+	if _, ok := refs[ref.Name()]; ok {
+		return plumbing.ErrRefExists
+	}
+
+	return b.WriteReference(ref)
 }

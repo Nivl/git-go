@@ -144,3 +144,226 @@ func TestParsePackedRefs(t *testing.T) {
 		assert.Equal(t, expected, data)
 	})
 }
+
+func TestWriteReference(t *testing.T) {
+	t.Run("should pass writing a new symbolic reference", func(t *testing.T) {
+		t.Parallel()
+
+		dir, err := ioutil.TempDir("", "fsbackend-init-")
+		require.NoError(t, err)
+		defer os.RemoveAll(dir)
+
+		b := New(dir)
+		err = b.Init()
+		require.NoError(t, err)
+
+		ref := plumbing.NewSymbolicReference("HEAD", "refs/heads/master")
+		err = b.WriteReference(ref)
+		require.NoError(t, err)
+
+		data, err := ioutil.ReadFile(filepath.Join(b.root, "HEAD"))
+		require.NoError(t, err)
+		assert.Equal(t, "ref: refs/heads/master\n", string(data))
+	})
+
+	t.Run("should pass writing a new oid reference", func(t *testing.T) {
+		t.Parallel()
+
+		dir, err := ioutil.TempDir("", "fsbackend-init-")
+		require.NoError(t, err)
+		defer os.RemoveAll(dir)
+
+		b := New(dir)
+		err = b.Init()
+		require.NoError(t, err)
+
+		target, err := plumbing.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
+		require.NoError(t, err)
+		ref := plumbing.NewReference("HEAD", target)
+		err = b.WriteReference(ref)
+		require.NoError(t, err)
+
+		data, err := ioutil.ReadFile(filepath.Join(b.root, "HEAD"))
+		require.NoError(t, err)
+		assert.Equal(t, target.String()+"\n", string(data))
+	})
+
+	t.Run("should fail with invalid name", func(t *testing.T) {
+		t.Parallel()
+
+		dir, err := ioutil.TempDir("", "fsbackend-init-")
+		require.NoError(t, err)
+		defer os.RemoveAll(dir)
+
+		b := New(dir)
+		err = b.Init()
+		require.NoError(t, err)
+
+		ref := plumbing.NewSymbolicReference("H EAD", "refs/heads/master")
+		err = b.WriteReference(ref)
+		require.Error(t, err)
+		require.True(t, xerrors.Is(err, plumbing.ErrRefNameInvalid), "unexpected error")
+
+		_, err = ioutil.ReadFile(filepath.Join(b.root, "HEAD"))
+		require.Error(t, err)
+	})
+
+	t.Run("should pass overwriting a symbolic reference", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+
+		// assert current data on disk
+		data, err := ioutil.ReadFile(filepath.Join(b.root, "HEAD"))
+		require.NoError(t, err)
+		assert.Equal(t, "ref: refs/heads/ml/packfile/tests\n", string(data))
+
+		ref := plumbing.NewSymbolicReference("HEAD", "refs/heads/master")
+		err = b.WriteReference(ref)
+		require.NoError(t, err)
+
+		data, err = ioutil.ReadFile(filepath.Join(b.root, "HEAD"))
+		require.NoError(t, err)
+		assert.Equal(t, "ref: refs/heads/master\n", string(data))
+	})
+
+	t.Run("should pass overwriting an oid reference", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+
+		// assert current data on disk
+		data, err := ioutil.ReadFile(filepath.Join(b.root, "HEAD"))
+		require.NoError(t, err)
+		assert.Equal(t, "ref: refs/heads/ml/packfile/tests\n", string(data))
+
+		target, err := plumbing.NewOidFromStr("abb720a96e4c29b9950a4c577c98470a4d5dd089")
+		require.NoError(t, err)
+		ref := plumbing.NewReference("HEAD", target)
+		err = b.WriteReference(ref)
+		require.NoError(t, err)
+
+		data, err = ioutil.ReadFile(filepath.Join(b.root, "HEAD"))
+		require.NoError(t, err)
+		assert.Equal(t, target.String()+"\n", string(data))
+	})
+}
+
+func TestWriteReferenceSafe(t *testing.T) {
+	t.Run("should pass writing a new symbolic reference", func(t *testing.T) {
+		t.Parallel()
+
+		dir, err := ioutil.TempDir("", "fsbackend-init-")
+		require.NoError(t, err)
+		defer os.RemoveAll(dir)
+
+		b := New(dir)
+		err = b.Init()
+		require.NoError(t, err)
+
+		ref := plumbing.NewSymbolicReference("HEAD", "refs/heads/master")
+		err = b.WriteReferenceSafe(ref)
+		require.NoError(t, err)
+
+		// Let's make sure the data changed on disk
+		data, err := ioutil.ReadFile(filepath.Join(b.root, "HEAD"))
+		require.NoError(t, err)
+		assert.Equal(t, "ref: refs/heads/master\n", string(data))
+	})
+
+	t.Run("should pass writing a new oid reference", func(t *testing.T) {
+		t.Parallel()
+
+		dir, err := ioutil.TempDir("", "fsbackend-init-")
+		require.NoError(t, err)
+		defer os.RemoveAll(dir)
+
+		b := New(dir)
+		err = b.Init()
+		require.NoError(t, err)
+
+		target, err := plumbing.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
+		require.NoError(t, err)
+		ref := plumbing.NewReference("HEAD", target)
+		err = b.WriteReferenceSafe(ref)
+		require.NoError(t, err)
+
+		// Let's make sure the data changed on disk
+		data, err := ioutil.ReadFile(filepath.Join(b.root, "HEAD"))
+		require.NoError(t, err)
+		assert.Equal(t, target.String()+"\n", string(data))
+	})
+
+	t.Run("should fail with invalid name", func(t *testing.T) {
+		t.Parallel()
+
+		dir, err := ioutil.TempDir("", "fsbackend-init-")
+		require.NoError(t, err)
+		defer os.RemoveAll(dir)
+
+		b := New(dir)
+		err = b.Init()
+		require.NoError(t, err)
+
+		ref := plumbing.NewSymbolicReference("H EAD", "refs/heads/master")
+		err = b.WriteReferenceSafe(ref)
+		require.Error(t, err)
+		require.True(t, xerrors.Is(err, plumbing.ErrRefNameInvalid), "unexpected error")
+
+		// Let's make sure the data have not been persisted
+		_, err = ioutil.ReadFile(filepath.Join(b.root, "HEAD"))
+		require.Error(t, err)
+	})
+
+	t.Run("should fail overwritting a ref on disk", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+
+		// assert current data on disk
+		data, err := ioutil.ReadFile(filepath.Join(b.root, "HEAD"))
+		require.NoError(t, err)
+		assert.Equal(t, "ref: refs/heads/ml/packfile/tests\n", string(data))
+
+		ref := plumbing.NewSymbolicReference("HEAD", "refs/heads/master")
+		err = b.WriteReferenceSafe(ref)
+		require.Error(t, err)
+		require.True(t, xerrors.Is(err, plumbing.ErrRefExists), "unexpected error")
+
+		// let's make sure the data have not changed
+		data, err = ioutil.ReadFile(filepath.Join(b.root, "HEAD"))
+		require.NoError(t, err)
+		assert.Equal(t, "ref: refs/heads/ml/packfile/tests\n", string(data))
+	})
+
+	t.Run("should fail overwritting a packed ref", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+
+		// assert current data on disk (there are none)
+		_, err := ioutil.ReadFile(filepath.Join(b.root, "refs/heads/master"))
+		require.Error(t, err)
+
+		ref := plumbing.NewSymbolicReference("refs/heads/master", "refs/heads/branch")
+		err = b.WriteReferenceSafe(ref)
+		require.Error(t, err)
+		require.True(t, xerrors.Is(err, plumbing.ErrRefExists), "unexpected error")
+
+		// Let's make sure the data have not been persisted
+		_, err = ioutil.ReadFile(filepath.Join(b.root, "refs/heads/master"))
+		require.Error(t, err)
+	})
+}

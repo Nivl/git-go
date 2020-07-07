@@ -32,6 +32,10 @@ var (
 
 	// ErrRefNameInvalid is an error thrown when a reference is not valid
 	ErrPackedRefInvalid = errors.New("packed-refs file is invalid")
+
+	// ErrUnknownRefType is an error thrown when the type of a reference
+	// is unknown
+	ErrUnknownRefType = errors.New("unknown reference type")
 )
 
 // ReferenceType represents the type of a reference
@@ -39,10 +43,10 @@ type ReferenceType int8
 
 const (
 	// OidReference represents a reference that targets an Oid
-	OidReference ReferenceType = iota
+	OidReference ReferenceType = 1
 	// SymbolicReference represents a reference that targets another
 	// reference
-	SymbolicReference
+	SymbolicReference ReferenceType = 2
 )
 
 // Reference represents a git reference
@@ -120,7 +124,7 @@ func resolveRefs(name string, finder RefContent, visited map[string]struct{}) (*
 // an object
 func NewReference(name string, target Oid) *Reference {
 	return &Reference{
-		typ:  SymbolicReference,
+		typ:  OidReference,
 		name: name,
 		id:   target,
 	}
@@ -146,6 +150,11 @@ func (ref *Reference) Name() string {
 // Target returns the ID targetted by a reference
 func (ref *Reference) Target() Oid {
 	return ref.id
+}
+
+// Type returns the type of a reference
+func (ref *Reference) Type() ReferenceType {
+	return ref.typ
 }
 
 // SymbolicTarget returns the symbolic target of a reference

@@ -21,12 +21,12 @@ type Backend interface {
 
 	// Reference returns a stored reference from its name
 	Reference(name string) (*plumbing.Reference, error)
-	// WriteReference writes the given reference in the db
-	// ErrRefExists is returned if the reference already exists
-	WriteReference(ref *plumbing.Reference) error
-	// OverwriteReference writes the given reference int the db. If the
+	// WriteReference writes the given reference int the db. If the
 	// reference already exists it will be overwritten
-	OverwriteReference(ref *plumbing.Reference) error
+	WriteReference(ref *plumbing.Reference) error
+	// WriteReferenceSafe writes the given reference in the db
+	// ErrRefExists is returned if the reference already exists
+	WriteReferenceSafe(ref *plumbing.Reference) error
 
 	// Object returns the object that has given oid
 	Object(plumbing.Oid) (plumbing.Oid, error)
