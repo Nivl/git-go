@@ -1,6 +1,7 @@
 package plumbing
 
 import (
+	"bytes"
 	"errors"
 	"strings"
 
@@ -28,6 +29,9 @@ var (
 
 	// ErrRefNameInvalid is an error thrown when a reference is not valid
 	ErrRefInvalid = errors.New("reference is not valid")
+
+	// ErrRefNameInvalid is an error thrown when a reference is not valid
+	ErrPackedRefInvalid = errors.New("packed-refs file is invalid")
 )
 
 // ReferenceType represents the type of a reference
@@ -62,8 +66,6 @@ func ResolveReference(name string, finder RefContent) (*Reference, error) {
 
 // resolveRefs resolves references recursively
 func resolveRefs(name string, finder RefContent, visited map[string]struct{}) (*Reference, error) {
-	name = strings.Trim(name, " \n")
-
 	// we need to protect ourselves against circular references
 	// Ex: refs/heads/master is a ref to refs/heads/a which is a ref to
 	// refs/heads/master
@@ -80,6 +82,7 @@ func resolveRefs(name string, finder RefContent, visited map[string]struct{}) (*
 	if err != nil {
 		return nil, err
 	}
+	data = bytes.Trim(data, " \n")
 
 	// we're expecting at the very least 6 char:
 	// "ref: " followed by a ref

@@ -1,6 +1,7 @@
 package fsbackend
 
 import (
+	"bufio"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -48,10 +49,12 @@ func (b *Backend) Reference(name string) (*plumbing.Reference, error) {
 		}
 		return data, nil
 	}
-
 	return plumbing.ResolveReference(name, finder)
 }
 
+// parsePackedRefs parsed the packed-refs file and returns a map
+// refName => Oid
+// https://git-scm.com/docs/git-pack-refs
 func (b *Backend) parsePackedRefs() (map[string]string, error) {
 	refs := map[string]string{}
 	f, err := os.Open(filepath.Join(b.root, gitpath.PackedRefsPath))
@@ -60,12 +63,31 @@ func (b *Backend) parsePackedRefs() (map[string]string, error) {
 		if os.IsNotExist(err) {
 			return refs, nil
 		}
+		return nil, xerrors.Errorf("could not open %s: %w", gitpath.PackedRefsPath, err)
+	}
+
+	sc := bufio.NewScanner(f)
+	for i := 1; sc.Scan(); i++ {
+		i++
+		line := sc.Text()
+		// we skip empty lines, comments, and annotated tag commit
+		if line == "" || line[0] == '#' || line[0] == '^' {
+			continue
+		}
+		// We expected data to have the format:
+		// "oid ref-name"
+		parts := strings.Split(line, " ")
+		if len(parts) != 2 {
+			return nil, xerrors.Errorf("unexpected data line %d: %w", i, plumbing.ErrPackedRefInvalid)
+		}
+		refs[parts[1]] = parts[0]
+	}
+
+	if sc.Err() != nil {
 		return nil, xerrors.Errorf("could not parse %s: %w", gitpath.PackedRefsPath, err)
 	}
 
-	// TODO(melvin): read line by line
-
-	return nil, nil
+	return refs, nil
 }
 
 // WriteReference writes the given reference on disk
