@@ -22,6 +22,7 @@ Basic git implementation in pure Go
 ## TODO (Short term)
 
 - [x] Add tests
+- [ ] Run tests on Linux, Windows, and MacOS
 - [ ] Add proper support for MIDX
 - [ ] Handle Short SHA
 - [x] Add support for trees with AsTree()
@@ -29,3 +30,4 @@ Basic git implementation in pure Go
 - [ ] Add support for writing in packfile/loose objects
 - [ ] Add Clone/Fetch support with HTTP (Started on branch [`ml/feat/clone`](https://github.com/Nivl/git-go/tree/ml/feat/clone))
 - [ ] Make objects immutable
+- [ ] Add an interface for the Repository so it can be mocked

@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/Nivl/git-go"
+	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/mocks/mockpackfile"
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/Nivl/git-go/plumbing"
@@ -30,7 +30,7 @@ func TestNewFromFile(t *testing.T) {
 		mockGetter := mockpackfile.NewMockObjectGetter(mockctrl)
 
 		packFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.pack"
-		packFilePath := filepath.Join(repoPath, git.DotGitPath, git.ObjectsPackPath, packFileName)
+		packFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, packFileName)
 		pack, err := packfile.NewFromFile(mockGetter, packFilePath)
 		require.NoError(t, err)
 		assert.NotNil(t, pack)
@@ -50,7 +50,7 @@ func TestNewFromFile(t *testing.T) {
 		mockGetter := mockpackfile.NewMockObjectGetter(mockctrl)
 
 		packFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.idx"
-		packFilePath := filepath.Join(repoPath, git.DotGitPath, git.ObjectsPackPath, packFileName)
+		packFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, packFileName)
 		pack, err := packfile.NewFromFile(mockGetter, packFilePath)
 		require.Error(t, err)
 		assert.True(t, xerrors.Is(err, packfile.ErrInvalidMagic))
@@ -71,7 +71,7 @@ func TestGetObject(t *testing.T) {
 		mockGetter := mockpackfile.NewMockObjectGetter(mockctrl)
 
 		packFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.pack"
-		packFilePath := filepath.Join(repoPath, git.DotGitPath, git.ObjectsPackPath, packFileName)
+		packFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, packFileName)
 		pack, err := packfile.NewFromFile(mockGetter, packFilePath)
 		require.NoError(t, err)
 		assert.NotNil(t, pack)
