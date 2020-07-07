@@ -29,7 +29,7 @@ type Backend interface {
 	WriteReferenceSafe(ref *plumbing.Reference) error
 
 	// Object returns the object that has given oid
-	Object(plumbing.Oid) (plumbing.Oid, error)
+	Object(plumbing.Oid) (*object.Object, error)
 	// HasObject returns whether an object exists in the odb
 	HasObject(plumbing.Oid) (bool, error)
 	// WriteObject adds an object to the odb

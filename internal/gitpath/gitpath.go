@@ -5,6 +5,7 @@ package gitpath
 import "os"
 
 // .git/ Files and directories
+// TODO(melvin): add method to get system-specific path
 const (
 	DotGitPath      = ".git"
 	ConfigPath      = "config"
