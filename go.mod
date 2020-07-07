@@ -3,7 +3,6 @@ module github.com/Nivl/git-go
 go 1.14
 
 require (
-	github.com/golang/mock v1.4.3
 	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/spf13/afero v1.3.1
 	github.com/spf13/cobra v1.0.0
