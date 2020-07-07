@@ -2,10 +2,8 @@ package testhelper
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/Nivl/git-go/internal/pathutil"
@@ -24,16 +22,10 @@ const (
 
 // UnTar will untar a git repository in a new temporary folder.
 func UnTar(t *testing.T, repoName RepoName) (repoPath string, cleanup func()) {
-	out, err := ioutil.TempDir("", strings.ReplaceAll(t.Name(), "/", "_")+"_")
-	require.NoError(t, err)
+	out, cleanup := TempDir(t)
+	defer cleanup()
 
-	defer func() {
-		if err != nil {
-			os.RemoveAll(out) //nolint
-		}
-	}()
-
-	_, err = exe.Run("tar",
+	_, err := exe.Run("tar",
 		"-xzf", fmt.Sprintf("%s/%s.tar.gz", TestdataPath(t), repoName),
 		"-C", out,
 	)
