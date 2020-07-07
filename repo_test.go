@@ -28,6 +28,7 @@ func TestInit(t *testing.T) {
 		assert.Equal(t, d, r.repoRoot)
 		assert.Equal(t, filepath.Join(d, gitpath.DotGitPath), r.dotGitPath)
 		assert.NotNil(t, r.wt)
+		assert.False(t, r.IsBare(), "repos should not be bare")
 	})
 
 	t.Run("bare repo", func(t *testing.T) {
@@ -47,6 +48,7 @@ func TestInit(t *testing.T) {
 		require.Equal(t, d, r.repoRoot)
 		require.Equal(t, d, r.dotGitPath)
 		assert.Nil(t, r.wt)
+		assert.True(t, r.IsBare(), "repos should be bare")
 	})
 }
 
@@ -65,6 +67,7 @@ func TestOpen(t *testing.T) {
 		assert.Equal(t, repoPath, r.repoRoot)
 		assert.Equal(t, filepath.Join(repoPath, gitpath.DotGitPath), r.dotGitPath)
 		assert.NotNil(t, r.wt)
+		assert.False(t, r.IsBare(), "repos should not be bare")
 	})
 
 	t.Run("bare repo", func(t *testing.T) {
@@ -85,6 +88,7 @@ func TestOpen(t *testing.T) {
 		require.Equal(t, repoPath, r.repoRoot)
 		require.Equal(t, repoPath, r.dotGitPath)
 		assert.Nil(t, r.wt)
+		assert.True(t, r.IsBare(), "repos should be bare")
 	})
 }
 

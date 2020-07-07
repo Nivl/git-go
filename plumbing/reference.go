@@ -9,6 +9,7 @@ import (
 	"golang.org/x/xerrors"
 )
 
+// Path of commonly used references
 const (
 	HEAD           = "HEAD"
 	MasterLocalRef = gitpath.RefsHeadsPath + "/master"
@@ -27,10 +28,11 @@ var (
 	// is not valid
 	ErrRefNameInvalid = errors.New("reference name is not valid")
 
-	// ErrRefNameInvalid is an error thrown when a reference is not valid
+	// ErrRefInvalid is an error thrown when a reference is not valid
 	ErrRefInvalid = errors.New("reference is not valid")
 
-	// ErrRefNameInvalid is an error thrown when a reference is not valid
+	// ErrPackedRefInvalid is an error thrown when the packed-refs
+	// file cannot be parsed properly
 	ErrPackedRefInvalid = errors.New("packed-refs file is invalid")
 
 	// ErrUnknownRefType is an error thrown when the type of a reference
@@ -52,10 +54,10 @@ const (
 // Reference represents a git reference
 // https://git-scm.com/book/en/v2/Git-Internals-Git-References
 type Reference struct {
-	typ    ReferenceType
 	name   string
-	id     Oid
 	target string
+	id     Oid
+	typ    ReferenceType
 }
 
 // RefContent represents a method that returns the content of reference
@@ -147,7 +149,7 @@ func (ref *Reference) Name() string {
 	return ref.name
 }
 
-// Target returns the ID targetted by a reference
+// Target returns the ID targeted by a reference
 func (ref *Reference) Target() Oid {
 	return ref.id
 }

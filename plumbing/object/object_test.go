@@ -165,7 +165,7 @@ func TestType(t *testing.T) {
 
 				if tc.expectsFailure {
 					assert.Panics(t, func() {
-						tc.typ.String() //nolint:unusedresult // we just want a panic
+						tc.typ.String() //nolint:govet // we just want a panic
 					})
 					return
 				}

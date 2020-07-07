@@ -57,9 +57,9 @@ func InitRepository(repoPath string) (*Repository, error) {
 	return InitRepositoryWithOptions(repoPath, InitOptions{})
 }
 
-// Init initialize a new git repository by creating the .git directory
-// in the given path, which is where almost everything that Git stores
-// and manipulates is located.
+// InitRepositoryWithOptions initialize a new git repository by creating
+// the .git directory in the given path, which is where almost everything
+// that Git stores and manipulates is located.
 // https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain#ch10-git-internals
 func InitRepositoryWithOptions(repoPath string, opts InitOptions) (*Repository, error) {
 	dotGitPath := repoPath
@@ -158,7 +158,6 @@ func OpenRepositoryWithOptions(repoPath string, opts OpenOptions) (*Repository, 
 	// if err != nil {
 	// 	return xerrors.Errorf("could not read config file: %w", err)
 	// }
-
 	// // Validate the config
 	// repoVersion := cfg.Section(cfgCore).Key(cfgCoreFormatVersion).MustInt(0)
 	// if repoVersion != 0 {
@@ -168,6 +167,8 @@ func OpenRepositoryWithOptions(repoPath string, opts OpenOptions) (*Repository, 
 	return r, nil
 }
 
+// IsBare returns whether the repo is bare or not.
+// A bare repo doesn't have a workign tree
 func (r *Repository) IsBare() bool {
 	return r.wt == nil
 }

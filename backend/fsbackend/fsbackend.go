@@ -62,5 +62,10 @@ func (b *Backend) Init() error {
 		}
 	}
 
+	err := b.setDefaultCfg()
+	if err != nil {
+		return xerrors.Errorf("could not set the default config: %w", err)
+	}
+
 	return nil
 }
