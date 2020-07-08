@@ -86,7 +86,6 @@ jobs:
         env:
           CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
           GIT_COMMIT_SHA: ${{ github.sha }}
-        with:
           GIT_BRANCH: ${{ steps.extract_branch.outputs.branch }}
         run: |
           ./cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov test-results/cc.macos-latest.out > test-results/cc.macos-latest.json
