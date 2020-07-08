@@ -31,37 +31,6 @@ jobs:
       - name: Build
         run: go build -race ./...
 
-  test:
-    name: Test
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
-    steps:
-      - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.4.0
-        with:
-          access_token: ${{ github.token }}
-      - uses: actions/checkout@v2
-      - name: Set up Go 1.14
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.14
-
-      - name: Download Code climate code coverage reporter
-        run: |
-          curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-          chmod +x ./cc-test-reporter
-          ./cc-test-reporter before-build
-
-      - name: Test
-        run: go test -v -race -coverprofile c.out ./...
-
-      - name: Report coverage
-        env:
-          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
-        run: ./cc-test-reporter after-build -p github.com/Nivl/git-go/
-
 test:
     name: Test
     runs-on: ${{ matrix.os }}
