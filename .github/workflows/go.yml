@@ -108,10 +108,10 @@ jobs:
         run: ls -R
 
       - name: Display structure of cc-bin
-        run: cc-bin
+        run: ls -R cc-bin
 
       - name: Display structure of tests-results
-        run: tests-results
+        run: ls -R tests-results
 
       - name: Report coverage
         env:
