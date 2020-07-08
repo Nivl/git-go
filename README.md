@@ -15,22 +15,18 @@ Basic git implementation in pure Go
 - [x] hash-object
 - [x] cat-file
 
-### API
+### Library
 
 - [x] Retrieve objects
 - [x] Write loose objects
 - [x] Read/Write References
 
-## TODO (Short term)
+## Roadmap
 
-- [x] Add tests
-- [x] Run tests on Linux, Windows, and MacOS
-- [ ] Add an interface for the Repository so it can be mocked
-- [ ] Add support for Short SHA
-- [ ] Add support for config file
-- [ ] Add support for writing objects in packfile
-- [ ] Add support for MIDX
-- [x] Add support for trees with AsTree()
-- [ ] Add object type to tree entries.
-- [ ] Make objects immutable
-- [ ] Add Clone/Fetch support with HTTP (Started on branch [`ml/feat/clone`](https://github.com/Nivl/git-go/tree/ml/feat/clone))
+### CLI
+
+See the [CLI project](https://github.com/Nivl/git-go/projects/2)
+
+### Library
+
+See the [Library project](https://github.com/Nivl/git-go/projects/1)
