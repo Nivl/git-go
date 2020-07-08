@@ -70,11 +70,12 @@ jobs:
 
       - name: Print data
         run: echo ${{ steps.extract_branch.outputs.branch }}
-      # - name: Download test-results
-      #   uses: actions/download-artifact@v1
-      #   with:
-      #     name: test-results
-      # - name: Download Code climate code coverage reporter
+
+      - name: Download test-results
+        uses: actions/download-artifact@v1
+        with:
+          name: test-results
+          # - name: Download Code climate code coverage reporter
       #   run: |
       #     curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
       #     chmod +x ./cc-test-reporter
