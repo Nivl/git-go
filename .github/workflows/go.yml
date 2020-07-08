@@ -104,14 +104,17 @@ jobs:
       - name: Download test-results
         uses: actions/download-artifact@v2
 
+      - name: Display structure of downloaded files
+        run: ls -R
+
       - name: Report coverage
         env:
           CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
           GIT_COMMIT_SHA: ${{ github.sha }}
           GIT_BRANCH: ${{ steps.extract_branch.outputs.branch }}
         run: |
-          ./cc-bin/cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov cc.macos-latest.out > cc.macos-latest.json
-          ./cc-bin/cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov cc.windows-latest.out > cc.windows-latest.json
-          ./cc-bin/cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov cc.ubuntu-latest.out > cc.ubuntu-latest.json
-          ./cc-bin/cc-test-reporter sum-coverage -p 3 cc.*.json -o cc.json
-          ./cc-bin/cc-test-reporter upload-coverage -i cc.json
+          ./cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov cc.macos-latest.out > cc.macos-latest.json
+          ./cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov cc.windows-latest.out > cc.windows-latest.json
+          ./cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov cc.ubuntu-latest.out > cc.ubuntu-latest.json
+          ./cc-test-reporter sum-coverage -p 3 cc.*.json -o cc.json
+          ./cc-test-reporter upload-coverage -i cc.json
