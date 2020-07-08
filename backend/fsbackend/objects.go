@@ -171,7 +171,7 @@ func (b *Backend) objectFromPackfile(oid plumbing.Oid) (*object.Object, error) {
 			return do, pf.Close()
 		}
 		if errors.Is(err, plumbing.ErrObjectNotFound) {
-			if err = pf.Close(); err == nil {
+			if err = pf.Close(); err != nil {
 				return nil, err
 			}
 			continue
