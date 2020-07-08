@@ -60,7 +60,7 @@ jobs:
 
   test_coverage:
     name: Upload test coverage
-    #needs: test
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Extract branch name
@@ -68,26 +68,26 @@ jobs:
         run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
         id: extract_branch
 
-      - name: Download test-results
-        uses: actions/download-artifact@v1
-        with:
-          name: test-results
-
-      - name: Download Code climate code coverage reporter
-        run: |
-          curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-          chmod +x ./cc-test-reporter
-
-      - name: Report coverage
-        env:
-          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
-          GIT_COMMIT_SHA: ${{ github.sha }}
-        with:
-          GIT_BRANCH: ${{ steps.extract_branch.outputs.branch }}
-        run: |
-          ./cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov test-results/cc.macos-latest.out > test-results/cc.macos-latest.json
-          ./cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov test-results/cc.windows-latest.out > test-results/cc.windows-latest.json
-          ./cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov test-results/cc.ubuntu-latest.out > test-results/cc.ubuntu-latest.json
-          ./cc-test-reporter sum-coverage -p 3 test-results/cc.*.json -o cc.json
-          ./cc-test-reporter upload-coverage --i cc.json
-          ./cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov test-results/cc.*.json
+      - name: Print data
+        run: echo ${{ steps.extract_branch.outputs.branch }}
+      # - name: Download test-results
+      #   uses: actions/download-artifact@v1
+      #   with:
+      #     name: test-results
+      # - name: Download Code climate code coverage reporter
+      #   run: |
+      #     curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+      #     chmod +x ./cc-test-reporter
+      # - name: Report coverage
+      #   env:
+      #     CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+      #     GIT_COMMIT_SHA: ${{ github.sha }}
+      #   with:
+      #     GIT_BRANCH: ${{ steps.extract_branch.outputs.branch }}
+      #   run: |
+      #     ./cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov test-results/cc.macos-latest.out > test-results/cc.macos-latest.json
+      #     ./cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov test-results/cc.windows-latest.out > test-results/cc.windows-latest.json
+      #     ./cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov test-results/cc.ubuntu-latest.out > test-results/cc.ubuntu-latest.json
+      #     ./cc-test-reporter sum-coverage -p 3 test-results/cc.*.json -o cc.json
+      #     ./cc-test-reporter upload-coverage --i cc.json
+      #     ./cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov test-results/cc.*.json
