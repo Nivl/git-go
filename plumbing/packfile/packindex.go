@@ -86,11 +86,17 @@ type PackIndex struct {
 
 // NewIndexFromFile returns an index object from the given file
 // The index will need to be closed using Close()
-func NewIndexFromFile(filePath string) (*PackIndex, error) {
+func NewIndexFromFile(filePath string) (idx *PackIndex, err error) {
 	f, err := os.Open(filePath)
 	if err != nil {
 		return nil, xerrors.Errorf("could not open %s: %w", filePath, err)
 	}
+
+	defer func() {
+		if err != nil {
+			f.Close() //nolint:errcheck // it already failed
+		}
+	}()
 
 	// Let's validate the header
 	header := make([]byte, len(indexHeader()))

@@ -2,6 +2,7 @@ name: Go
 on: [push]
 jobs:
   lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -12,8 +13,16 @@ jobs:
 
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
     steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.4.0
+        with:
+          access_token: ${{ github.token }}
+
       - uses: actions/checkout@v2
       - name: Set up Go 1.14
         uses: actions/setup-go@v2
@@ -25,24 +34,85 @@ jobs:
 
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
     steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.4.0
+        with:
+          access_token: ${{ github.token }}
       - uses: actions/checkout@v2
       - name: Set up Go 1.14
         uses: actions/setup-go@v2
         with:
           go-version: 1.14
 
+      - name: Test
+        run: go test -race -coverprofile cc.${{ matrix.os }}.out ./...
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v2
+        with:
+          name: tests-results
+          path: cc.${{ matrix.os }}.out
+
+  pre_coverage:
+    name: Prepare test coverage
+    runs-on: ubuntu-latest
+    steps:
       - name: Download Code climate code coverage reporter
         run: |
           curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
           chmod +x ./cc-test-reporter
-          ./cc-test-reporter before-build
 
-      - name: Test
-        run: go test -v -race -coverprofile c.out ./...
+      - name: Extract branch name
+        shell: bash
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        id: extract_branch
+
+      - name: initialize reporter
+        env:
+          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+          GIT_COMMIT_SHA: ${{ github.sha }}
+          GIT_BRANCH: ${{ steps.extract_branch.outputs.branch }}
+        run: ./cc-test-reporter before-build
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v2
+        with:
+          name: cc-bin
+          path: cc-test-reporter
+
+  coverage:
+    name: Upload test coverage
+    needs: [pre_coverage, test]
+    runs-on: ubuntu-latest
+    steps:
+      # TODO(melvin): It sucks that we need to checkout AGAIN maybe we
+      # can/should cache it? Checking out is required for running
+      # format-coverage. There are no binaries for windows so we cannot
+      # even move the command to the test job
+      - uses: actions/checkout@v2
+
+      - name: Extract branch name
+        shell: bash
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        id: extract_branch
+
+      - name: Download test-results
+        uses: actions/download-artifact@v2
 
       - name: Report coverage
         env:
           CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
-        run: ./cc-test-reporter after-build -p github.com/Nivl/git-go/
+          GIT_COMMIT_SHA: ${{ github.sha }}
+          GIT_BRANCH: ${{ steps.extract_branch.outputs.branch }}
+        run: |
+          chmod +x ./cc-bin/cc-test-reporter
+          ./cc-bin/cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov tests-results/cc.macos-latest.out -o cc.macos-latest.json
+          ./cc-bin/cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov tests-results/cc.windows-latest.out -o cc.windows-latest.json
+          ./cc-bin/cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov tests-results/cc.ubuntu-latest.out -o cc.ubuntu-latest.json
+          ./cc-bin/cc-test-reporter sum-coverage -p 3 cc.*.json -o cc.json
+          ./cc-bin/cc-test-reporter upload-coverage -i cc.json

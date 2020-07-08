@@ -20,14 +20,14 @@ func TestRun(t *testing.T) {
 		{
 			cmd:            "echo",
 			args:           []string{"this", "should be printed"},
-			expectedOutput: "this should be printed",
+			expectedOutput: "this should be printed\r",
 			expectedError:  nil,
 		},
 		{
 			cmd:            "does-not-exist",
 			args:           []string{},
 			expectedOutput: "",
-			expectedError:  errors.New(`exec: "does-not-exist": executable file not found in $PATH`),
+			expectedError:  errors.New(`exec: "does-not-exist": executable file not found in %PATH%`),
 		},
 	}
 	for i, tc := range testCases {
