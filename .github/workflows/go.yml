@@ -119,6 +119,7 @@ jobs:
           GIT_COMMIT_SHA: ${{ github.sha }}
           GIT_BRANCH: ${{ steps.extract_branch.outputs.branch }}
         run: |
+          chmod +x ./cc-bin/cc-test-reporter
           ./cc-bin/cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov tests-results/cc.macos-latest.out > cc.macos-latest.json
           ./cc-bin/cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov tests-results/cc.windows-latest.out > cc.windows-latest.json
           ./cc-bin/cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov tests-results/cc.ubuntu-latest.out > cc.ubuntu-latest.json
