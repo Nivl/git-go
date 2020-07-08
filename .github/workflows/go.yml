@@ -12,12 +12,16 @@ jobs:
 
   build:
     name: Build
-    runs-on: [macos-latest, windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
     steps:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@0.4.0
         with:
           access_token: ${{ github.token }}
+
       - uses: actions/checkout@v2
       - name: Set up Go 1.14
         uses: actions/setup-go@v2
