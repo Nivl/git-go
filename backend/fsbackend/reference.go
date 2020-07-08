@@ -71,7 +71,7 @@ func (b *Backend) parsePackedRefs() (refs map[string]string, err error) {
 	}
 	defer func() {
 		closeErr := f.Close()
-		if err != nil {
+		if err == nil {
 			err = closeErr
 		}
 	}()
