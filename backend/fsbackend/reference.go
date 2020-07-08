@@ -60,6 +60,7 @@ func (b *Backend) nameToPath(name string) string {
 // refName => Oid
 // https://git-scm.com/docs/git-pack-refs
 func (b *Backend) parsePackedRefs() (refs map[string]string, err error) {
+	refs = map[string]string{}
 	f, err := os.Open(filepath.Join(b.root, gitpath.PackedRefsPath))
 	if err != nil {
 		// if the file doesn't exist we just return an empty map
