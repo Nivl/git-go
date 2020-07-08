@@ -95,13 +95,15 @@ jobs:
       # format-coverage. There are no binaries for windows so we cannot
       # even move the command to the test job
       - uses: actions/checkout@v2
+
       - name: Extract branch name
         shell: bash
         run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
         id: extract_branch
-      - uses: actions/checkout@v2
+
       - name: Download test-results
         uses: actions/download-artifact@v2
+
       - name: Report coverage
         env:
           CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
