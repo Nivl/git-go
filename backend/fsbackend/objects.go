@@ -163,15 +163,20 @@ func (b *Backend) objectFromPackfile(oid plumbing.Oid) (*object.Object, error) {
 		packFilePath := filepath.Join(p, filename)
 		pf, err := packfile.NewFromFile(packFilePath)
 		if err != nil {
+			pf.Close() //nolint:errcheck // it failed anyway
 			return nil, xerrors.Errorf("could not open packfile: %w", err)
 		}
 		do, err := pf.GetObject(oid)
 		if err == nil {
-			return do, nil
+			return do, pf.Close()
 		}
 		if errors.Is(err, plumbing.ErrObjectNotFound) {
+			if err = pf.Close(); err == nil {
+				return nil, err
+			}
 			continue
 		}
+		pf.Close() //nolint:errcheck // it failed anyway
 		return nil, err
 	}
 	return nil, plumbing.ErrObjectNotFound

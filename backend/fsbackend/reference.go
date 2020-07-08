@@ -59,8 +59,7 @@ func (b *Backend) nameToPath(name string) string {
 // parsePackedRefs parsed the packed-refs file and returns a map
 // refName => Oid
 // https://git-scm.com/docs/git-pack-refs
-func (b *Backend) parsePackedRefs() (map[string]string, error) {
-	refs := map[string]string{}
+func (b *Backend) parsePackedRefs() (refs map[string]string, err error) {
 	f, err := os.Open(filepath.Join(b.root, gitpath.PackedRefsPath))
 	if err != nil {
 		// if the file doesn't exist we just return an empty map
@@ -69,6 +68,12 @@ func (b *Backend) parsePackedRefs() (map[string]string, error) {
 		}
 		return nil, xerrors.Errorf("could not open %s: %w", gitpath.PackedRefsPath, err)
 	}
+	defer func() {
+		closeErr := f.Close()
+		if err != nil {
+			err = closeErr
+		}
+	}()
 
 	sc := bufio.NewScanner(f)
 	for i := 1; sc.Scan(); i++ {
