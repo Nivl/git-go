@@ -83,7 +83,7 @@ type Pack struct {
 
 // NewFromFile returns a pack object from the given file
 // The pack will need to be closed using Close()
-func NewFromFile(filePath string) (*Pack, error) {
+func NewFromFile(filePath string) (pack *Pack, err error) {
 	f, err := os.Open(filePath)
 	if err != nil {
 		return nil, xerrors.Errorf("could not open %s: %w", filePath, err)

@@ -20,7 +20,7 @@ func TestRun(t *testing.T) {
 		{
 			cmd:            "echo",
 			args:           []string{"this", "should be printed"},
-			expectedOutput: "this should be printed\n",
+			expectedOutput: "this should be printed\r",
 			expectedError:  nil,
 		},
 		{
