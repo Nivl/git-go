@@ -17,12 +17,6 @@ import (
 	"golang.org/x/xerrors"
 )
 
-// This line generates a mock of the all the interfaces using gomock
-// (https://github.com/golang/mock). To regenerate the mocks, you'll need
-// gomock and mockgen installed, then run `go generate github.com/Nivl/git-go/plumbing/packfile`
-//
-//go:generate mockgen -package mockpackfile -destination ../../internal/mocks/mockpackfile/object_getter.go github.com/Nivl/git-go/plumbing/packfile ObjectGetter
-
 const (
 	// packfileHeaderSize contains the size of the header of a packfile.
 	// the first 4 bytes contain the magic, the 4 next bytes contains the
@@ -50,12 +44,6 @@ var (
 	// unsupported version
 	ErrInvalidVersion = errors.New("invalid version")
 )
-
-// ObjectGetter is an hack with awful perf until we support parsing
-// MIDX file: https://git-scm.com/docs/multi-pack-index
-type ObjectGetter interface {
-	GetObject(oid plumbing.Oid) (*object.Object, error)
-}
 
 // Pack represents a Packfile
 // The packfile contains a header, a content, and a footer
@@ -89,14 +77,13 @@ type ObjectGetter interface {
 //         Contains the SHA1 sum of the packfile (without this SHA)
 // https://github.com/git/git/blob/master/Documentation/technical/pack-format.txt
 type Pack struct {
-	objectGetter ObjectGetter
-	r            *os.File
-	idx          *PackIndex
+	r   *os.File
+	idx *PackIndex
 }
 
 // NewFromFile returns a pack object from the given file
 // The pack will need to be closed using Close()
-func NewFromFile(objectGetter ObjectGetter, filePath string) (*Pack, error) {
+func NewFromFile(filePath string) (*Pack, error) {
 	f, err := os.Open(filePath)
 	if err != nil {
 		return nil, xerrors.Errorf("could not open %s: %w", filePath, err)
@@ -122,9 +109,8 @@ func NewFromFile(objectGetter ObjectGetter, filePath string) (*Pack, error) {
 	}
 
 	return &Pack{
-		objectGetter: objectGetter,
-		r:            f,
-		idx:          idx,
+		r:   f,
+		idx: idx,
 	}, nil
 }
 
@@ -287,7 +273,7 @@ func (pck *Pack) getObjectAt(oid plumbing.Oid, objectOffset uint64) (*object.Obj
 	// we retrieve the base object
 	var base *object.Object
 	if baseOid != plumbing.NullOid {
-		base, err = pck.objectGetter.GetObject(baseOid)
+		base, err = pck.GetObject(baseOid)
 		if err != nil {
 			return nil, xerrors.Errorf("could not get base object %s: %w", baseOid.String(), err)
 		}

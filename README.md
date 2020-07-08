@@ -8,7 +8,7 @@ Basic git implementation in pure Go
 
 #### Porcelain
 
-- [x] ini
+- [x] init
 
 #### Plumbing
 
@@ -17,15 +17,20 @@ Basic git implementation in pure Go
 
 ### API
 
-- [x] Read packfile
+- [x] Retrieve objects
+- [x] Write loose objects
+- [x] Read/Write References
 
 ## TODO (Short term)
 
 - [x] Add tests
-- [ ] Add proper support for MIDX
-- [ ] Handle Short SHA
+- [ ] Run tests on Linux, Windows, and MacOS
+- [ ] Add an interface for the Repository so it can be mocked
+- [ ] Add support for Short SHA
+- [ ] Add support for config file
+- [ ] Add support for writing objects in packfile
+- [ ] Add support for MIDX
 - [x] Add support for trees with AsTree()
 - [ ] Add object type to tree entries.
-- [ ] Add support for writing in packfile/loose objects
-- [ ] Add Clone/Fetch support with HTTP (Started on branch [`ml/feat/clone`](https://github.com/Nivl/git-go/tree/ml/feat/clone))
 - [ ] Make objects immutable
+- [ ] Add Clone/Fetch support with HTTP (Started on branch [`ml/feat/clone`](https://github.com/Nivl/git-go/tree/ml/feat/clone))

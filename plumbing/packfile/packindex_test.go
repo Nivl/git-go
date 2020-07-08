@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/Nivl/git-go"
+	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/Nivl/git-go/plumbing"
 	"github.com/Nivl/git-go/plumbing/packfile"
@@ -23,7 +23,7 @@ func TestNewIndexFromFile(t *testing.T) {
 		defer cleanup()
 
 		indexFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.idx"
-		indexFilePath := filepath.Join(repoPath, git.DotGitPath, git.ObjectsPackPath, indexFileName)
+		indexFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, indexFileName)
 		index, err := packfile.NewIndexFromFile(indexFilePath)
 		require.NoError(t, err)
 		assert.NotNil(t, index)
@@ -39,7 +39,7 @@ func TestNewIndexFromFile(t *testing.T) {
 		defer cleanup()
 
 		indexFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.pack"
-		indexFilePath := filepath.Join(repoPath, git.DotGitPath, git.ObjectsPackPath, indexFileName)
+		indexFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, indexFileName)
 		index, err := packfile.NewIndexFromFile(indexFilePath)
 		require.Error(t, err)
 		assert.Nil(t, index)
@@ -55,7 +55,7 @@ func TestGetObjectOffset(t *testing.T) {
 		defer cleanup()
 
 		indexFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.idx"
-		indexFilePath := filepath.Join(repoPath, git.DotGitPath, git.ObjectsPackPath, indexFileName)
+		indexFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, indexFileName)
 		index, err := packfile.NewIndexFromFile(indexFilePath)
 		require.NoError(t, err)
 		assert.NotNil(t, index)

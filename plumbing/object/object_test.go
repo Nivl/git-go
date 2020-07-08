@@ -111,6 +111,23 @@ func TestAsTree(t *testing.T) {
 	})
 }
 
+func TestAsBlob(t *testing.T) {
+	t.Parallel()
+
+	content, err := ioutil.ReadFile(filepath.Join(testhelper.TestdataPath(t), "blob_642480605b8b0fd464ab5762e044269cf29a60a3"))
+	require.NoError(t, err)
+
+	sha, err := plumbing.NewOidFromStr("642480605b8b0fd464ab5762e044269cf29a60a3")
+	require.NoError(t, err)
+
+	o := object.NewWithID(sha, object.TypeBlob, content)
+	blob := o.AsBlob()
+
+	assert.Equal(t, o.ID, blob.ID())
+	assert.Equal(t, o.Size(), blob.Size())
+	assert.Equal(t, o.Bytes(), blob.Bytes())
+}
+
 func TestType(t *testing.T) {
 	t.Run("type.String()", func(t *testing.T) {
 		t.Parallel()
@@ -165,7 +182,7 @@ func TestType(t *testing.T) {
 
 				if tc.expectsFailure {
 					assert.Panics(t, func() {
-						tc.typ.String() //nolint:unusedresult // we just want a panic
+						tc.typ.String() //nolint:govet // we just want a panic
 					})
 					return
 				}

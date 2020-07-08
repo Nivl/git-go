@@ -15,8 +15,8 @@ issues:
   exclude-rules:
     - linters:
         - gosec
-      # for G306: https://github.com/golangci/golangci-lint/issues/177
-      text: "G104|G304|G110|G306|G505|G401"
+      # for G306 and G301: https://github.com/golangci/golangci-lint/issues/177
+      text: "G104|G304|G110|G306|G301|G505|G401"
 
     - linters:
         - govet
