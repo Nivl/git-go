@@ -24,7 +24,7 @@ Basic git implementation in pure Go
 ## TODO (Short term)
 
 - [x] Add tests
-- [ ] Run tests on Linux, Windows, and MacOS
+- [x] Run tests on Linux, Windows, and MacOS
 - [ ] Add an interface for the Repository so it can be mocked
 - [ ] Add support for Short SHA
 - [ ] Add support for config file
