@@ -114,4 +114,4 @@ jobs:
           ./cc-bin/cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov cc.windows-latest.out > cc.windows-latest.json
           ./cc-bin/cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov cc.ubuntu-latest.out > cc.ubuntu-latest.json
           ./cc-bin/cc-test-reporter sum-coverage -p 3 cc.*.json -o cc.json
-          ./cc-bin/cc-test-reporter upload-coverage --i cc.json
+          ./cc-bin/cc-test-reporter upload-coverage -i cc.json
