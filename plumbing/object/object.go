@@ -163,7 +163,7 @@ func (o *Object) Compress() (data []byte, err error) {
 
 	// get the SHA of the file
 	fileContent := w.Bytes()
-	o.ID = plumbing.NewOid(fileContent)
+	o.ID = plumbing.NewOidFromContent(fileContent)
 
 	compressedContent := new(bytes.Buffer)
 	zw := zlib.NewWriter(compressedContent)

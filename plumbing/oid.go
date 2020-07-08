@@ -33,9 +33,9 @@ func (o Oid) String() string {
 	return hex.EncodeToString(o[:])
 }
 
-// NewOid returns the Oid of the given content. The oid will be the
-// SHA1 sum of the content
-func NewOid(bytes []byte) Oid {
+// NewOidFromContent returns the Oid of the given content.
+// The oid will be the SHA1 sum of the content
+func NewOidFromContent(bytes []byte) Oid {
 	return sha1.Sum(bytes)
 }
 
@@ -61,9 +61,9 @@ func NewOidFromChars(id []byte) (Oid, error) {
 // For the SHA 9b91da06e69613397b38e0808e0ba5ee6983251b
 // the oid will be {0x9b, 0x91, 0xda, ...}
 func NewOidFromStr(id string) (Oid, error) {
-	bytes, decodeErr := hex.DecodeString(id)
-	if decodeErr != nil {
-		return NullOid, decodeErr
+	bytes, err := hex.DecodeString(id)
+	if err != nil {
+		return NullOid, err
 	}
 
 	if len(bytes) != 20 {

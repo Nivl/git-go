@@ -1,11 +1,10 @@
 package git
 
 import (
-	"io/ioutil"
-	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/Nivl/git-go/plumbing"
 	"github.com/Nivl/git-go/plumbing/object"
@@ -13,66 +12,84 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestInit creates a directory, runs Init(), and
-// checks that every has been created
 func TestInit(t *testing.T) {
-	// Setup
-	d, err := ioutil.TempDir("", t.Name()+"-")
-	require.NoError(t, err)
-	defer os.RemoveAll(d)
+	t.Run("repo with working tree", func(t *testing.T) {
+		t.Parallel()
 
-	// Run logic
-	r, err := InitRepository(d)
-	require.NoError(t, err, "failed creating a repo")
+		// Setup
+		d, cleanup := testhelper.TempDir(t)
+		defer cleanup()
 
-	// assert returned repository
-	require.Equal(t, d, r.projectPath)
-	require.Equal(t, filepath.Join(d, DotGitPath), r.path)
+		// Run logic
+		r, err := InitRepository(d)
+		require.NoError(t, err, "failed creating a repo")
 
-	// Assert data on disk
-	dir := "dir"
-	file := "file"
-	checks := []struct {
-		path string
-		typ  string
-	}{
-		{path: DotGitPath, typ: dir},
-		{path: filepath.Join(DotGitPath, BranchesPath), typ: dir},
-		{path: filepath.Join(DotGitPath, ObjectsPath), typ: dir},
-		{path: filepath.Join(DotGitPath, ObjectsInfoPath), typ: dir},
-		{path: filepath.Join(DotGitPath, ObjectsPackPath), typ: dir},
-		{path: filepath.Join(DotGitPath, RefsPath), typ: dir},
-		{path: filepath.Join(DotGitPath, RefsTagsPath), typ: dir},
-		{path: filepath.Join(DotGitPath, RefsHeadsPath), typ: dir},
+		// assert returned repository
+		assert.Equal(t, d, r.repoRoot)
+		assert.Equal(t, filepath.Join(d, gitpath.DotGitPath), r.dotGitPath)
+		assert.NotNil(t, r.wt)
+		assert.False(t, r.IsBare(), "repos should not be bare")
+	})
 
-		{path: filepath.Join(DotGitPath, ConfigPath), typ: file},
-		{path: filepath.Join(DotGitPath, DescriptionPath), typ: file},
-		{path: filepath.Join(DotGitPath, HEADPath), typ: file},
-	}
+	t.Run("bare repo", func(t *testing.T) {
+		t.Parallel()
 
-	for _, check := range checks {
-		fp := filepath.Join(d, check.path)
-		s, err := os.Stat(fp)
-		require.NoError(t, err, "%s should exist at %s", check.path, fp)
+		// Setup
+		d, cleanup := testhelper.TempDir(t)
+		defer cleanup()
 
-		if check.typ == dir {
-			require.True(t, s.IsDir(), "%s should be a directory at %s", check.path, fp)
-		}
-	}
+		// Run logic
+		r, err := InitRepositoryWithOptions(d, InitOptions{
+			IsBare: true,
+		})
+		require.NoError(t, err, "failed creating a repo")
+
+		// assert returned repository
+		require.Equal(t, d, r.repoRoot)
+		require.Equal(t, d, r.dotGitPath)
+		assert.Nil(t, r.wt)
+		assert.True(t, r.IsBare(), "repos should be bare")
+	})
 }
 
-// TestLoad runs Load(), and expects no error
-func TestLoad(t *testing.T) {
-	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-	defer cleanup()
+func TestOpen(t *testing.T) {
+	t.Run("repo with working tree", func(t *testing.T) {
+		t.Parallel()
 
-	r, err := LoadRepository(repoPath)
-	require.NoError(t, err, "failed loading a repo")
-	require.NotNil(t, r, "repository should not be nil")
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
 
-	// assert returned repository
-	require.Equal(t, repoPath, r.projectPath)
-	require.Equal(t, filepath.Join(repoPath, DotGitPath), r.path)
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err, "failed loading a repo")
+		require.NotNil(t, r, "repository should not be nil")
+
+		// assert returned repository
+		assert.Equal(t, repoPath, r.repoRoot)
+		assert.Equal(t, filepath.Join(repoPath, gitpath.DotGitPath), r.dotGitPath)
+		assert.NotNil(t, r.wt)
+		assert.False(t, r.IsBare(), "repos should not be bare")
+	})
+
+	t.Run("bare repo", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+		repoPath = filepath.Join(repoPath, gitpath.DotGitPath)
+
+		r, err := OpenRepositoryWithOptions(repoPath, OpenOptions{
+			IsBare: true,
+		})
+		require.NoError(t, err, "failed loading a repo")
+		require.NotNil(t, r, "repository should not be nil")
+
+		// assert returned repository
+		// assert returned repository
+		require.Equal(t, repoPath, r.repoRoot)
+		require.Equal(t, repoPath, r.dotGitPath)
+		assert.Nil(t, r.wt)
+		assert.True(t, r.IsBare(), "repos should be bare")
+	})
 }
 
 func TestRepositoryGetObject(t *testing.T) {
@@ -84,7 +101,7 @@ func TestRepositoryGetObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		defer cleanup()
 
-		r, err := LoadRepository(repoPath)
+		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")
 
 		oid, err := plumbing.NewOidFromStr("b07e28976ac8972715598f390964d53cf4dbc1bd")
@@ -105,7 +122,7 @@ func TestRepositoryGetObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		defer cleanup()
 
-		r, err := LoadRepository(repoPath)
+		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")
 
 		oid, err := plumbing.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
@@ -124,7 +141,7 @@ func TestRepositoryNewBlob(t *testing.T) {
 	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 	defer cleanup()
 
-	r, err := LoadRepository(repoPath)
+	r, err := OpenRepository(repoPath)
 	require.NoError(t, err, "failed loading a repo")
 
 	data := "abcdefghijklmnopqrstuvwxyz"

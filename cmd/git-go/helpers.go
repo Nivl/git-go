@@ -16,5 +16,5 @@ func loadRepository(cfg *config) (*git.Repository, error) {
 	}
 
 	// run the command
-	return git.LoadRepository(repoPath)
+	return git.OpenRepository(repoPath)
 }
