@@ -84,36 +84,3 @@ jobs:
           with:
             name: cc-test-reporter
             path: cc-test-reporter
-
-  coverage:
-    name: Upload test coverage
-    needs: [pre_coverage, test]
-    runs-on: ubuntu-latest
-    steps:
-      # TODO(melvin): It sucks that we need to checkout AGAIN maybe we
-      # can/should cache it? Checking out is required for running
-      # format-coverage. There are no binaries for windows so we cannot
-      # even move the command to the test job
-      - uses: actions/checkout@v2
-
-      - name: Extract branch name
-        shell: bash
-        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
-        id: extract_branch
-
-      - uses: actions/checkout@v2
-
-      - name: Download test-results
-        uses: actions/download-artifact@v2
-
-      - name: Report coverage
-        env:
-          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
-          GIT_COMMIT_SHA: ${{ github.sha }}
-          GIT_BRANCH: ${{ steps.extract_branch.outputs.branch }}
-        run: |
-          ./cc-bin/cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov cc.macos-latest.out > cc.macos-latest.json
-          ./cc-bin/cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov cc.windows-latest.out > cc.windows-latest.json
-          ./cc-bin/cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov cc.ubuntu-latest.out > cc.ubuntu-latest.json
-          ./cc-bin/cc-test-reporter sum-coverage -p 3 cc.*.json -o cc.json
-          ./cc-bin/cc-test-reporter upload-coverage --i cc.json
