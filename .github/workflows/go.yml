@@ -93,4 +93,3 @@ jobs:
           ./cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov test-results/cc.ubuntu-latest.out > test-results/cc.ubuntu-latest.json
           ./cc-test-reporter sum-coverage -p 3 test-results/cc.*.json -o cc.json
           ./cc-test-reporter upload-coverage --i cc.json
-          ./cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov test-results/cc.*.json
