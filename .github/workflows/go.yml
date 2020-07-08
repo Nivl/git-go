@@ -80,16 +80,18 @@ jobs:
         run: |
           curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
           chmod +x ./cc-test-reporter
-      # - name: Report coverage
-      #   env:
-      #     CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
-      #     GIT_COMMIT_SHA: ${{ github.sha }}
-      #   with:
-      #     GIT_BRANCH: ${{ steps.extract_branch.outputs.branch }}
-      #   run: |
-      #     ./cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov test-results/cc.macos-latest.out > test-results/cc.macos-latest.json
-      #     ./cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov test-results/cc.windows-latest.out > test-results/cc.windows-latest.json
-      #     ./cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov test-results/cc.ubuntu-latest.out > test-results/cc.ubuntu-latest.json
-      #     ./cc-test-reporter sum-coverage -p 3 test-results/cc.*.json -o cc.json
-      #     ./cc-test-reporter upload-coverage --i cc.json
-      #     ./cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov test-results/cc.*.json
+          ./cc-test-reporter before-build
+
+      - name: Report coverage
+        env:
+          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+          GIT_COMMIT_SHA: ${{ github.sha }}
+        with:
+          GIT_BRANCH: ${{ steps.extract_branch.outputs.branch }}
+        run: |
+          ./cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov test-results/cc.macos-latest.out > test-results/cc.macos-latest.json
+          ./cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov test-results/cc.windows-latest.out > test-results/cc.windows-latest.json
+          ./cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov test-results/cc.ubuntu-latest.out > test-results/cc.ubuntu-latest.json
+          ./cc-test-reporter sum-coverage -p 3 test-results/cc.*.json -o cc.json
+          ./cc-test-reporter upload-coverage --i cc.json
+          ./cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov test-results/cc.*.json
