@@ -55,12 +55,11 @@ jobs:
       - name: Upload test results
         uses: actions/upload-artifact@v2
         with:
-          name: test-results
+          name: cc.${{ matrix.os }}.out
           path: cc.${{ matrix.os }}.out
 
   pre_coverage:
     name: Prepare test coverage
-    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Download Code climate code coverage reporter
@@ -83,7 +82,7 @@ jobs:
       - name: Upload binaries
           uses: actions/upload-artifact@v2
           with:
-            name: cc-bin
+            name: cc-test-reporter
             path: cc-test-reporter
 
   coverage:
@@ -113,8 +112,8 @@ jobs:
           GIT_COMMIT_SHA: ${{ github.sha }}
           GIT_BRANCH: ${{ steps.extract_branch.outputs.branch }}
         run: |
-          ./cc-bin/cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov test-results/cc.macos-latest.out > test-results/cc.macos-latest.json
-          ./cc-bin/cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov test-results/cc.windows-latest.out > test-results/cc.windows-latest.json
-          ./cc-bin/cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov test-results/cc.ubuntu-latest.out > test-results/cc.ubuntu-latest.json
-          ./cc-bin/cc-test-reporter sum-coverage -p 3 test-results/cc.*.json -o cc.json
+          ./cc-bin/cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov cc.macos-latest.out > cc.macos-latest.json
+          ./cc-bin/cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov cc.windows-latest.out > cc.windows-latest.json
+          ./cc-bin/cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov cc.ubuntu-latest.out > cc.ubuntu-latest.json
+          ./cc-bin/cc-test-reporter sum-coverage -p 3 cc.*.json -o cc.json
           ./cc-bin/cc-test-reporter upload-coverage --i cc.json
