@@ -57,30 +57,3 @@ jobs:
         with:
           name: cc.${{ matrix.os }}.out
           path: cc.${{ matrix.os }}.out
-
-  pre_coverage:
-    name: Prepare test coverage
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download Code climate code coverage reporter
-        run: |
-          curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-          chmod +x ./cc-test-reporter
-
-      - name: Extract branch name
-        shell: bash
-        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
-        id: extract_branch
-
-      - name: initialize reporter
-        env:
-          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
-          GIT_COMMIT_SHA: ${{ github.sha }}
-          GIT_BRANCH: ${{ steps.extract_branch.outputs.branch }}
-        run: ./cc-test-reporter before-build
-
-      - name: Upload binaries
-          uses: actions/upload-artifact@v2
-          with:
-            name: cc-test-reporter
-            path: cc-test-reporter
