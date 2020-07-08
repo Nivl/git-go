@@ -89,6 +89,12 @@ func NewFromFile(filePath string) (*Pack, error) {
 		return nil, xerrors.Errorf("could not open %s: %w", filePath, err)
 	}
 
+	defer func() {
+		if err != nil {
+			f.Close() //nolint:errcheck // it already failed
+		}
+	}()
+
 	// Let's validate the header
 	header := make([]byte, packfileHeaderSize)
 	_, err = f.ReadAt(header, 0)

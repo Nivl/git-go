@@ -165,6 +165,7 @@ func TestCatFile(t *testing.T) {
 					content, err := ioutil.ReadFile(filepath.Join(testhelper.TestdataPath(t), filename))
 					require.NoError(t, err)
 					expected = string(content)
+					//expected = strings.ReplaceAll(expected, "\r\n", "\n")
 				}
 				assert.Equal(t, expected, string(out))
 			})
