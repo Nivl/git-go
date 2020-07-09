@@ -91,7 +91,7 @@ func TestParsePackedRefs(t *testing.T) {
 		err := b.Init()
 		require.NoError(t, err)
 		fPath := filepath.Join(b.root, gitpath.PackedRefsPath)
-		err = ioutil.WriteFile(fPath, []byte("not valid data"), 0644)
+		err = ioutil.WriteFile(fPath, []byte("not valid data"), 0o644)
 		require.NoError(t, err)
 
 		_, err = b.parsePackedRefs()
@@ -109,7 +109,7 @@ func TestParsePackedRefs(t *testing.T) {
 		err := b.Init()
 		require.NoError(t, err)
 		fPath := filepath.Join(b.root, gitpath.PackedRefsPath)
-		err = ioutil.WriteFile(fPath, []byte("^de111c003b5661db802f17ac69419dcb9f4f3137\n# this is a comment"), 0644)
+		err = ioutil.WriteFile(fPath, []byte("^de111c003b5661db802f17ac69419dcb9f4f3137\n# this is a comment"), 0o644)
 		require.NoError(t, err)
 
 		_, err = b.parsePackedRefs()
@@ -344,7 +344,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
 
 		// assert current data on disk (there are none)
-		_, err := ioutil.ReadFile(filepath.Join(b.root, "refs/heads/master"))
+		_, err := ioutil.ReadFile(filepath.Join(b.root, "refs", "heads", "master"))
 		require.Error(t, err)
 
 		ref := plumbing.NewSymbolicReference("refs/heads/master", "refs/heads/branch")
@@ -353,7 +353,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 		require.True(t, xerrors.Is(err, plumbing.ErrRefExists), "unexpected error")
 
 		// Let's make sure the data have not been persisted
-		_, err = ioutil.ReadFile(filepath.Join(b.root, "refs/heads/master"))
+		_, err = ioutil.ReadFile(filepath.Join(b.root, "refs", "heads", "master"))
 		require.Error(t, err)
 	})
 }

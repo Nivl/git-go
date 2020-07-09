@@ -201,11 +201,11 @@ func (b *Backend) WriteObject(o *object.Object) (plumbing.Oid, error) {
 	p := b.looseObjectPath(sha)
 	// We need to make sure the dest dir exists
 	dest := filepath.Dir(p)
-	if err = os.MkdirAll(dest, 0755); err != nil {
+	if err = os.MkdirAll(dest, 0o755); err != nil {
 		return plumbing.NullOid, xerrors.Errorf("could not create the destination directory %s: %w", dest, err)
 	}
 
-	if err = ioutil.WriteFile(p, data, 0644); err != nil {
+	if err = ioutil.WriteFile(p, data, 0o644); err != nil {
 		return plumbing.NullOid, xerrors.Errorf("could not persist object %s at path %s: %w", sha, p, err)
 	}
 

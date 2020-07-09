@@ -39,7 +39,7 @@ func (b *Backend) Init() error {
 	}
 	for _, d := range dirs {
 		fullPath := filepath.Join(b.root, d)
-		if err := os.MkdirAll(fullPath, 0750); err != nil {
+		if err := os.MkdirAll(fullPath, 0o750); err != nil {
 			return xerrors.Errorf("could not create directory %s: %w", d, err)
 		}
 	}
@@ -57,7 +57,7 @@ func (b *Backend) Init() error {
 	}
 	for _, f := range files {
 		fullPath := filepath.Join(b.root, f.path)
-		if err := ioutil.WriteFile(fullPath, f.content, 0644); err != nil {
+		if err := ioutil.WriteFile(fullPath, f.content, 0o644); err != nil {
 			return xerrors.Errorf("could not create file %s: %w", f, err)
 		}
 	}

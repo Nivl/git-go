@@ -6,11 +6,10 @@ import (
 	"bytes"
 	"compress/zlib"
 	"encoding/binary"
+	"errors"
 	"io"
 	"os"
 	"strings"
-
-	"errors"
 
 	"github.com/Nivl/git-go/plumbing"
 	"github.com/Nivl/git-go/plumbing/object"
@@ -207,7 +206,7 @@ func (pck *Pack) getRawObjectAt(oid plumbing.Oid, objectOffset uint64) (o *objec
 	// ofs: This Delta contains a negative offset to the base object
 	var baseObjectOffset uint64
 	var baseObjectOid plumbing.Oid
-	switch objectType {
+	switch objectType { //nolint:exhaustive // only 2 types have a special treatment
 	case object.ObjectDeltaRef:
 		baseObjectSHA := make([]byte, plumbing.OidSize)
 		_, err = buf.Read(baseObjectSHA)

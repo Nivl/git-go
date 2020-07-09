@@ -134,6 +134,8 @@ func catFileCmd(out io.Writer, cfg *config, p catFileParams) error {
 			}
 		case object.TypeBlob:
 			fmt.Fprint(out, string(o.Bytes()))
+		case object.TypeTag, object.ObjectDeltaOFS, object.ObjectDeltaRef:
+			fallthrough
 		default:
 			return xerrors.Errorf("pretty-print not supported for type %s", o.Type().String())
 		}

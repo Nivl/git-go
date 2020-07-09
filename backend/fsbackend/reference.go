@@ -116,7 +116,7 @@ func (b *Backend) WriteReference(ref *plumbing.Reference) error {
 	default:
 		return xerrors.Errorf("reference type %d: %w", ref.Type(), plumbing.ErrUnknownRefType)
 	}
-	err := ioutil.WriteFile(b.nameToPath(ref.Name()), []byte(target), 0644)
+	err := ioutil.WriteFile(b.nameToPath(ref.Name()), []byte(target), 0o644)
 	if err != nil {
 		return xerrors.Errorf("could not persist reference to disk: %w", err)
 	}
