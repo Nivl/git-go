@@ -82,7 +82,7 @@ func TestHasObject(t *testing.T) {
 	b := fsbackend.New(filepath.Join(repoPath, gitpath.DotGitPath))
 
 	require.Panics(t, func() {
-		b.HasObject(oid) //nolint // we just want to make sure it's panic'ing
+		b.HasObject(oid)
 	})
 }
 

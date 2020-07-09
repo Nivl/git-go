@@ -43,11 +43,11 @@ func TestInit(t *testing.T) {
 		defer cleanup()
 
 		// create a directory
-		err := os.MkdirAll(filepath.Join(dir, gitpath.ObjectsPath), 0750)
+		err := os.MkdirAll(filepath.Join(dir, gitpath.ObjectsPath), 0o750)
 		require.NoError(t, err)
 
 		// create a file
-		err = ioutil.WriteFile(filepath.Join(dir, gitpath.DescriptionPath), []byte{}, 0644)
+		err = ioutil.WriteFile(filepath.Join(dir, gitpath.DescriptionPath), []byte{}, 0o644)
 		require.NoError(t, err)
 
 		err = fsbackend.New(dir).Init()
@@ -66,7 +66,7 @@ func TestInit(t *testing.T) {
 		defer cleanup()
 
 		// create a directory
-		err := os.MkdirAll(filepath.Join(dir, gitpath.ObjectsPath), 0550)
+		err := os.MkdirAll(filepath.Join(dir, gitpath.ObjectsPath), 0o550)
 		require.NoError(t, err)
 
 		err = fsbackend.New(dir).Init()
@@ -83,7 +83,7 @@ func TestInit(t *testing.T) {
 		defer cleanup()
 
 		// create a file
-		err := ioutil.WriteFile(filepath.Join(dir, gitpath.DescriptionPath), []byte{}, 0444)
+		err := ioutil.WriteFile(filepath.Join(dir, gitpath.DescriptionPath), []byte{}, 0o444)
 		require.NoError(t, err)
 
 		err = fsbackend.New(dir).Init()

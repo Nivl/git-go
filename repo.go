@@ -1,9 +1,8 @@
 package git
 
 import (
-	"path/filepath"
-
 	"errors"
+	"path/filepath"
 
 	"github.com/Nivl/git-go/backend"
 	"github.com/Nivl/git-go/backend/fsbackend"
