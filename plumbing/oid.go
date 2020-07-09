@@ -74,3 +74,8 @@ func NewOidFromStr(id string) (Oid, error) {
 
 	return oid, nil
 }
+
+// IsZero returns whether the oid has the zero value (NullOid)
+func (o Oid) IsZero() bool {
+	return o == NullOid
+}
