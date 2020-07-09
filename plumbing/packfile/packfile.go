@@ -206,7 +206,7 @@ func (pck *Pack) getRawObjectAt(oid plumbing.Oid, objectOffset uint64) (o *objec
 	// ofs: This Delta contains a negative offset to the base object
 	var baseObjectOffset uint64
 	var baseObjectOid plumbing.Oid
-	switch objectType {
+	switch objectType { //nolint:exhaustive // only 2 types have a special treatment
 	case object.ObjectDeltaRef:
 		baseObjectSHA := make([]byte, plumbing.OidSize)
 		_, err = buf.Read(baseObjectSHA)
@@ -237,8 +237,6 @@ func (pck *Pack) getRawObjectAt(oid plumbing.Oid, objectOffset uint64) (o *objec
 		if _, err = buf.Discard(bytesRead); err != nil {
 			return nil, plumbing.NullOid, 0, xerrors.Errorf("could not skip the offset: %w", err)
 		}
-	case object.TypeTag, object.TypeTree, object.TypeBlob, object.TypeCommit:
-		return nil, plumbing.NullOid, 0, xerrors.Errorf("unexected object type %d", objectType)
 	}
 
 	// We can now fetch the actual data of the object, which is zlib encoded
