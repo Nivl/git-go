@@ -237,7 +237,7 @@ func (pck *Pack) getRawObjectAt(oid plumbing.Oid, objectOffset uint64) (o *objec
 		if _, err = buf.Discard(bytesRead); err != nil {
 			return nil, plumbing.NullOid, 0, xerrors.Errorf("could not skip the offset: %w", err)
 		}
-	case object.TypeTag, object.TypeTree, object.TypeCommit:
+	case object.TypeTag, object.TypeTree, object.TypeBlob, object.TypeCommit:
 		return nil, plumbing.NullOid, 0, xerrors.Errorf("unexected object type %d", objectType)
 	}
 
