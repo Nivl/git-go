@@ -6,11 +6,10 @@ import (
 	"bytes"
 	"compress/zlib"
 	"encoding/binary"
+	"errors"
 	"io"
 	"os"
 	"strings"
-
-	"errors"
 
 	"github.com/Nivl/git-go/plumbing"
 	"github.com/Nivl/git-go/plumbing/object"

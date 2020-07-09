@@ -3,7 +3,6 @@ package plumbing
 import (
 	"crypto/sha1"
 	"encoding/hex"
-
 	"errors"
 )
 

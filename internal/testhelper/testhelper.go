@@ -18,7 +18,7 @@ func TempDir(t *testing.T) (out string, cleanup func()) {
 	cleanup = func() {
 		// for debug purpose we keep everything if the test failed
 		if err != nil {
-			os.RemoveAll(out) //nolint
+			os.RemoveAll(out) //nolint:
 		}
 	}
 	return out, cleanup

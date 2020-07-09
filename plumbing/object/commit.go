@@ -1,12 +1,11 @@
 package object
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
-
-	"errors"
 
 	"github.com/Nivl/git-go/internal/readutil"
 	"github.com/Nivl/git-go/plumbing"

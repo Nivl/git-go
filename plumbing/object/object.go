@@ -4,10 +4,9 @@ package object
 import (
 	"bytes"
 	"compress/zlib"
+	"errors"
 	"fmt"
 	"strconv"
-
-	"errors"
 
 	"github.com/Nivl/git-go/internal/readutil"
 	"github.com/Nivl/git-go/plumbing"

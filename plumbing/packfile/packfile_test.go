@@ -47,6 +47,7 @@ func TestNewFromFile(t *testing.T) {
 		assert.Nil(t, pack)
 	})
 }
+
 func TestGetObject(t *testing.T) {
 	t.Parallel()
 
