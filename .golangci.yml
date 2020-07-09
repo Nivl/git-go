@@ -58,7 +58,6 @@ linters:
     - interfacer
     - unconvert
     - asciicheck
-    - gofmt
     - goimports
     - maligned
     - misspell
@@ -71,13 +70,13 @@ linters:
     - whitespace
     - goprintffuncname
     - goerr113
-    # - exhaustive need golangci-lint 1.28
+    - exhaustive
     - nolintlint
+    - noctx
+    - exportloopref
+    - gofumpt # replaces gofmt
 
 linters-settings:
-  gofmt:
-    simplify: true
-
   govet:
     check-shadowing: true
 
