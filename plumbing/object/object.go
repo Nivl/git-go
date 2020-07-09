@@ -18,6 +18,10 @@ var (
 	// unknown object
 	ErrObjectUnknown = errors.New("invalid object type")
 
+	// ErrObjectInvalid represents an error thrown when parsing an invalid
+	// object
+	ErrObjectInvalid = errors.New("invalid object")
+
 	// ErrTreeInvalid represents an error thrown when parsing an invalid
 	// tree object
 	ErrTreeInvalid = errors.New("invalid tree")
@@ -162,8 +166,14 @@ func (o *Object) Compress() (data []byte, err error) {
 
 	// get the SHA of the file
 	fileContent := w.Bytes()
-	o.ID = plumbing.NewOidFromContent(fileContent)
+	newID := plumbing.NewOidFromContent(fileContent)
 
+	// We check if the ID of the object has changed
+	if !o.ID.IsZero() && o.ID != newID {
+		return nil, xerrors.Errorf("shasum missmatch, expected %s, got %s: %w", o.ID.String(), newID.String(), ErrObjectInvalid)
+	}
+
+	o.ID = newID
 	compressedContent := new(bytes.Buffer)
 	zw := zlib.NewWriter(compressedContent)
 	defer func() {

@@ -193,7 +193,7 @@ func (b *Backend) HasObject(plumbing.Oid) (bool, error) {
 func (b *Backend) WriteObject(o *object.Object) (plumbing.Oid, error) {
 	data, err := o.Compress()
 	if err != nil {
-		return plumbing.NullOid, xerrors.Errorf("unsupported object type %s", o.Type())
+		return plumbing.NullOid, xerrors.Errorf("could not compress object: %w", err)
 	}
 
 	// Persist the data on disk

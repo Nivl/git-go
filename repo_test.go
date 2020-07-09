@@ -1,6 +1,7 @@
 package git
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -149,4 +150,9 @@ func TestRepositoryNewBlob(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotEqual(t, plumbing.NullOid, blob.ID())
 	assert.Equal(t, []byte(data), blob.Bytes())
+
+	// make sure the blob was persisted
+	p := filepath.Join(r.dotGitPath, gitpath.ObjectsPath, blob.ID().String()[0:2], blob.ID().String()[2:])
+	_, err = os.Stat(p)
+	require.NoError(t, err)
 }

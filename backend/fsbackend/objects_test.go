@@ -1,6 +1,7 @@
 package fsbackend_test
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -95,10 +96,12 @@ func TestWriteObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		defer cleanup()
 
-		b := fsbackend.New(filepath.Join(repoPath, gitpath.DotGitPath))
+		dotGitPath := filepath.Join(repoPath, gitpath.DotGitPath)
+		b := fsbackend.New(dotGitPath)
 		o := object.New(object.TypeBlob, []byte("data"))
 		oid, err := b.WriteObject(o)
 		require.NoError(t, err)
+		assert.NotEqual(t, plumbing.NullOid, oid, "invalid oid returned")
 
 		// assert it's in disk
 		storedO, err := b.Object(oid)
@@ -106,5 +109,11 @@ func TestWriteObject(t *testing.T) {
 		assert.Equal(t, o.Type(), storedO.Type(), "invalid type")
 		assert.Equal(t, o.Size(), storedO.Size(), "invalid size")
 		assert.Equal(t, o.Bytes(), storedO.Bytes(), "invalid size")
+		assert.NotEqual(t, plumbing.NullOid, storedO.ID, "invalid ID")
+
+		// make sure the blob was persisted
+		p := filepath.Join(dotGitPath, gitpath.ObjectsPath, storedO.ID.String()[0:2], storedO.ID.String()[2:])
+		_, err = os.Stat(p)
+		require.NoError(t, err)
 	})
 }
