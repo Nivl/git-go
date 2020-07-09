@@ -6,6 +6,7 @@ import (
 	"compress/zlib"
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/Nivl/git-go/internal/readutil"
@@ -209,29 +210,32 @@ func (o *Object) AsTree() (*Tree, error) {
 
 	objData := o.Bytes()
 	offset := 0
-	var err error
-	for {
+	for i := 1; ; i++ {
 		entry := &TreeEntry{}
 		data := readutil.ReadTo(objData[offset:], ' ')
 		if len(data) == 0 {
-			return nil, xerrors.Errorf("could not retrieve the mode: %w", ErrTreeInvalid)
+			return nil, xerrors.Errorf("could not retrieve the mode of entry %d: %w", i, ErrTreeInvalid)
 		}
 		offset += len(data) + 1 // +1 for the space
-		entry.Mode = string(data)
+		mode, err := strconv.ParseInt(string(data), 8, 32)
+		if err != nil {
+			return nil, xerrors.Errorf("could not parse mode of entry %d: %w", i, err)
+		}
+		entry.Mode = os.FileMode(mode)
 
 		data = readutil.ReadTo(objData[offset:], 0)
 		if len(data) == 0 {
-			return nil, xerrors.Errorf("could not retrieve the path: %w", ErrTreeInvalid)
+			return nil, xerrors.Errorf("could not retrieve the path of entry %d: %w", i, ErrTreeInvalid)
 		}
 		offset += len(data) + 1 // +1 for the \0
 		entry.Path = string(data)
 
 		if offset+20 > len(objData) {
-			return nil, xerrors.Errorf("not enough space to retrieve the ID: %w", ErrTreeInvalid)
+			return nil, xerrors.Errorf("not enough space to retrieve the ID of entry %d: %w", i, ErrTreeInvalid)
 		}
 		entry.ID, err = plumbing.NewOidFromHex(objData[offset : offset+20])
 		if err != nil {
-			return nil, xerrors.Errorf("%s: %w", ErrTreeInvalid.Error(), err)
+			return nil, xerrors.Errorf("invalid SHA for entry %d (%s): %w", i, err.Error(), ErrTreeInvalid)
 		}
 		offset += 20
 

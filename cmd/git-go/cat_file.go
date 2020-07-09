@@ -130,7 +130,7 @@ func catFileCmd(out io.Writer, cfg *config, p catFileParams) error {
 			}
 			for _, e := range tree.Entries {
 				// TODO(melvin): add the type
-				fmt.Fprintf(out, "%06s %s\t%s\n", e.Mode, e.ID.String(), e.Path)
+				fmt.Fprintf(out, "%06o %s\t%s\n", e.Mode, e.ID.String(), e.Path)
 			}
 		case object.TypeBlob:
 			fmt.Fprint(out, string(o.Bytes()))

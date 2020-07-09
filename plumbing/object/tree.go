@@ -1,6 +1,10 @@
 package object
 
-import "github.com/Nivl/git-go/plumbing"
+import (
+	"os"
+
+	"github.com/Nivl/git-go/plumbing"
+)
 
 // Tree represents a git tree object
 type Tree struct {
@@ -10,7 +14,7 @@ type Tree struct {
 
 // TreeEntry represents an entry inside a git tree
 type TreeEntry struct {
-	Mode string
+	Mode os.FileMode
 	ID   plumbing.Oid
 	Path string
 }
