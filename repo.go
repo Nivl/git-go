@@ -180,10 +180,8 @@ func (r *Repository) GetObject(oid plumbing.Oid) (*object.Object, error) {
 // NewBlob creates, stores, and returns a new Blob object
 func (r *Repository) NewBlob(data []byte) (*object.Blob, error) {
 	o := object.New(object.TypeBlob, data)
-	_, err := o.Compress()
-	if err != nil {
-		return nil, xerrors.Errorf("could not compress object: %w", err)
+	if _, err := r.dotGit.WriteObject(o); err != nil {
+		return nil, err
 	}
-	// TODO(melvin): actually store the data
 	return object.NewBlob(o), nil
 }

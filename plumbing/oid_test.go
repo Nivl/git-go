@@ -166,3 +166,42 @@ func TestNewOidFromContent(t *testing.T) {
 		})
 	}
 }
+
+func TestIsZero(t *testing.T) {
+	t.Run("from string", func(t *testing.T) {
+		t.Parallel()
+
+		testCases := []struct {
+			desc   string
+			sha    string
+			isZero bool
+		}{
+			{
+				desc:   "valid sha should not be zero",
+				sha:    "f7c3bc1d808e04732adf679965ccc34ca7ae3441",
+				isZero: false,
+			},
+			{
+				desc:   "Only 0 should be 0",
+				sha:    "0000000000000000000000000000000000000000",
+				isZero: true,
+			},
+		}
+		for i, tc := range testCases {
+			tc := tc
+			i := i
+			t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
+				t.Parallel()
+
+				sha, err := plumbing.NewOidFromStr(tc.sha)
+				require.NoError(t, err)
+				require.Equal(t, tc.isZero, sha.IsZero())
+			})
+		}
+	})
+
+	t.Run("NullOid should be nul", func(t *testing.T) {
+		t.Parallel()
+		require.True(t, plumbing.NullOid.IsZero(), "NullOid should be Zero")
+	})
+}

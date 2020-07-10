@@ -1,0 +1,101 @@
+package git
+
+import (
+	"fmt"
+	"os"
+	"sort"
+
+	"github.com/Nivl/git-go/backend"
+	"github.com/Nivl/git-go/plumbing"
+	"github.com/Nivl/git-go/plumbing/object"
+	"golang.org/x/xerrors"
+)
+
+// TreeBuilder is used to build trees
+type TreeBuilder struct {
+	Backend backend.Backend
+	entries map[string]*object.TreeEntry
+}
+
+// NewTreeBuilder create a new empty tree builder
+func (r *Repository) NewTreeBuilder() *TreeBuilder {
+	return &TreeBuilder{
+		Backend: r.dotGit,
+	}
+}
+
+// NewTreeBuilderFromTree create a new tree builder containing the
+// entries of another tree
+func (r *Repository) NewTreeBuilderFromTree(t *object.Tree) *TreeBuilder {
+	entries := map[string]*object.TreeEntry{}
+	for _, e := range t.Entries {
+		entries[e.Path] = e
+	}
+
+	return &TreeBuilder{
+		Backend: r.dotGit,
+		entries: entries,
+	}
+}
+
+// Insert inserts a new object in a tree
+func (tb *TreeBuilder) Insert(path string, oid plumbing.Oid, mode os.FileMode) error {
+	o, err := tb.Backend.Object(oid)
+	if err != nil {
+		return xerrors.Errorf("cannot verify object: %w", err)
+	}
+
+	if o.Type() != object.TypeBlob && o.Type() != object.TypeTree {
+		return xerrors.Errorf("unexpected object %s: %w", o.Type().String(), object.ErrObjectInvalid)
+	}
+
+	e := &object.TreeEntry{
+		Mode: mode,
+		Path: path,
+		ID:   oid,
+	}
+
+	if tb.entries == nil {
+		tb.entries = map[string]*object.TreeEntry{}
+	}
+	tb.entries[path] = e
+	return nil
+}
+
+// Remove removes an object from tree
+func (tb *TreeBuilder) Remove(path string) {
+	if tb.entries == nil {
+		return
+	}
+	delete(tb.entries, path)
+}
+
+// Write creates and persists a new Tree object
+func (tb *TreeBuilder) Write() (*object.Tree, error) {
+	// We need to order all our entries alphabetically
+	// We're going to extract the paths of the map
+	// they just loop over the keys instead of the entries
+	paths := make([]string, 0, len(tb.entries))
+	for p := range tb.entries {
+		fmt.Println("found path: ", p)
+		paths = append(paths, p)
+	}
+	sort.Strings(paths)
+
+	entries := make([]*object.TreeEntry, 0, len(paths))
+	for i, p := range paths {
+		fmt.Println(i, p)
+		entries = append(entries, tb.entries[p])
+	}
+
+	t := object.NewTree(entries)
+	o, err := t.ToObject()
+	if err != nil {
+		return nil, xerrors.Errorf("could not parse the tree to an object: %w", err)
+	}
+	if _, err := tb.Backend.WriteObject(o); err != nil {
+		return nil, xerrors.Errorf("could not write the object to the odb: %w", err)
+	}
+	t.ID = o.ID
+	return t, nil
+}

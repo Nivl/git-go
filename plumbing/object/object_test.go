@@ -12,6 +12,7 @@ import (
 	"github.com/Nivl/git-go/plumbing/object"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/xerrors"
 )
 
 func TestAsCommit(t *testing.T) {
@@ -321,5 +322,21 @@ func TestCompress(t *testing.T) {
 		assert.Equal(t, treeSHA, o.ID.String())
 
 		// TODO(melvin): Test the compressed object
+	})
+
+	t.Run("should fail if ID missmatch", func(t *testing.T) {
+		t.Parallel()
+
+		fakeTreeID, err := plumbing.NewOidFromStr("d5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
+		require.NoError(t, err)
+
+		testFile := "tree_e5b9e846e1b468bc9597ff95d71dfacda8bd54e3"
+		content, err := ioutil.ReadFile(filepath.Join(testhelper.TestdataPath(t), testFile))
+		require.NoError(t, err)
+
+		o := object.NewWithID(fakeTreeID, object.TypeTree, content)
+		_, err = o.Compress()
+		require.Error(t, err)
+		require.True(t, xerrors.Is(err, object.ErrObjectInvalid))
 	})
 }

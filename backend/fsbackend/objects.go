@@ -193,12 +193,15 @@ func (b *Backend) HasObject(plumbing.Oid) (bool, error) {
 func (b *Backend) WriteObject(o *object.Object) (plumbing.Oid, error) {
 	data, err := o.Compress()
 	if err != nil {
-		return plumbing.NullOid, xerrors.Errorf("unsupported object type %s", o.Type())
+		return plumbing.NullOid, xerrors.Errorf("could not compress object: %w", err)
 	}
 
 	// Persist the data on disk
 	sha := o.ID.String()
 	p := b.looseObjectPath(sha)
+
+	// TODO(melvin): Make sure the object doesn't already exist anywhere
+
 	// We need to make sure the dest dir exists
 	dest := filepath.Dir(p)
 	if err = os.MkdirAll(dest, 0o755); err != nil {

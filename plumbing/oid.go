@@ -22,7 +22,11 @@ var (
 // Oid represents an object id
 type Oid [OidSize]byte
 
-// Bytes returns a byte slice of the Oid
+// Bytes returns the raw Oid as []byte.
+// This is different than doing []byte(oid.String())
+// For the oid 642480605b8b0fd464ab5762e044269cf29a60a3:
+// oid.Bytes(): []byte{ 0x64, 0x24, 0x80, ... }
+// []byte(oid.String()): []byte{ '6', '4', '2', '4', '8' '0', ... }
 func (o Oid) Bytes() []byte {
 	return o[:]
 }
@@ -73,4 +77,9 @@ func NewOidFromStr(id string) (Oid, error) {
 	copy(oid[:], bytes)
 
 	return oid, nil
+}
+
+// IsZero returns whether the oid has the zero value (NullOid)
+func (o Oid) IsZero() bool {
+	return o == NullOid
 }

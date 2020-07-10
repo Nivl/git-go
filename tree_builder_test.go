@@ -1,0 +1,267 @@
+package git
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"testing"
+
+	"github.com/Nivl/git-go/internal/gitpath"
+	"github.com/Nivl/git-go/internal/testhelper"
+	"github.com/Nivl/git-go/plumbing"
+	"github.com/Nivl/git-go/plumbing/object"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/xerrors"
+)
+
+func TestTreeBuilderInsert(t *testing.T) {
+	t.Run("single pass/fail", func(t *testing.T) {
+		t.Parallel()
+
+		testCases := []struct {
+			desc          string
+			sha           string
+			expectedError error
+		}{
+			{
+				desc:          "should fail inserting an object that doesn't exist",
+				sha:           plumbing.NullOid.String(),
+				expectedError: plumbing.ErrObjectNotFound,
+			},
+			{
+				desc:          "should fail inserting a commit",
+				sha:           "bbb720a96e4c29b9950a4c577c98470a4d5dd089",
+				expectedError: object.ErrObjectInvalid,
+			},
+			{
+				desc: "should pass inserting a blob",
+				sha:  "642480605b8b0fd464ab5762e044269cf29a60a3",
+			},
+			{
+				desc: "should pass inserting a tree",
+				sha:  "e5b9e846e1b468bc9597ff95d71dfacda8bd54e3",
+			},
+		}
+		for i, tc := range testCases {
+			tc := tc
+			i := i
+			t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
+				t.Parallel()
+
+				repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+				defer cleanup()
+
+				r, err := OpenRepository(repoPath)
+				require.NoError(t, err, "failed loading a repo")
+				require.NotNil(t, r, "repository should not be nil")
+
+				oid, err := plumbing.NewOidFromStr(tc.sha)
+				require.NoError(t, err)
+
+				tb := r.NewTreeBuilder()
+				err = tb.Insert("somewhere", oid, 0o644)
+				if tc.expectedError != nil {
+					require.Error(t, err)
+					assert.True(t, xerrors.Is(err, tc.expectedError))
+				} else {
+					require.NoError(t, err)
+					assert.Len(t, tb.entries, 1)
+				}
+			})
+		}
+	})
+
+	t.Run("should pass inserting multiple objects", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err, "failed loading a repo")
+		require.NotNil(t, r, "repository should not be nil")
+
+		tb := r.NewTreeBuilder()
+
+		// insert a blob
+		oid, err := plumbing.NewOidFromStr("642480605b8b0fd464ab5762e044269cf29a60a3")
+		require.NoError(t, err)
+		err = tb.Insert("blob", oid, 0o644)
+		require.NoError(t, err)
+
+		// insert a tree
+		oid, err = plumbing.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
+		require.NoError(t, err)
+		err = tb.Insert("tree", oid, 0o755)
+		require.NoError(t, err)
+
+		assert.Len(t, tb.entries, 2)
+	})
+
+	t.Run("should pass overwritting a path", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err, "failed loading a repo")
+		require.NotNil(t, r, "repository should not be nil")
+
+		tb := r.NewTreeBuilder()
+
+		// insert a blob
+		oid, err := plumbing.NewOidFromStr("642480605b8b0fd464ab5762e044269cf29a60a3")
+		require.NoError(t, err)
+		err = tb.Insert("path", oid, 0o644)
+		require.NoError(t, err)
+
+		// insert a tree
+		oid, err = plumbing.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
+		require.NoError(t, err)
+		err = tb.Insert("path", oid, 0o755)
+		require.NoError(t, err)
+
+		assert.Len(t, tb.entries, 1)
+		require.Contains(t, tb.entries, "path")
+		require.Equal(t, tb.entries["path"].ID, oid)
+		require.Equal(t, tb.entries["path"].Mode, os.FileMode(0o755))
+	})
+}
+
+func TestTreeBuilderRemove(t *testing.T) {
+	t.Run("should remove elements", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err, "failed loading a repo")
+		require.NotNil(t, r, "repository should not be nil")
+
+		tb := r.NewTreeBuilder()
+
+		// insert a blob
+		oid, err := plumbing.NewOidFromStr("642480605b8b0fd464ab5762e044269cf29a60a3")
+		require.NoError(t, err)
+		err = tb.Insert("blob", oid, 0o644)
+		require.NoError(t, err)
+
+		// insert a tree
+		oid, err = plumbing.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
+		require.NoError(t, err)
+		err = tb.Insert("tree", oid, 0o755)
+		require.NoError(t, err)
+		assert.Len(t, tb.entries, 2)
+
+		// Remove the blob
+		tb.Remove("blob")
+		assert.Len(t, tb.entries, 1)
+
+		// Remove the tree
+		tb.Remove("tree")
+		assert.Len(t, tb.entries, 0)
+	})
+
+	t.Run("should pass removing something that doesn't exists", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err, "failed loading a repo")
+		require.NotNil(t, r, "repository should not be nil")
+
+		tb := r.NewTreeBuilder()
+
+		// Remove the blob
+		assert.Len(t, tb.entries, 0)
+		tb.Remove("blob")
+		assert.Len(t, tb.entries, 0)
+
+		// Let's test with an allocated map
+		tb.entries = map[string]*object.TreeEntry{}
+		tb.Remove("blob")
+		assert.Len(t, tb.entries, 0)
+	})
+}
+
+func TestTreeBuilderWrite(t *testing.T) {
+	t.Run("should return 4b825dc642cb6eb9a060e54bf8d69288fbee4904 for empty tree", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err, "failed loading a repo")
+		require.NotNil(t, r, "repository should not be nil")
+
+		tb := r.NewTreeBuilder()
+		tree, err := tb.Write()
+		require.NoError(t, err)
+		assert.Empty(t, tree.Entries)
+		assert.Equal(t, "4b825dc642cb6eb9a060e54bf8d69288fbee4904", tree.ID.String())
+	})
+
+	t.Run("should persist tree", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err, "failed loading a repo")
+		require.NotNil(t, r, "repository should not be nil")
+
+		tb := r.NewTreeBuilder()
+
+		// insert a blob
+		oid, err := plumbing.NewOidFromStr("642480605b8b0fd464ab5762e044269cf29a60a3")
+		require.NoError(t, err)
+		err = tb.Insert("blob", oid, 0o644)
+		require.NoError(t, err)
+
+		// insert a tree
+		oid, err = plumbing.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
+		require.NoError(t, err)
+		err = tb.Insert("tree", oid, 0o755)
+		require.NoError(t, err)
+
+		tree, err := tb.Write()
+		require.NoError(t, err)
+		assert.Len(t, tb.entries, 2)
+
+		p := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPath, tree.ID.String()[0:2], tree.ID.String()[2:])
+		_, err = os.Stat(p)
+		require.NoError(t, err)
+	})
+
+	t.Run("building an existing tree should return the same data", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err, "failed loading a repo")
+		require.NotNil(t, r, "repository should not be nil")
+
+		oid, err := plumbing.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
+		require.NoError(t, err)
+		o, err := r.GetObject(oid)
+		require.NoError(t, err)
+		tree, err := o.AsTree()
+		require.NoError(t, err)
+
+		// Create a tree and write it right away
+		tb := r.NewTreeBuilderFromTree(tree)
+		newTree, err := tb.Write()
+		require.NoError(t, err)
+		assert.Equal(t, tree.ID.String(), newTree.ID.String())
+		assert.Equal(t, tree.Entries, newTree.Entries)
+	})
+}

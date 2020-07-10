@@ -122,7 +122,7 @@ func TestGetObject(t *testing.T) {
 			entryOid, err := plumbing.NewOidFromStr("215559fe5053786726a19571fe0fd3d76c7fcfcd")
 			require.NoError(t, err)
 			entry := &object.TreeEntry{
-				Mode: "100644",
+				Mode: 0o100644,
 				ID:   entryOid,
 				Path: "const.go",
 			}

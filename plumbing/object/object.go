@@ -6,6 +6,7 @@ import (
 	"compress/zlib"
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/Nivl/git-go/internal/readutil"
@@ -17,6 +18,11 @@ var (
 	// ErrObjectUnknown represents an error thrown when encoutering an
 	// unknown object
 	ErrObjectUnknown = errors.New("invalid object type")
+
+	// ErrObjectInvalid represents an error thrown when an object contains
+	// unexpected data or when the wrong object is provided to a method.
+	// Ex. Inserting a ObjectDeltaOFS in a tree
+	ErrObjectInvalid = errors.New("invalid object")
 
 	// ErrTreeInvalid represents an error thrown when parsing an invalid
 	// tree object
@@ -162,8 +168,14 @@ func (o *Object) Compress() (data []byte, err error) {
 
 	// get the SHA of the file
 	fileContent := w.Bytes()
-	o.ID = plumbing.NewOidFromContent(fileContent)
+	newID := plumbing.NewOidFromContent(fileContent)
 
+	// We check if the ID of the object has changed
+	if !o.ID.IsZero() && o.ID != newID {
+		return nil, xerrors.Errorf("shasum missmatch, expected %s, got %s: %w", o.ID.String(), newID.String(), ErrObjectInvalid)
+	}
+
+	o.ID = newID
 	compressedContent := new(bytes.Buffer)
 	zw := zlib.NewWriter(compressedContent)
 	defer func() {
@@ -188,7 +200,7 @@ func (o *Object) AsBlob() *Blob {
 
 // AsTree parses the object as Tree
 //
-// A commit has following format:
+// A tree has following format:
 //
 // {octal_mode} {path_name}\0{encoded_sha}
 //
@@ -199,29 +211,32 @@ func (o *Object) AsTree() (*Tree, error) {
 
 	objData := o.Bytes()
 	offset := 0
-	var err error
-	for {
+	for i := 1; ; i++ {
 		entry := &TreeEntry{}
 		data := readutil.ReadTo(objData[offset:], ' ')
 		if len(data) == 0 {
-			return nil, xerrors.Errorf("could not retrieve the mode: %w", ErrTreeInvalid)
+			return nil, xerrors.Errorf("could not retrieve the mode of entry %d: %w", i, ErrTreeInvalid)
 		}
 		offset += len(data) + 1 // +1 for the space
-		entry.Mode = string(data)
+		mode, err := strconv.ParseInt(string(data), 8, 32)
+		if err != nil {
+			return nil, xerrors.Errorf("could not parse mode of entry %d: %w", i, err)
+		}
+		entry.Mode = os.FileMode(mode)
 
 		data = readutil.ReadTo(objData[offset:], 0)
 		if len(data) == 0 {
-			return nil, xerrors.Errorf("could not retrieve the path: %w", ErrTreeInvalid)
+			return nil, xerrors.Errorf("could not retrieve the path of entry %d: %w", i, ErrTreeInvalid)
 		}
 		offset += len(data) + 1 // +1 for the \0
 		entry.Path = string(data)
 
 		if offset+20 > len(objData) {
-			return nil, xerrors.Errorf("not enough space to retrieve the ID: %w", ErrTreeInvalid)
+			return nil, xerrors.Errorf("not enough space to retrieve the ID of entry %d: %w", i, ErrTreeInvalid)
 		}
 		entry.ID, err = plumbing.NewOidFromHex(objData[offset : offset+20])
 		if err != nil {
-			return nil, xerrors.Errorf("%s: %w", ErrTreeInvalid.Error(), err)
+			return nil, xerrors.Errorf("invalid SHA for entry %d (%s): %w", i, err.Error(), ErrTreeInvalid)
 		}
 		offset += 20
 
@@ -231,7 +246,7 @@ func (o *Object) AsTree() (*Tree, error) {
 		}
 	}
 
-	return NewTree(o.ID, entries), nil
+	return NewTreeWithID(o.ID, entries), nil
 }
 
 // AsCommit parses the object as Commit
