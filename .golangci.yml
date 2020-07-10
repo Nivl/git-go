@@ -91,3 +91,4 @@ linters-settings:
     disabled-checks:
       - sloppyReassign
       - emptyFallthrough
+      - octalLiteral
