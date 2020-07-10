@@ -19,8 +19,9 @@ var (
 	// unknown object
 	ErrObjectUnknown = errors.New("invalid object type")
 
-	// ErrObjectInvalid represents an error thrown when parsing an invalid
-	// object
+	// ErrObjectInvalid represents an error thrown when an object contains
+	// unexpected data or when the wrong object is provided to a method.
+	// Ex. Inserting a ObjectDeltaOFS in a tree
 	ErrObjectInvalid = errors.New("invalid object")
 
 	// ErrTreeInvalid represents an error thrown when parsing an invalid
@@ -199,7 +200,7 @@ func (o *Object) AsBlob() *Blob {
 
 // AsTree parses the object as Tree
 //
-// A commit has following format:
+// A tree has following format:
 //
 // {octal_mode} {path_name}\0{encoded_sha}
 //
@@ -245,7 +246,7 @@ func (o *Object) AsTree() (*Tree, error) {
 		}
 	}
 
-	return NewTree(o.ID, entries), nil
+	return NewTreeWithID(o.ID, entries), nil
 }
 
 // AsCommit parses the object as Commit
