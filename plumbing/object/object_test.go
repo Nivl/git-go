@@ -107,8 +107,8 @@ func TestAsTree(t *testing.T) {
 		tree, err := o.AsTree()
 		require.NoError(t, err)
 
-		assert.Equal(t, o.ID, tree.ID)
-		assert.Len(t, tree.Entries, 13)
+		assert.Equal(t, o.ID, tree.ID())
+		assert.Len(t, tree.Entries(), 13)
 	})
 }
 

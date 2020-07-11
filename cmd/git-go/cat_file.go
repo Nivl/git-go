@@ -128,7 +128,7 @@ func catFileCmd(out io.Writer, cfg *config, p catFileParams) error {
 			if err != nil {
 				return xerrors.Errorf("could not get tree %w", err)
 			}
-			for _, e := range tree.Entries {
+			for _, e := range tree.Entries() {
 				// TODO(melvin): add the type
 				fmt.Fprintf(out, "%06o %s\t%s\n", e.Mode, e.ID.String(), e.Path)
 			}

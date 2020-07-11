@@ -14,7 +14,7 @@ import (
 // TreeBuilder is used to build trees
 type TreeBuilder struct {
 	Backend backend.Backend
-	entries map[string]*object.TreeEntry
+	entries map[string]object.TreeEntry
 }
 
 // NewTreeBuilder create a new empty tree builder
@@ -27,8 +27,8 @@ func (r *Repository) NewTreeBuilder() *TreeBuilder {
 // NewTreeBuilderFromTree create a new tree builder containing the
 // entries of another tree
 func (r *Repository) NewTreeBuilderFromTree(t *object.Tree) *TreeBuilder {
-	entries := map[string]*object.TreeEntry{}
-	for _, e := range t.Entries {
+	entries := map[string]object.TreeEntry{}
+	for _, e := range t.Entries() {
 		entries[e.Path] = e
 	}
 
@@ -49,14 +49,14 @@ func (tb *TreeBuilder) Insert(path string, oid plumbing.Oid, mode os.FileMode) e
 		return xerrors.Errorf("unexpected object %s: %w", o.Type().String(), object.ErrObjectInvalid)
 	}
 
-	e := &object.TreeEntry{
+	e := object.TreeEntry{
 		Mode: mode,
 		Path: path,
 		ID:   oid,
 	}
 
 	if tb.entries == nil {
-		tb.entries = map[string]*object.TreeEntry{}
+		tb.entries = map[string]object.TreeEntry{}
 	}
 	tb.entries[path] = e
 	return nil
@@ -82,7 +82,7 @@ func (tb *TreeBuilder) Write() (*object.Tree, error) {
 	}
 	sort.Strings(paths)
 
-	entries := make([]*object.TreeEntry, 0, len(paths))
+	entries := make([]object.TreeEntry, 0, len(paths))
 	for i, p := range paths {
 		fmt.Println(i, p)
 		entries = append(entries, tb.entries[p])
@@ -96,6 +96,5 @@ func (tb *TreeBuilder) Write() (*object.Tree, error) {
 	if _, err := tb.Backend.WriteObject(o); err != nil {
 		return nil, xerrors.Errorf("could not write the object to the odb: %w", err)
 	}
-	t.ID = o.ID
-	return t, nil
+	return object.NewTreeWithID(o.ID, t.Entries()), nil
 }

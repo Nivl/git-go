@@ -207,12 +207,12 @@ func (o *Object) AsBlob() *Blob {
 // Note:
 // - a Tree may have multiple entries
 func (o *Object) AsTree() (*Tree, error) {
-	entries := []*TreeEntry{}
+	entries := []TreeEntry{}
 
 	objData := o.Bytes()
 	offset := 0
 	for i := 1; ; i++ {
-		entry := &TreeEntry{}
+		entry := TreeEntry{}
 		data := readutil.ReadTo(objData[offset:], ' ')
 		if len(data) == 0 {
 			return nil, xerrors.Errorf("could not retrieve the mode of entry %d: %w", i, ErrTreeInvalid)
