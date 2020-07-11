@@ -16,12 +16,12 @@ func NewBlob(o *Object) *Blob {
 
 // IsPersisted returns whether the object has been written to the odb
 func (b *Blob) IsPersisted() bool {
-	return b.rawObject.ID != plumbing.NullOid
+	return b.rawObject.id != plumbing.NullOid
 }
 
 // ID returns the blob's ID
 func (b *Blob) ID() plumbing.Oid {
-	return b.rawObject.ID
+	return b.rawObject.id
 }
 
 // Bytes returns the blob's contents

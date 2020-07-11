@@ -10,8 +10,9 @@ import (
 
 // Tree represents a git tree object
 type Tree struct {
-	ID      plumbing.Oid
-	Entries []*TreeEntry
+	id plumbing.Oid
+	// we don't use pointers to make sure entries are immutable
+	entries []TreeEntry
 }
 
 // TreeEntry represents an entry inside a git tree
@@ -22,18 +23,32 @@ type TreeEntry struct {
 }
 
 // NewTree returns a new tree with the given entries
-func NewTree(entries []*TreeEntry) *Tree {
+func NewTree(entries []TreeEntry) *Tree {
 	return &Tree{
-		Entries: entries,
+		entries: entries,
 	}
 }
 
 // NewTreeWithID returns a new tree
-func NewTreeWithID(id plumbing.Oid, entries []*TreeEntry) *Tree {
+func NewTreeWithID(id plumbing.Oid, entries []TreeEntry) *Tree {
 	return &Tree{
-		ID:      id,
-		Entries: entries,
+		id:      id,
+		entries: entries,
 	}
+}
+
+// Entries returns a copy of tree entries
+func (t *Tree) Entries() []TreeEntry {
+	out := make([]TreeEntry, len(t.entries))
+	copy(out, t.entries)
+	return out
+}
+
+// ID returns the object's ID
+// plumbing.NullOid is returned if the object doesn't have
+// an ID yet
+func (t *Tree) ID() plumbing.Oid {
+	return t.id
 }
 
 // ToObject returns an Object representing the tree
@@ -45,7 +60,7 @@ func (t *Tree) ToObject() (*Object, error) {
 	// The format of an tree entry is:
 	// {octal_mode} {path_name}\0{encoded_sha}
 	// A tree object is only composed of a bunch of entries back to back
-	for _, e := range t.Entries {
+	for _, e := range t.entries {
 		// Write the mode
 		buf.WriteString(strconv.FormatInt(int64(e.Mode), 8))
 		// add space
@@ -58,8 +73,8 @@ func (t *Tree) ToObject() (*Object, error) {
 		buf.Write(e.ID.Bytes())
 	}
 
-	if t.ID != plumbing.NullOid {
-		return NewWithID(t.ID, TypeTree, buf.Bytes()), nil
+	if t.id != plumbing.NullOid {
+		return NewWithID(t.id, TypeTree, buf.Bytes()), nil
 	}
 	return New(TypeTree, buf.Bytes()), nil
 }

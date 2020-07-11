@@ -105,7 +105,7 @@ func NewTypeFromString(t string) (Type, error) {
 // (kind of an optimized git database) located in .git/objects/packs
 // https://git-scm.com/book/en/v2/Git-Internals-Git-Objects
 type Object struct {
-	ID      plumbing.Oid
+	id      plumbing.Oid
 	typ     Type
 	content []byte
 }
@@ -114,7 +114,7 @@ type Object struct {
 // The Object ID won't be calculated until Compress() is called
 func New(typ Type, content []byte) *Object {
 	return &Object{
-		ID:      plumbing.NullOid,
+		id:      plumbing.NullOid,
 		typ:     typ,
 		content: content,
 	}
@@ -123,10 +123,15 @@ func New(typ Type, content []byte) *Object {
 // NewWithID creates a new git object of the given type with the given ID
 func NewWithID(id plumbing.Oid, typ Type, content []byte) *Object {
 	return &Object{
-		ID:      id,
+		id:      id,
 		typ:     typ,
 		content: content,
 	}
+}
+
+// ID returns the ID of the object.
+func (o *Object) ID() plumbing.Oid {
+	return o.id
 }
 
 // Size returns the size of the object
@@ -171,11 +176,11 @@ func (o *Object) Compress() (data []byte, err error) {
 	newID := plumbing.NewOidFromContent(fileContent)
 
 	// We check if the ID of the object has changed
-	if !o.ID.IsZero() && o.ID != newID {
-		return nil, xerrors.Errorf("shasum missmatch, expected %s, got %s: %w", o.ID.String(), newID.String(), ErrObjectInvalid)
+	if !o.id.IsZero() && o.id != newID {
+		return nil, xerrors.Errorf("shasum missmatch, expected %s, got %s: %w", o.id.String(), newID.String(), ErrObjectInvalid)
 	}
 
-	o.ID = newID
+	o.id = newID
 	compressedContent := new(bytes.Buffer)
 	zw := zlib.NewWriter(compressedContent)
 	defer func() {
@@ -207,12 +212,12 @@ func (o *Object) AsBlob() *Blob {
 // Note:
 // - a Tree may have multiple entries
 func (o *Object) AsTree() (*Tree, error) {
-	entries := []*TreeEntry{}
+	entries := []TreeEntry{}
 
 	objData := o.Bytes()
 	offset := 0
 	for i := 1; ; i++ {
-		entry := &TreeEntry{}
+		entry := TreeEntry{}
 		data := readutil.ReadTo(objData[offset:], ' ')
 		if len(data) == 0 {
 			return nil, xerrors.Errorf("could not retrieve the mode of entry %d: %w", i, ErrTreeInvalid)
@@ -246,7 +251,7 @@ func (o *Object) AsTree() (*Tree, error) {
 		}
 	}
 
-	return NewTreeWithID(o.ID, entries), nil
+	return NewTreeWithID(o.id, entries), nil
 }
 
 // AsCommit parses the object as Commit
@@ -273,7 +278,7 @@ func (o *Object) AsCommit() (*Commit, error) {
 	if o.typ != TypeCommit {
 		return nil, xerrors.Errorf("type %s is not a commit", o.typ)
 	}
-	ci := &Commit{ID: o.ID}
+	ci := &Commit{ID: o.id}
 	offset := 0
 	objData := o.Bytes()
 	for {

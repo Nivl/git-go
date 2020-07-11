@@ -183,7 +183,7 @@ func TestTreeBuilderRemove(t *testing.T) {
 		assert.Len(t, tb.entries, 0)
 
 		// Let's test with an allocated map
-		tb.entries = map[string]*object.TreeEntry{}
+		tb.entries = map[string]object.TreeEntry{}
 		tb.Remove("blob")
 		assert.Len(t, tb.entries, 0)
 	})
@@ -203,8 +203,8 @@ func TestTreeBuilderWrite(t *testing.T) {
 		tb := r.NewTreeBuilder()
 		tree, err := tb.Write()
 		require.NoError(t, err)
-		assert.Empty(t, tree.Entries)
-		assert.Equal(t, "4b825dc642cb6eb9a060e54bf8d69288fbee4904", tree.ID.String())
+		assert.Empty(t, tree.Entries())
+		assert.Equal(t, "4b825dc642cb6eb9a060e54bf8d69288fbee4904", tree.ID().String())
 	})
 
 	t.Run("should persist tree", func(t *testing.T) {
@@ -235,7 +235,7 @@ func TestTreeBuilderWrite(t *testing.T) {
 		require.NoError(t, err)
 		assert.Len(t, tb.entries, 2)
 
-		p := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPath, tree.ID.String()[0:2], tree.ID.String()[2:])
+		p := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPath, tree.ID().String()[0:2], tree.ID().String()[2:])
 		_, err = os.Stat(p)
 		require.NoError(t, err)
 	})
@@ -261,7 +261,7 @@ func TestTreeBuilderWrite(t *testing.T) {
 		tb := r.NewTreeBuilderFromTree(tree)
 		newTree, err := tb.Write()
 		require.NoError(t, err)
-		assert.Equal(t, tree.ID.String(), newTree.ID.String())
-		assert.Equal(t, tree.Entries, newTree.Entries)
+		assert.Equal(t, tree.ID().String(), newTree.ID().String())
+		assert.Equal(t, tree.Entries(), newTree.Entries())
 	})
 }
