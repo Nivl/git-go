@@ -30,7 +30,7 @@ func TestTreeToObject(t *testing.T) {
 
 		newO, err := tree.ToObject()
 		require.NoError(t, err)
-		require.Equal(t, o.ID, newO.ID)
+		require.Equal(t, o.ID(), newO.ID())
 		require.Equal(t, o.Bytes(), newO.Bytes())
 	})
 }

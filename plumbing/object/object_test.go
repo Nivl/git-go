@@ -68,7 +68,7 @@ commit footer`)
 		ci, err := o.AsCommit()
 		require.NoError(t, err)
 
-		assert.Equal(t, o.ID, ci.ID)
+		assert.Equal(t, o.ID(), ci.ID)
 		assert.Equal(t, "f0b577644139c6e04216d82f1dd4a5a63addeeca", ci.TreeID.String(), "invalid tree id")
 
 		require.NotNil(t, ci.Author, "author missing")
@@ -107,7 +107,7 @@ func TestAsTree(t *testing.T) {
 		tree, err := o.AsTree()
 		require.NoError(t, err)
 
-		assert.Equal(t, o.ID, tree.ID())
+		assert.Equal(t, o.ID(), tree.ID())
 		assert.Len(t, tree.Entries(), 13)
 	})
 }
@@ -124,7 +124,7 @@ func TestAsBlob(t *testing.T) {
 	o := object.NewWithID(sha, object.TypeBlob, content)
 	blob := o.AsBlob()
 
-	assert.Equal(t, o.ID, blob.ID())
+	assert.Equal(t, o.ID(), blob.ID())
 	assert.Equal(t, o.Size(), blob.Size())
 	assert.Equal(t, o.Bytes(), blob.Bytes())
 }
@@ -319,7 +319,7 @@ func TestCompress(t *testing.T) {
 		o := object.NewWithID(treeID, object.TypeTree, content)
 		_, err = o.Compress()
 		require.NoError(t, err)
-		assert.Equal(t, treeSHA, o.ID.String())
+		assert.Equal(t, treeSHA, o.ID().String())
 
 		// TODO(melvin): Test the compressed object
 	})

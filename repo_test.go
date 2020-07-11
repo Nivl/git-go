@@ -112,7 +112,7 @@ func TestRepositoryGetObject(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, obj)
 
-		assert.Equal(t, oid, obj.ID)
+		assert.Equal(t, oid, obj.ID())
 		assert.Equal(t, object.TypeBlob, obj.Type())
 		assert.Equal(t, "package packfile", string(obj.Bytes()[:16]))
 	})
@@ -133,7 +133,7 @@ func TestRepositoryGetObject(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, obj)
 
-		assert.Equal(t, oid, obj.ID)
+		assert.Equal(t, oid, obj.ID())
 		assert.Equal(t, object.TypeCommit, obj.Type())
 	})
 }

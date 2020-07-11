@@ -59,6 +59,6 @@ func hashObjectCmd(out io.Writer, filePath, typ string) error {
 		return err
 	}
 
-	fmt.Fprintln(out, o.ID.String())
+	fmt.Fprintln(out, o.ID().String())
 	return nil
 }

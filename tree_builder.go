@@ -1,7 +1,6 @@
 package git
 
 import (
-	"fmt"
 	"os"
 	"sort"
 
@@ -77,14 +76,12 @@ func (tb *TreeBuilder) Write() (*object.Tree, error) {
 	// they just loop over the keys instead of the entries
 	paths := make([]string, 0, len(tb.entries))
 	for p := range tb.entries {
-		fmt.Println("found path: ", p)
 		paths = append(paths, p)
 	}
 	sort.Strings(paths)
 
 	entries := make([]object.TreeEntry, 0, len(paths))
-	for i, p := range paths {
-		fmt.Println(i, p)
+	for _, p := range paths {
 		entries = append(entries, tb.entries[p])
 	}
 
@@ -96,5 +93,5 @@ func (tb *TreeBuilder) Write() (*object.Tree, error) {
 	if _, err := tb.Backend.WriteObject(o); err != nil {
 		return nil, xerrors.Errorf("could not write the object to the odb: %w", err)
 	}
-	return object.NewTreeWithID(o.ID, t.Entries()), nil
+	return object.NewTreeWithID(o.ID(), t.Entries()), nil
 }

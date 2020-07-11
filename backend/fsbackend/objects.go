@@ -197,7 +197,7 @@ func (b *Backend) WriteObject(o *object.Object) (plumbing.Oid, error) {
 	}
 
 	// Persist the data on disk
-	sha := o.ID.String()
+	sha := o.ID().String()
 	p := b.looseObjectPath(sha)
 
 	// TODO(melvin): Make sure the object doesn't already exist anywhere
@@ -212,5 +212,5 @@ func (b *Backend) WriteObject(o *object.Object) (plumbing.Oid, error) {
 		return plumbing.NullOid, xerrors.Errorf("could not persist object %s at path %s: %w", sha, p, err)
 	}
 
-	return o.ID, nil
+	return o.ID(), nil
 }

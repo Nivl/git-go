@@ -32,7 +32,7 @@ func TestObject(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, obj)
 
-		assert.Equal(t, oid, obj.ID)
+		assert.Equal(t, oid, obj.ID())
 		assert.Equal(t, object.TypeBlob, obj.Type())
 		assert.Equal(t, "package packfile", string(obj.Bytes()[:16]))
 	})
@@ -51,7 +51,7 @@ func TestObject(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, obj)
 
-		assert.Equal(t, oid, obj.ID)
+		assert.Equal(t, oid, obj.ID())
 		assert.Equal(t, object.TypeCommit, obj.Type())
 	})
 
@@ -109,10 +109,10 @@ func TestWriteObject(t *testing.T) {
 		assert.Equal(t, o.Type(), storedO.Type(), "invalid type")
 		assert.Equal(t, o.Size(), storedO.Size(), "invalid size")
 		assert.Equal(t, o.Bytes(), storedO.Bytes(), "invalid size")
-		assert.NotEqual(t, plumbing.NullOid, storedO.ID, "invalid ID")
+		assert.NotEqual(t, plumbing.NullOid, storedO.ID(), "invalid ID")
 
 		// make sure the blob was persisted
-		p := filepath.Join(dotGitPath, gitpath.ObjectsPath, storedO.ID.String()[0:2], storedO.ID.String()[2:])
+		p := filepath.Join(dotGitPath, gitpath.ObjectsPath, storedO.ID().String()[0:2], storedO.ID().String()[2:])
 		_, err = os.Stat(p)
 		require.NoError(t, err)
 	})
