@@ -1,0 +1,32 @@
+titleOnly: true
+types:
+  - feat
+  - fix
+  - docs
+  - refactor
+  - perf
+  - test
+  - build
+  - ci
+  - chore
+  - revert
+scopes:
+  - object
+  - objects
+  - packfile
+  - index
+  - tree
+  - commit
+  - tag
+  - blob
+  - references
+  - reference
+  - ref
+  - plumbing
+  - backend
+  - git-basics
+  - loose-objects
+  - pakfile-index
+  - repo
+  - repository
+  - cli
