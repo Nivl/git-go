@@ -1,17 +1,5 @@
 > ⚠️ This document is just a quick introduction/glossary that tries to explain things the easy way and might not be 100% accurate for the sake of staying easily readable and not too verbose.
 
-If you ever wonder what a git command does internally, you can add `GIT_TRACE=1` in front of it.
-
-Ex.:
-
-```
-❯ GIT_TRACE=1 git branch
-19:42:49.324029 git.c:439               trace: built-in: git branch
-19:42:49.328964 run-command.c:663       trace: run_command: unset GIT_PAGER_IN_USE; LV=-c 'diff-so-fancy | less --tabs=4 -RFX'
-19:42:49.858665 git.c:439               trace: built-in: git config --list
-* master
-```
-
 ## Useful links
 
 - https://git-scm.com/book/en/v2/
@@ -208,3 +196,37 @@ The working tree is basically your file system. When you open a file in your cod
 
 - `git status` to see what changed in the index (section `Changes to be committed`, the changes will appear in green if you have colors enabled).
 - `git reset HEAD <file>` can be used to remove files from the index without impacting the working tree.
+
+## Debugging and reverse engineering
+
+### Trace a git cli command
+
+If you ever wonder what a git command does internally, you can add `GIT_TRACE=1` in front of it.
+
+Ex.:
+
+```
+❯ GIT_TRACE=1 git branch
+19:42:49.324029 git.c:439               trace: built-in: git branch
+19:42:49.328964 run-command.c:663       trace: run_command: unset GIT_PAGER_IN_USE; LV=-c 'diff-so-fancy | less --tabs=4 -RFX'
+19:42:49.858665 git.c:439               trace: built-in: git config --list
+* master
+```
+
+### Extract a raw object
+
+Source: https://stackoverflow.com/a/52193441/382879
+
+You can extract a raw object using python. For example, to extract the
+(loose) object `03455d53eeaf35edc36e983ba877b2bc5242b49a` you can do:
+
+```
+python -c "import zlib,sys;sys.stdout.write(zlib.decompress(sys.stdin.read()))" < .git/objects/03/455d53eeaf35edc36e983ba877b2bc5242b49a
+```
+
+Now if the object has a binary format, you most likely want to inspect its
+data using hexdump:
+
+```
+python -c "import zlib,sys;sys.stdout.write(zlib.decompress(sys.stdin.read()))" < .git/objects/03/455d53eeaf35edc36e983ba877b2bc5242b49a | hexdump -C
+```
