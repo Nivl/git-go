@@ -124,6 +124,33 @@ func TestHasObject(t *testing.T) {
 
 		_, found = b.cache.Get(oid)
 		require.True(t, found, "the sha should have been added to the cache")
+
+		// should get the data from the cache
+		exists, err = b.HasObject(oid)
+		require.NoError(t, err)
+		assert.True(t, exists, "the sha should exist")
+	})
+
+	t.Run("invalid cache should be replaced", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+
+		oid, err := plumbing.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
+		require.NoError(t, err)
+
+		b.cache.Add(oid, "not a valid value")
+
+		exists, err := b.HasObject(oid)
+		require.NoError(t, err)
+		assert.True(t, exists, "the sha should exist")
+
+		o, found := b.cache.Get(oid)
+		require.True(t, found, "the sha should have been added to the cache")
+		require.IsType(t, &object.Object{}, o)
 	})
 }
 
