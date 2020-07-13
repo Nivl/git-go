@@ -9,6 +9,7 @@ import (
 
 	"github.com/Nivl/git-go/backend"
 	"github.com/Nivl/git-go/internal/gitpath"
+	"github.com/golang/groupcache/lru"
 	"golang.org/x/xerrors"
 )
 
@@ -17,13 +18,15 @@ var _ backend.Backend = (*Backend)(nil)
 
 // Backend is a Backend implementation that uses the filesystem to store data
 type Backend struct {
-	root string
+	root  string
+	cache *lru.Cache
 }
 
 // New returns a new Backend object
 func New(dotGitPath string) *Backend {
 	return &Backend{
-		root: dotGitPath,
+		root:  dotGitPath,
+		cache: lru.New(1000),
 	}
 }
 
