@@ -236,5 +236,9 @@ func (b *Backend) WriteObject(o *object.Object) (plumbing.Oid, error) {
 		return plumbing.NullOid, xerrors.Errorf("could not persist object %s at path %s: %w", sha, p, err)
 	}
 
+	// add the object to the cache
+	if b.cache != nil {
+		b.cache.Add(o.ID(), o)
+	}
 	return o.ID(), nil
 }
