@@ -23,7 +23,7 @@ type Signature struct {
 	Time  time.Time
 }
 
-func (s *Signature) String() string {
+func (s Signature) String() string {
 	return fmt.Sprintf("%s <%s> %d %s", s.Name, s.Email, s.Time.Unix(), s.Time.Format("-0700"))
 }
 
@@ -98,16 +98,53 @@ func NewSignatureFromBytes(b []byte) (*Signature, error) {
 
 // Commit represents a commit object
 type Commit struct {
-	Author    *Signature
-	Committer *Signature
+	author    Signature
+	committer Signature
 
-	GPGSig  string
-	Message string
+	gpgSig  string
+	message string
 
-	// SHA of all the parent commits, if any
-	// A regular commit usually has 1 parent, a merge commit has 2 or more,
-	// and the very first commit has none
-	ParentIDs []plumbing.Oid
-	ID        plumbing.Oid
-	TreeID    plumbing.Oid
+	parentIDs []plumbing.Oid
+	id        plumbing.Oid
+	treeID    plumbing.Oid
+}
+
+// ID returns the SHA of the commit object
+func (c *Commit) ID() plumbing.Oid {
+	return c.id
+}
+
+// Author returns the Signature of the person that made the changes
+func (c *Commit) Author() Signature {
+	return c.author
+}
+
+// Committer returns the Signature of the person that created the commit
+func (c *Commit) Committer() Signature {
+	return c.committer
+}
+
+// Message returns the commit's message
+func (c *Commit) Message() string {
+	return c.message
+}
+
+// ParentIDs returns the list of SHA of the parent commits (if any)
+// - The first commit of an orphan branch has 0 parents
+// - A regular commit or the result of a fast-forward merge has 1 parent
+// - A true merge (no fast-forward) as 2 or more parents
+func (c *Commit) ParentIDs() []plumbing.Oid {
+	out := make([]plumbing.Oid, len(c.parentIDs))
+	copy(out, c.parentIDs)
+	return out
+}
+
+// TreeID return the SHA of the commit's tree
+func (c *Commit) TreeID() plumbing.Oid {
+	return c.treeID
+}
+
+// GPGSig return the GPG signature of the commit, if any
+func (c *Commit) GPGSig() string {
+	return c.gpgSig
 }
