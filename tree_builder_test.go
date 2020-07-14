@@ -60,7 +60,7 @@ func TestTreeBuilderInsert(t *testing.T) {
 				require.NoError(t, err)
 
 				tb := r.NewTreeBuilder()
-				err = tb.Insert("somewhere", oid, 0o644)
+				err = tb.Insert("somewhere", oid, object.ModeFile)
 				if tc.expectedError != nil {
 					require.Error(t, err)
 					assert.True(t, xerrors.Is(err, tc.expectedError))
@@ -87,13 +87,13 @@ func TestTreeBuilderInsert(t *testing.T) {
 		// insert a blob
 		oid, err := plumbing.NewOidFromStr("642480605b8b0fd464ab5762e044269cf29a60a3")
 		require.NoError(t, err)
-		err = tb.Insert("blob", oid, 0o644)
+		err = tb.Insert("blob", oid, object.ModeFile)
 		require.NoError(t, err)
 
 		// insert a tree
 		oid, err = plumbing.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
 		require.NoError(t, err)
-		err = tb.Insert("tree", oid, 0o755)
+		err = tb.Insert("tree", oid, object.ModeDirectory)
 		require.NoError(t, err)
 
 		assert.Len(t, tb.entries, 2)
@@ -114,19 +114,38 @@ func TestTreeBuilderInsert(t *testing.T) {
 		// insert a blob
 		oid, err := plumbing.NewOidFromStr("642480605b8b0fd464ab5762e044269cf29a60a3")
 		require.NoError(t, err)
-		err = tb.Insert("path", oid, 0o644)
+		err = tb.Insert("path", oid, object.ModeFile)
 		require.NoError(t, err)
 
 		// insert a tree
 		oid, err = plumbing.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
 		require.NoError(t, err)
-		err = tb.Insert("path", oid, 0o755)
+		err = tb.Insert("path", oid, object.ModeDirectory)
 		require.NoError(t, err)
 
 		assert.Len(t, tb.entries, 1)
 		require.Contains(t, tb.entries, "path")
 		require.Equal(t, tb.entries["path"].ID, oid)
-		require.Equal(t, tb.entries["path"].Mode, os.FileMode(0o755))
+		require.Equal(t, tb.entries["path"].Mode, object.ModeDirectory)
+	})
+
+	t.Run("should fail with invalid mode", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err, "failed loading a repo")
+		require.NotNil(t, r, "repository should not be nil")
+
+		tb := r.NewTreeBuilder()
+
+		// insert a blob
+		oid, err := plumbing.NewOidFromStr("642480605b8b0fd464ab5762e044269cf29a60a3")
+		require.NoError(t, err)
+		err = tb.Insert("path", oid, 0o644)
+		require.Error(t, err)
 	})
 }
 
@@ -146,13 +165,13 @@ func TestTreeBuilderRemove(t *testing.T) {
 		// insert a blob
 		oid, err := plumbing.NewOidFromStr("642480605b8b0fd464ab5762e044269cf29a60a3")
 		require.NoError(t, err)
-		err = tb.Insert("blob", oid, 0o644)
+		err = tb.Insert("blob", oid, object.ModeFile)
 		require.NoError(t, err)
 
 		// insert a tree
 		oid, err = plumbing.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
 		require.NoError(t, err)
-		err = tb.Insert("tree", oid, 0o755)
+		err = tb.Insert("tree", oid, object.ModeDirectory)
 		require.NoError(t, err)
 		assert.Len(t, tb.entries, 2)
 
@@ -222,13 +241,13 @@ func TestTreeBuilderWrite(t *testing.T) {
 		// insert a blob
 		oid, err := plumbing.NewOidFromStr("642480605b8b0fd464ab5762e044269cf29a60a3")
 		require.NoError(t, err)
-		err = tb.Insert("blob", oid, 0o644)
+		err = tb.Insert("blob", oid, object.ModeFile)
 		require.NoError(t, err)
 
 		// insert a tree
 		oid, err = plumbing.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
 		require.NoError(t, err)
-		err = tb.Insert("tree", oid, 0o755)
+		err = tb.Insert("tree", oid, object.ModeDirectory)
 		require.NoError(t, err)
 
 		tree, err := tb.Write()

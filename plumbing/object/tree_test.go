@@ -3,7 +3,6 @@ package object_test
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -49,7 +48,7 @@ func TestTree(t *testing.T) {
 
 		tree := object.NewTreeWithID(treeID, []object.TreeEntry{
 			{
-				Mode: os.FileMode(0o644),
+				Mode: object.ModeFile,
 				ID:   blobID,
 				Path: "blob",
 			},
@@ -61,4 +60,38 @@ func TestTree(t *testing.T) {
 		tree.Entries()[0].Path = "nope"
 		assert.Equal(t, "blob", tree.Entries()[0].Path, "should not update entry Path")
 	})
+}
+
+func TestTreeObjectMode(t *testing.T) {
+	testCases := []struct {
+		desc    string
+		mode    object.TreeObjectMode
+		isValid bool
+	}{
+		{
+			desc:    "0o644 should not be valid",
+			mode:    0o644,
+			isValid: false,
+		},
+		{
+			desc:    "ModeFile should be valid",
+			mode:    object.ModeFile,
+			isValid: true,
+		},
+		{
+			desc:    "0o100755 should be valid",
+			mode:    0o100755,
+			isValid: true,
+		},
+	}
+	for i, tc := range testCases {
+		tc := tc
+		i := i
+		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
+			t.Parallel()
+
+			out := tc.mode.IsValid()
+			assert.Equal(t, tc.isValid, out)
+		})
+	}
 }

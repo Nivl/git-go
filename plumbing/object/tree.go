@@ -2,11 +2,39 @@ package object
 
 import (
 	"bytes"
-	"os"
 	"strconv"
 
 	"github.com/Nivl/git-go/plumbing"
 )
+
+// TreeObjectMode represents the mode of an object inside a tree
+// Non-standard modes (like 0o100664) are not supported
+type TreeObjectMode int32
+
+const (
+	// ModeFile represents the mode to use for a regular file
+	ModeFile TreeObjectMode = 0o100644
+	// ModeExecutable represents the mode to use for a executable file
+	ModeExecutable TreeObjectMode = 0o100755
+	// ModeDirectory represents the mode to use for a directory
+	ModeDirectory TreeObjectMode = 0o040000
+	// ModeSymLink represents the mode to use for a symbolic link
+	ModeSymLink TreeObjectMode = 0o120000
+	// ModeGitLink represents the mode to use for a gitlink (submodule)
+	ModeGitLink TreeObjectMode = 0o160000
+)
+
+// IsValid returns whether the mode is a supported mode or not
+func (m TreeObjectMode) IsValid() bool {
+	// we use a switch because any missing value will be detected
+	// by our linter
+	switch m {
+	case ModeFile, ModeExecutable, ModeDirectory, ModeSymLink, ModeGitLink:
+		return true
+	default:
+		return false
+	}
+}
 
 // Tree represents a git tree object
 type Tree struct {
@@ -17,7 +45,7 @@ type Tree struct {
 
 // TreeEntry represents an entry inside a git tree
 type TreeEntry struct {
-	Mode os.FileMode
+	Mode TreeObjectMode
 	ID   plumbing.Oid
 	Path string
 }

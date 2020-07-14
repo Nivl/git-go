@@ -1,7 +1,6 @@
 package git
 
 import (
-	"os"
 	"sort"
 
 	"github.com/Nivl/git-go/backend"
@@ -38,7 +37,11 @@ func (r *Repository) NewTreeBuilderFromTree(t *object.Tree) *TreeBuilder {
 }
 
 // Insert inserts a new object in a tree
-func (tb *TreeBuilder) Insert(path string, oid plumbing.Oid, mode os.FileMode) error {
+func (tb *TreeBuilder) Insert(path string, oid plumbing.Oid, mode object.TreeObjectMode) error {
+	if !mode.IsValid() {
+		return xerrors.Errorf("invalid mode %o", mode)
+	}
+
 	o, err := tb.Backend.Object(oid)
 	if err != nil {
 		return xerrors.Errorf("cannot verify object: %w", err)
