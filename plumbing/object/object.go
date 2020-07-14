@@ -6,7 +6,6 @@ import (
 	"compress/zlib"
 	"errors"
 	"fmt"
-	"os"
 	"strconv"
 
 	"github.com/Nivl/git-go/internal/readutil"
@@ -227,7 +226,7 @@ func (o *Object) AsTree() (*Tree, error) {
 		if err != nil {
 			return nil, xerrors.Errorf("could not parse mode of entry %d: %w", i, err)
 		}
-		entry.Mode = os.FileMode(mode)
+		entry.Mode = TreeObjectMode(mode)
 
 		data = readutil.ReadTo(objData[offset:], 0)
 		if len(data) == 0 {
