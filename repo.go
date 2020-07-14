@@ -185,3 +185,18 @@ func (r *Repository) NewBlob(data []byte) (*object.Blob, error) {
 	}
 	return object.NewBlob(o), nil
 }
+
+// CommitOptions represents all the optional data needed to create a commit
+type CommitOptions struct {
+	ParentsID []plumbing.Oid
+	Message   string
+	GPGSig    string
+	// Committer represent the person creating the commit.
+	// If not provided, the author will be used as committer
+	Committer object.Signature
+}
+
+// NewCommit creates, stores, and returns a new Commit object
+func (r *Repository) NewCommit(tree *object.Tree, author object.Signature, opts CommitOptions) (*object.Tree, error) {
+	return nil, nil
+}
