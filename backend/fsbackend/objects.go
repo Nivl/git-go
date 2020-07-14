@@ -18,6 +18,14 @@ import (
 
 // Object returns the object that has given oid
 func (b *Backend) Object(oid plumbing.Oid) (*object.Object, error) {
+	if b.cache != nil {
+		if cachedO, found := b.cache.Get(oid); found {
+			if o, valid := cachedO.(*object.Object); valid {
+				return o, nil
+			}
+		}
+	}
+
 	// First let's look for loose objects
 	o, err := b.looseObject(oid)
 	if err == nil {
@@ -31,6 +39,9 @@ func (b *Backend) Object(oid plumbing.Oid) (*object.Object, error) {
 	o, err = b.objectFromPackfile(oid)
 	if err != nil {
 		return nil, err
+	}
+	if b.cache != nil {
+		b.cache.Add(oid, o)
 	}
 	return o, nil
 }
@@ -127,6 +138,7 @@ func (b *Backend) objectFromPackfile(oid plumbing.Oid) (*object.Object, error) {
 
 	// TODO(melvin): parse MIDX files instead
 	// MIDX file: https://git-scm.com/docs/multi-pack-index
+	// https://github.com/Nivl/git-go/issues/13
 	packfiles := []string{}
 	err := filepath.Walk(p, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -183,10 +195,15 @@ func (b *Backend) objectFromPackfile(oid plumbing.Oid) (*object.Object, error) {
 }
 
 // HasObject returns whether an object exists in the odb
-func (b *Backend) HasObject(plumbing.Oid) (bool, error) {
-	// TODO(melvin): add LRU cache so it's fine to call
-	// HasObject() then Object() without perf hit
-	panic("not implemented")
+func (b *Backend) HasObject(oid plumbing.Oid) (bool, error) {
+	_, err := b.Object(oid)
+	if err == nil {
+		return true, nil
+	}
+	if xerrors.Is(err, plumbing.ErrObjectNotFound) {
+		return false, nil
+	}
+	return false, xerrors.Errorf("could not get object: %w", err)
 }
 
 // WriteObject adds an object to the odb
@@ -196,11 +213,18 @@ func (b *Backend) WriteObject(o *object.Object) (plumbing.Oid, error) {
 		return plumbing.NullOid, xerrors.Errorf("could not compress object: %w", err)
 	}
 
+	// Make sure the object doesn't already exist anywhere
+	found, err := b.HasObject(o.ID())
+	if err != nil {
+		return plumbing.NullOid, xerrors.Errorf("could not check if object (%s) already exists: %w", o.ID().String(), err)
+	}
+	if found {
+		return o.ID(), nil
+	}
+
 	// Persist the data on disk
 	sha := o.ID().String()
 	p := b.looseObjectPath(sha)
-
-	// TODO(melvin): Make sure the object doesn't already exist anywhere
 
 	// We need to make sure the dest dir exists
 	dest := filepath.Dir(p)
@@ -212,5 +236,9 @@ func (b *Backend) WriteObject(o *object.Object) (plumbing.Oid, error) {
 		return plumbing.NullOid, xerrors.Errorf("could not persist object %s at path %s: %w", sha, p, err)
 	}
 
+	// add the object to the cache
+	if b.cache != nil {
+		b.cache.Add(o.ID(), o)
+	}
 	return o.ID(), nil
 }
