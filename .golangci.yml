@@ -92,3 +92,4 @@ linters-settings:
       - sloppyReassign
       - emptyFallthrough
       - octalLiteral
+      - hugeParam # disabled because we pass options objects by copy
