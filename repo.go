@@ -186,17 +186,54 @@ func (r *Repository) NewBlob(data []byte) (*object.Blob, error) {
 	return object.NewBlob(o), nil
 }
 
-// CommitOptions represents all the optional data needed to create a commit
-type CommitOptions struct {
-	ParentsID []plumbing.Oid
-	Message   string
-	GPGSig    string
-	// Committer represent the person creating the commit.
-	// If not provided, the author will be used as committer
-	Committer object.Signature
+// NewCommit creates, stores, and returns a new Commit object
+// The head of the reference $refname will be updated to this
+// new commit.
+// An empty refName will create a detached (loose) commit
+// If the reference doesn't exists, it will be created
+func (r *Repository) NewCommit(refname string, tree *object.Tree, author object.Signature, opts *object.CommitOptions) (*object.Commit, error) {
+	// We first validate the parents actually exists
+	for _, id := range opts.ParentsID {
+		parent, err := r.dotGit.Object(id)
+		if err != nil {
+			return nil, xerrors.Errorf("could not retrieve parent %s: %w", id.String(), err)
+		}
+		if parent.Type() != object.TypeCommit {
+			return nil, xerrors.Errorf("invalid type for parent %s. got %d, expected %d", id.String(), parent.Type(), parent.Type())
+		}
+	}
+
+	c := object.NewCommit(tree, author, opts)
+	o, err := c.ToObject()
+	if err != nil {
+		return nil, xerrors.Errorf("could not parse the commit to an object: %w", err)
+	}
+	if _, err = r.dotGit.WriteObject(o); err != nil {
+		return nil, xerrors.Errorf("could not write the object to the odb: %w", err)
+	}
+
+	// If we have a refname then the
+	if refname != "" {
+		ref := plumbing.NewReference(refname, o.ID())
+		if err = r.dotGit.WriteReference(ref); err != nil {
+			return nil, xerrors.Errorf("could not update the HEAD of %s: %w", refname, err)
+		}
+	}
+
+	return o.AsCommit()
 }
 
-// NewCommit creates, stores, and returns a new Commit object
-func (r *Repository) NewCommit(tree *object.Tree, author object.Signature, opts CommitOptions) (*object.Tree, error) {
-	return nil, nil
+// NewDetachedCommit creates, stores, and returns a new Commit object
+// not attached to any reference
+func (r *Repository) NewDetachedCommit(tree *object.Tree, author object.Signature, opts *object.CommitOptions) (*object.Commit, error) {
+	return r.NewCommit("", tree, author, opts)
+}
+
+// GetCommit returns the commit matching the given SHA
+func (r *Repository) GetCommit(oid plumbing.Oid) (*object.Commit, error) {
+	o, err := r.dotGit.Object(oid)
+	if err != nil {
+		return nil, err
+	}
+	return o.AsCommit()
 }

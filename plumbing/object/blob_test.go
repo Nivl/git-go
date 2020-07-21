@@ -22,7 +22,7 @@ func TestBlob(t *testing.T) {
 		assert.False(t, blob.IsPersisted())
 		assert.Equal(t, plumbing.NullOid, blob.ID())
 
-		assert.Equal(t, o, blob.AsObject())
+		assert.Equal(t, o, blob.ToObject())
 	})
 
 	t.Run(".BytesCopy() should return immutable data", func(t *testing.T) {

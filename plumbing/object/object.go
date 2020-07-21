@@ -316,13 +316,13 @@ func (o *Object) AsCommit() (*Commit, error) {
 			if err != nil {
 				return nil, xerrors.Errorf("could not parse signature [%s]: %w", string(kv[1]), err)
 			}
-			ci.author = *sig
+			ci.author = sig
 		case "committer":
 			sig, err := NewSignatureFromBytes(kv[1])
 			if err != nil {
 				return nil, xerrors.Errorf("could not parse signature [%s]: %w", string(kv[1]), err)
 			}
-			ci.committer = *sig
+			ci.committer = sig
 		case "gpgsig":
 			begin := string(kv[1]) + "\n"
 			end := "-----END PGP SIGNATURE-----\n"

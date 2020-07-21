@@ -41,7 +41,7 @@ func (b *Blob) Size() int {
 	return len(b.rawObject.content)
 }
 
-// AsObject returns the Blob's underlying Object
-func (b *Blob) AsObject() *Object {
+// ToObject returns the Blob's underlying Object
+func (b *Blob) ToObject() *Object {
 	return b.rawObject
 }
