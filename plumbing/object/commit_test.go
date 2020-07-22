@@ -130,3 +130,46 @@ func TestNewSignatureFromBytes(t *testing.T) {
 		})
 	}
 }
+
+func TestSignatureIsZero(t *testing.T) {
+	testCases := []struct {
+		desc   string
+		sig    object.Signature
+		isZero bool
+	}{
+		{
+			desc:   "empty object should be zero",
+			sig:    object.Signature{},
+			isZero: true,
+		},
+		{
+			desc: "sign with a name should not be zero",
+			sig: object.Signature{
+				Name: "tester",
+			},
+			isZero: false,
+		},
+		{
+			desc: "sign with an email should not be zero",
+			sig: object.Signature{
+				Email: "tester@domain.tld",
+			},
+			isZero: false,
+		},
+		{
+			desc: "sign with a time should not be zero",
+			sig: object.Signature{
+				Time: time.Now(),
+			},
+			isZero: false,
+		},
+	}
+	for i, tc := range testCases {
+		tc := tc
+		i := i
+		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tc.isZero, tc.sig.IsZero())
+		})
+	}
+}
