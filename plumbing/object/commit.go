@@ -187,9 +187,9 @@ func (c *Commit) GPGSig() string {
 }
 
 // ToObject returns the underlying Object
-func (c *Commit) ToObject() (*Object, error) {
+func (c *Commit) ToObject() *Object {
 	if c.rawObject != nil {
-		return c.rawObject, nil
+		return c.rawObject
 	}
 
 	// Quick reminder that the Write* methods on bytes.Buffer never fails,
@@ -221,7 +221,7 @@ func (c *Commit) ToObject() (*Object, error) {
 
 	buf.WriteString(c.message)
 	if c.id != plumbing.NullOid {
-		return NewWithID(c.id, TypeCommit, buf.Bytes()), nil
+		return NewWithID(c.id, TypeCommit, buf.Bytes())
 	}
-	return New(TypeCommit, buf.Bytes()), nil
+	return New(TypeCommit, buf.Bytes())
 }

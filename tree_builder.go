@@ -89,10 +89,7 @@ func (tb *TreeBuilder) Write() (*object.Tree, error) {
 	}
 
 	t := object.NewTree(entries)
-	o, err := t.ToObject()
-	if err != nil {
-		return nil, xerrors.Errorf("could not parse the tree to an object: %w", err)
-	}
+	o := t.ToObject()
 	if _, err := tb.Backend.WriteObject(o); err != nil {
 		return nil, xerrors.Errorf("could not write the object to the odb: %w", err)
 	}

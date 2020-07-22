@@ -204,18 +204,15 @@ func (r *Repository) NewCommit(refname string, tree *object.Tree, author object.
 	}
 
 	c := object.NewCommit(tree, author, opts)
-	o, err := c.ToObject()
-	if err != nil {
-		return nil, xerrors.Errorf("could not parse the commit to an object: %w", err)
-	}
-	if _, err = r.dotGit.WriteObject(o); err != nil {
+	o := c.ToObject()
+	if _, err := r.dotGit.WriteObject(o); err != nil {
 		return nil, xerrors.Errorf("could not write the object to the odb: %w", err)
 	}
 
 	// If we have a refname then the
 	if refname != "" {
 		ref := plumbing.NewReference(refname, o.ID())
-		if err = r.dotGit.WriteReference(ref); err != nil {
+		if err := r.dotGit.WriteReference(ref); err != nil {
 			return nil, xerrors.Errorf("could not update the HEAD of %s: %w", refname, err)
 		}
 	}
