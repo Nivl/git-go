@@ -277,7 +277,10 @@ func (o *Object) AsCommit() (*Commit, error) {
 	if o.typ != TypeCommit {
 		return nil, xerrors.Errorf("type %s is not a commit", o.typ)
 	}
-	ci := &Commit{id: o.id}
+	ci := &Commit{
+		id:        o.id,
+		rawObject: o,
+	}
 	offset := 0
 	objData := o.Bytes()
 	for {
@@ -325,10 +328,10 @@ func (o *Object) AsCommit() (*Commit, error) {
 			ci.committer = sig
 		case "gpgsig":
 			begin := string(kv[1]) + "\n"
-			end := "-----END PGP SIGNATURE-----\n"
+			end := "-----END PGP SIGNATURE-----"
 			i := bytes.Index(objData[offset:], []byte(end))
 			ci.gpgSig = begin + string(objData[offset:offset+i]) + end
-			offset += len(end) + i
+			offset += len(end) + i + 1 // +1 to count the \n
 		}
 	}
 

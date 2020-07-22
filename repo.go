@@ -177,6 +177,24 @@ func (r *Repository) GetObject(oid plumbing.Oid) (*object.Object, error) {
 	return r.dotGit.Object(oid)
 }
 
+// GetCommit returns the commit matching the given SHA
+func (r *Repository) GetCommit(oid plumbing.Oid) (*object.Commit, error) {
+	o, err := r.dotGit.Object(oid)
+	if err != nil {
+		return nil, err
+	}
+	return o.AsCommit()
+}
+
+// GetTree returns the tree matching the given SHA
+func (r *Repository) GetTree(oid plumbing.Oid) (*object.Tree, error) {
+	o, err := r.dotGit.Object(oid)
+	if err != nil {
+		return nil, err
+	}
+	return o.AsTree()
+}
+
 // NewBlob creates, stores, and returns a new Blob object
 func (r *Repository) NewBlob(data []byte) (*object.Blob, error) {
 	o := object.New(object.TypeBlob, data)
@@ -203,7 +221,7 @@ func (r *Repository) NewCommit(refname string, tree *object.Tree, author object.
 		}
 	}
 
-	c := object.NewCommit(tree, author, opts)
+	c := object.NewCommit(tree.ID(), author, opts)
 	o := c.ToObject()
 	if _, err := r.dotGit.WriteObject(o); err != nil {
 		return nil, xerrors.Errorf("could not write the object to the odb: %w", err)
@@ -224,13 +242,4 @@ func (r *Repository) NewCommit(refname string, tree *object.Tree, author object.
 // not attached to any reference
 func (r *Repository) NewDetachedCommit(tree *object.Tree, author object.Signature, opts *object.CommitOptions) (*object.Commit, error) {
 	return r.NewCommit("", tree, author, opts)
-}
-
-// GetCommit returns the commit matching the given SHA
-func (r *Repository) GetCommit(oid plumbing.Oid) (*object.Commit, error) {
-	o, err := r.dotGit.Object(oid)
-	if err != nil {
-		return nil, err
-	}
-	return o.AsCommit()
 }

@@ -129,9 +129,9 @@ type Commit struct {
 }
 
 // NewCommit creates a new Commit object
-func NewCommit(tree *Tree, author Signature, opts *CommitOptions) *Commit {
+func NewCommit(treeID plumbing.Oid, author Signature, opts *CommitOptions) *Commit {
 	c := &Commit{
-		treeID:    tree.ID(),
+		treeID:    treeID,
 		author:    author,
 		committer: opts.Committer,
 		message:   opts.Message,
@@ -213,15 +213,14 @@ func (c *Commit) ToObject() *Object {
 	buf.WriteString(c.Committer().String())
 	buf.WriteRune('\n')
 
-	buf.WriteString("gpgsig ")
-	buf.WriteString(c.gpgSig)
-	buf.WriteRune('\n')
+	if c.gpgSig != "" {
+		buf.WriteString("gpgsig ")
+		buf.WriteString(c.gpgSig)
+		buf.WriteRune('\n')
+	}
 
 	buf.WriteRune('\n')
 
 	buf.WriteString(c.message)
-	if c.id != plumbing.NullOid {
-		return NewWithID(c.id, TypeCommit, buf.Bytes())
-	}
 	return New(TypeCommit, buf.Bytes())
 }

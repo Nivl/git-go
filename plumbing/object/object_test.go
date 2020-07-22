@@ -103,8 +103,7 @@ commit footer`)
  /mZenHRSs/LNfYEwfNhJy6tPGAI9to/O15UHVRS1nneuacMSIyjxYg/kfhmSZKoz
  o9fizcxapx+JwVYHviO6wVdSbgS2aO1u9/whof3Fkm+/Luvo0J4=
  =/Zem
- -----END PGP SIGNATURE-----
-`
+ -----END PGP SIGNATURE-----`
 		assert.Equal(t, expectedGPG, ci.GPGSig(), "invalid gpgsig")
 
 		expectedMessage := `commit head

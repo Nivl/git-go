@@ -5,6 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Nivl/git-go"
+	"github.com/Nivl/git-go/internal/testhelper"
+	"github.com/Nivl/git-go/plumbing"
 	"github.com/Nivl/git-go/plumbing/object"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -172,4 +175,138 @@ func TestSignatureIsZero(t *testing.T) {
 			assert.Equal(t, tc.isZero, tc.sig.IsZero())
 		})
 	}
+}
+
+func TestNewCommit(t *testing.T) {
+	t.Run("NewCommit with all data sets", func(t *testing.T) {
+		t.Parallel()
+
+		// Find a tree
+		treeOID, err := plumbing.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
+		require.NoError(t, err)
+
+		// Find a commit
+		parentID, err := plumbing.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
+		require.NoError(t, err)
+
+		ci := object.NewCommit(treeOID, object.NewSignature("author", "email"), &object.CommitOptions{
+			ParentsID: []plumbing.Oid{parentID},
+			Message:   "message",
+			GPGSig:    "gpgsig",
+			Committer: object.NewSignature("committer", "commiter@domain.tld"),
+		})
+		assert.Equal(t, treeOID, ci.TreeID())
+		assert.Equal(t, "message", ci.Message())
+		assert.Equal(t, "gpgsig", ci.GPGSig())
+		assert.Equal(t, "committer", ci.Committer().Name)
+		assert.Equal(t, "author", ci.Author().Name)
+		assert.Equal(t, []plumbing.Oid{parentID}, ci.ParentIDs())
+	})
+
+	t.Run("NewCommit with no committer should use the author", func(t *testing.T) {
+		t.Parallel()
+
+		// Find a tree
+		treeOID, err := plumbing.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
+		require.NoError(t, err)
+
+		ci := object.NewCommit(treeOID, object.NewSignature("author", "email"), &object.CommitOptions{})
+		assert.Equal(t, "author", ci.Author().Name)
+	})
+}
+
+func TestToObject(t *testing.T) {
+	t.Run("duplicating a commit should work", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+		r, err := git.OpenRepository(repoPath)
+		require.NoError(t, err)
+
+		// Find a commit
+		commitOID, err := plumbing.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
+		require.NoError(t, err)
+		commit, err := r.GetCommit(commitOID)
+		require.NoError(t, err)
+
+		ci := object.NewCommit(commit.TreeID(), commit.Author(), &object.CommitOptions{
+			ParentsID: commit.ParentIDs(),
+			Message:   commit.Message(),
+			GPGSig:    commit.GPGSig(),
+			Committer: commit.Committer(),
+		})
+
+		o := ci.ToObject()
+		_, err = o.Compress()
+		require.NoError(t, err)
+		// We're expecting the same ID
+		assert.Equal(t, commit.ID(), o.ID())
+
+		ci2, err := o.AsCommit()
+		require.NoError(t, err)
+
+		// We're expecting the same content
+		assert.Equal(t, commit.Message(), ci2.Message())
+		assert.Equal(t, commit.Committer().Name, ci2.Committer().Name)
+		assert.Equal(t, commit.ParentIDs(), ci2.ParentIDs())
+		assert.Equal(t, commit.GPGSig(), ci2.GPGSig())
+		assert.Equal(t, commit.TreeID(), ci2.TreeID())
+	})
+
+	t.Run("ToObject should return the raw object", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+		r, err := git.OpenRepository(repoPath)
+		require.NoError(t, err)
+
+		// Find a commit
+		commitOID, err := plumbing.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
+		require.NoError(t, err)
+		commit, err := r.GetCommit(commitOID)
+		require.NoError(t, err)
+
+		o := commit.ToObject()
+		assert.Equal(t, commit.ID(), o.ID())
+
+		ci, err := o.AsCommit()
+		require.NoError(t, err)
+
+		assert.Equal(t, commit.Message(), ci.Message())
+		assert.Equal(t, commit.Committer().Name, ci.Committer().Name)
+		assert.Equal(t, commit.ParentIDs(), ci.ParentIDs())
+		assert.Equal(t, commit.GPGSig(), ci.GPGSig())
+		assert.Equal(t, commit.TreeID(), ci.TreeID())
+	})
+
+	t.Run("happy path on NewCommit", func(t *testing.T) {
+		t.Parallel()
+
+		// Find a tree
+		treeOID, err := plumbing.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
+		require.NoError(t, err)
+
+		// Find a commit
+		parentID, err := plumbing.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
+		require.NoError(t, err)
+
+		ci := object.NewCommit(treeOID, object.NewSignature("author", "email"), &object.CommitOptions{
+			ParentsID: []plumbing.Oid{parentID},
+			Message:   "message",
+			GPGSig:    "-----BEGIN PGP SIGNATURE-----\n\ndata\n-----END PGP SIGNATURE-----",
+			Committer: object.NewSignature("committer", "commiter@domain.tld"),
+		})
+
+		o := ci.ToObject()
+		ci2, err := o.AsCommit()
+		require.NoError(t, err)
+
+		assert.Equal(t, ci.Message(), ci2.Message())
+		assert.Equal(t, ci.Committer().Name, ci2.Committer().Name)
+		assert.Equal(t, ci.ParentIDs(), ci2.ParentIDs())
+		assert.Equal(t, ci.GPGSig(), ci2.GPGSig())
+		assert.Equal(t, ci.TreeID(), ci2.TreeID())
+	})
 }
