@@ -1,3 +1,3 @@
-// package ginternals contains objects and methods to work on git
+// Package ginternals contains objects and methods to work on git
 // internals
 package ginternals
