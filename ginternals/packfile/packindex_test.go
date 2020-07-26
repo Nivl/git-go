@@ -4,10 +4,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/packfile"
 	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/testhelper"
-	"github.com/Nivl/git-go/plumbing"
-	"github.com/Nivl/git-go/plumbing/packfile"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/xerrors"
@@ -64,7 +64,7 @@ func TestGetObjectOffset(t *testing.T) {
 		}()
 
 		t.Run("should work with valid oid", func(t *testing.T) {
-			oid, err := plumbing.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
+			oid, err := ginternals.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
 			require.NoError(t, err)
 			offset, err := index.GetObjectOffset(oid)
 			require.NoError(t, err)
@@ -72,11 +72,11 @@ func TestGetObjectOffset(t *testing.T) {
 		})
 
 		t.Run("should fail with invalid oid", func(t *testing.T) {
-			oid, err := plumbing.NewOidFromStr("1acdadc2a420225783794fbffd51e2e137a69646")
+			oid, err := ginternals.NewOidFromStr("1acdadc2a420225783794fbffd51e2e137a69646")
 			require.NoError(t, err)
 			_, err = index.GetObjectOffset(oid)
 			require.Error(t, err)
-			require.True(t, xerrors.Is(err, plumbing.ErrObjectNotFound))
+			require.True(t, xerrors.Is(err, ginternals.ErrObjectNotFound))
 		})
 	})
 }

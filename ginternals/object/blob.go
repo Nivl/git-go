@@ -1,6 +1,6 @@
 package object
 
-import "github.com/Nivl/git-go/plumbing"
+import "github.com/Nivl/git-go/ginternals"
 
 // Blob represents a blob object
 type Blob struct {
@@ -16,11 +16,11 @@ func NewBlob(o *Object) *Blob {
 
 // IsPersisted returns whether the object has been written to the odb
 func (b *Blob) IsPersisted() bool {
-	return b.rawObject.id != plumbing.NullOid
+	return b.rawObject.id != ginternals.NullOid
 }
 
 // ID returns the blob's ID
-func (b *Blob) ID() plumbing.Oid {
+func (b *Blob) ID() ginternals.Oid {
 	return b.rawObject.id
 }
 

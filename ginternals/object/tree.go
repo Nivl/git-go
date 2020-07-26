@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"strconv"
 
-	"github.com/Nivl/git-go/plumbing"
+	"github.com/Nivl/git-go/ginternals"
 )
 
 // TreeObjectMode represents the mode of an object inside a tree
@@ -38,7 +38,7 @@ func (m TreeObjectMode) IsValid() bool {
 
 // Tree represents a git tree object
 type Tree struct {
-	id plumbing.Oid
+	id ginternals.Oid
 	// we don't use pointers to make sure entries are immutable
 	entries []TreeEntry
 }
@@ -46,7 +46,7 @@ type Tree struct {
 // TreeEntry represents an entry inside a git tree
 type TreeEntry struct {
 	Mode TreeObjectMode
-	ID   plumbing.Oid
+	ID   ginternals.Oid
 	Path string
 }
 
@@ -58,7 +58,7 @@ func NewTree(entries []TreeEntry) *Tree {
 }
 
 // NewTreeWithID returns a new tree
-func NewTreeWithID(id plumbing.Oid, entries []TreeEntry) *Tree {
+func NewTreeWithID(id ginternals.Oid, entries []TreeEntry) *Tree {
 	return &Tree{
 		id:      id,
 		entries: entries,
@@ -73,9 +73,9 @@ func (t *Tree) Entries() []TreeEntry {
 }
 
 // ID returns the object's ID
-// plumbing.NullOid is returned if the object doesn't have
+// ginternals.NullOid is returned if the object doesn't have
 // an ID yet
-func (t *Tree) ID() plumbing.Oid {
+func (t *Tree) ID() ginternals.Oid {
 	return t.id
 }
 
@@ -101,7 +101,7 @@ func (t *Tree) ToObject() *Object {
 		buf.Write(e.ID.Bytes())
 	}
 
-	if t.id != plumbing.NullOid {
+	if t.id != ginternals.NullOid {
 		return NewWithID(t.id, TypeTree, buf.Bytes())
 	}
 	return New(TypeTree, buf.Bytes())

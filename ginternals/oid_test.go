@@ -1,10 +1,10 @@
-package plumbing_test
+package ginternals_test
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/Nivl/git-go/plumbing"
+	"github.com/Nivl/git-go/ginternals"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/xerrors"
@@ -31,7 +31,7 @@ func TestNewOidFromStr(t *testing.T) {
 			desc:          "invalid size should fail",
 			id:            "0eaf96ff79d8f61958aaefe163620d952606",
 			expectError:   true,
-			expectedError: plumbing.ErrInvalidOid,
+			expectedError: ginternals.ErrInvalidOid,
 		},
 	}
 	for i, tc := range testCases {
@@ -40,12 +40,12 @@ func TestNewOidFromStr(t *testing.T) {
 		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
 			t.Parallel()
 
-			oid, err := plumbing.NewOidFromStr(tc.id)
+			oid, err := ginternals.NewOidFromStr(tc.id)
 			if tc.expectError {
 				require.Error(t, err)
-				assert.Equal(t, plumbing.NullOid, oid)
+				assert.Equal(t, ginternals.NullOid, oid)
 				if tc.expectedError != nil {
-					assert.True(t, xerrors.Is(err, plumbing.ErrInvalidOid), "invalid error returned: %s", err.Error())
+					assert.True(t, xerrors.Is(err, ginternals.ErrInvalidOid), "invalid error returned: %s", err.Error())
 				}
 				return
 			}
@@ -76,7 +76,7 @@ func TestNewOidFromChars(t *testing.T) {
 			desc:          "invalid size should fail",
 			id:            []byte("0eaf96ff79d8f61958aaefe163620d952606"),
 			expectError:   true,
-			expectedError: plumbing.ErrInvalidOid,
+			expectedError: ginternals.ErrInvalidOid,
 		},
 	}
 	for i, tc := range testCases {
@@ -85,12 +85,12 @@ func TestNewOidFromChars(t *testing.T) {
 		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
 			t.Parallel()
 
-			oid, err := plumbing.NewOidFromChars(tc.id)
+			oid, err := ginternals.NewOidFromChars(tc.id)
 			if tc.expectError {
 				require.Error(t, err)
-				assert.Equal(t, plumbing.NullOid, oid)
+				assert.Equal(t, ginternals.NullOid, oid)
 				if tc.expectedError != nil {
-					assert.True(t, xerrors.Is(err, plumbing.ErrInvalidOid), "invalid error returned: %s", err.Error())
+					assert.True(t, xerrors.Is(err, ginternals.ErrInvalidOid), "invalid error returned: %s", err.Error())
 				}
 				return
 			}
@@ -118,7 +118,7 @@ func TestNewOidFromHex(t *testing.T) {
 			desc:          "invalid size should fail",
 			id:            []byte{0x0e, 0xaf, 0x96, 0x6f, 0xf7, 0x9d, 0x8f, 0x61, 0x95, 0x8a, 0xae, 0xfe, 0x16, 0x36, 0x20, 0xd9, 0x52, 0x60, 0x65},
 			expectError:   true,
-			expectedError: plumbing.ErrInvalidOid,
+			expectedError: ginternals.ErrInvalidOid,
 		},
 	}
 	for i, tc := range testCases {
@@ -127,12 +127,12 @@ func TestNewOidFromHex(t *testing.T) {
 		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
 			t.Parallel()
 
-			oid, err := plumbing.NewOidFromHex(tc.id)
+			oid, err := ginternals.NewOidFromHex(tc.id)
 			if tc.expectError {
 				require.Error(t, err)
-				assert.Equal(t, plumbing.NullOid, oid)
+				assert.Equal(t, ginternals.NullOid, oid)
 				if tc.expectedError != nil {
-					assert.True(t, xerrors.Is(err, plumbing.ErrInvalidOid), "invalid error returned: %s", err.Error())
+					assert.True(t, xerrors.Is(err, ginternals.ErrInvalidOid), "invalid error returned: %s", err.Error())
 				}
 				return
 			}
@@ -161,7 +161,7 @@ func TestNewOidFromContent(t *testing.T) {
 		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
 			t.Parallel()
 
-			oid := plumbing.NewOidFromContent(tc.content)
+			oid := ginternals.NewOidFromContent(tc.content)
 			assert.Equal(t, tc.expectedID, []byte(oid.String()))
 		})
 	}
@@ -193,7 +193,7 @@ func TestIsZero(t *testing.T) {
 			t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
 				t.Parallel()
 
-				sha, err := plumbing.NewOidFromStr(tc.sha)
+				sha, err := ginternals.NewOidFromStr(tc.sha)
 				require.NoError(t, err)
 				require.Equal(t, tc.isZero, sha.IsZero())
 			})
@@ -202,6 +202,6 @@ func TestIsZero(t *testing.T) {
 
 	t.Run("NullOid should be nul", func(t *testing.T) {
 		t.Parallel()
-		require.True(t, plumbing.NullOid.IsZero(), "NullOid should be Zero")
+		require.True(t, ginternals.NullOid.IsZero(), "NullOid should be Zero")
 	})
 }

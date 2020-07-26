@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/internal/readutil"
-	"github.com/Nivl/git-go/plumbing"
 	"golang.org/x/xerrors"
 )
 
@@ -104,7 +104,7 @@ func NewTypeFromString(t string) (Type, error) {
 // (kind of an optimized git database) located in .git/objects/packs
 // https://git-scm.com/book/en/v2/Git-Internals-Git-Objects
 type Object struct {
-	id      plumbing.Oid
+	id      ginternals.Oid
 	typ     Type
 	content []byte
 }
@@ -113,14 +113,14 @@ type Object struct {
 // The Object ID won't be calculated until Compress() is called
 func New(typ Type, content []byte) *Object {
 	return &Object{
-		id:      plumbing.NullOid,
+		id:      ginternals.NullOid,
 		typ:     typ,
 		content: content,
 	}
 }
 
 // NewWithID creates a new git object of the given type with the given ID
-func NewWithID(id plumbing.Oid, typ Type, content []byte) *Object {
+func NewWithID(id ginternals.Oid, typ Type, content []byte) *Object {
 	return &Object{
 		id:      id,
 		typ:     typ,
@@ -129,7 +129,7 @@ func NewWithID(id plumbing.Oid, typ Type, content []byte) *Object {
 }
 
 // ID returns the ID of the object.
-func (o *Object) ID() plumbing.Oid {
+func (o *Object) ID() ginternals.Oid {
 	return o.id
 }
 
@@ -172,7 +172,7 @@ func (o *Object) Compress() (data []byte, err error) {
 
 	// get the SHA of the file
 	fileContent := w.Bytes()
-	newID := plumbing.NewOidFromContent(fileContent)
+	newID := ginternals.NewOidFromContent(fileContent)
 
 	// We check if the ID of the object has changed
 	if !o.id.IsZero() && o.id != newID {
@@ -238,7 +238,7 @@ func (o *Object) AsTree() (*Tree, error) {
 		if offset+20 > len(objData) {
 			return nil, xerrors.Errorf("not enough space to retrieve the ID of entry %d: %w", i, ErrTreeInvalid)
 		}
-		entry.ID, err = plumbing.NewOidFromHex(objData[offset : offset+20])
+		entry.ID, err = ginternals.NewOidFromHex(objData[offset : offset+20])
 		if err != nil {
 			return nil, xerrors.Errorf("invalid SHA for entry %d (%s): %w", i, err.Error(), ErrTreeInvalid)
 		}
@@ -303,13 +303,13 @@ func (o *Object) AsCommit() (*Commit, error) {
 		kv := bytes.SplitN(line, []byte{' '}, 2)
 		switch string(kv[0]) {
 		case "tree":
-			oid, err := plumbing.NewOidFromChars(kv[1])
+			oid, err := ginternals.NewOidFromChars(kv[1])
 			if err != nil {
 				return nil, xerrors.Errorf("could not parse tree id %#v: %w", kv[1], err)
 			}
 			ci.treeID = oid
 		case "parent":
-			oid, err := plumbing.NewOidFromChars(kv[1])
+			oid, err := ginternals.NewOidFromChars(kv[1])
 			if err != nil {
 				return nil, xerrors.Errorf("could not parse parent id %#v: %w", kv[1], err)
 			}

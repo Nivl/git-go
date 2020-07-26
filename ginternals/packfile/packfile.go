@@ -11,8 +11,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Nivl/git-go/plumbing"
-	"github.com/Nivl/git-go/plumbing/object"
+	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/object"
 	"golang.org/x/xerrors"
 )
 
@@ -121,10 +121,10 @@ func NewFromFile(filePath string) (pack *Pack, err error) {
 
 // getRawObjectAt return the raw object located at the given offset,
 // including its base info if the object is a delta
-func (pck *Pack) getRawObjectAt(oid plumbing.Oid, objectOffset uint64) (o *object.Object, deltaBaseSHA plumbing.Oid, deltaBaseOffset uint64, err error) {
+func (pck *Pack) getRawObjectAt(oid ginternals.Oid, objectOffset uint64) (o *object.Object, deltaBaseSHA ginternals.Oid, deltaBaseOffset uint64, err error) {
 	_, err = pck.r.Seek(int64(objectOffset), io.SeekStart)
 	if err != nil {
-		return nil, plumbing.NullOid, 0, xerrors.Errorf("could not seek from 0 to object offset %d: %w", objectOffset, err)
+		return nil, ginternals.NullOid, 0, xerrors.Errorf("could not seek from 0 to object offset %d: %w", objectOffset, err)
 	}
 	buf := bufio.NewReader(pck.r)
 
@@ -151,7 +151,7 @@ func (pck *Pack) getRawObjectAt(oid plumbing.Oid, objectOffset uint64) (o *objec
 	// Total: 10 bytes
 	metadata, err := buf.Peek(10)
 	if err != nil {
-		return nil, plumbing.NullOid, 0, xerrors.Errorf("could not get object meta: %w", err)
+		return nil, ginternals.NullOid, 0, xerrors.Errorf("could not get object meta: %w", err)
 	}
 
 	// We now need to extract the type of the object. The type is a number
@@ -164,7 +164,7 @@ func (pck *Pack) getRawObjectAt(oid plumbing.Oid, objectOffset uint64) (o *objec
 	// >> 4        : 0000_0TTT
 	objectType := object.Type((metadata[0] & 0b_0111_0000) >> 4)
 	if !objectType.IsValid() {
-		return nil, plumbing.NullOid, 0, xerrors.Errorf("unknown object type %d", objectType)
+		return nil, ginternals.NullOid, 0, xerrors.Errorf("unknown object type %d", objectType)
 	}
 
 	// The first part of the size is on the last 4 bits of the byte.
@@ -179,7 +179,7 @@ func (pck *Pack) getRawObjectAt(oid plumbing.Oid, objectOffset uint64) (o *objec
 	if pck.isMSBSet(metadata[0]) {
 		size, byteRead, err := pck.readSize(metadata[1:])
 		if err != nil {
-			return nil, plumbing.NullOid, 0, xerrors.Errorf("couldn't read object size: %w", err)
+			return nil, ginternals.NullOid, 0, xerrors.Errorf("couldn't read object size: %w", err)
 		}
 		metadataSize += byteRead
 		// we add 4bits to the right of $size, then we merge everything with |
@@ -194,7 +194,7 @@ func (pck *Pack) getRawObjectAt(oid plumbing.Oid, objectOffset uint64) (o *objec
 	// size), we now need to discard the right amount of bytes to move
 	// our internal cursor to the object data
 	if _, err = buf.Discard(metadataSize); err != nil {
-		return nil, plumbing.NullOid, 0, xerrors.Errorf("could not skip the metadata: %w", err)
+		return nil, ginternals.NullOid, 0, xerrors.Errorf("could not skip the metadata: %w", err)
 	}
 
 	// Some objects are deltified and need extra parsing before getting to
@@ -205,17 +205,17 @@ func (pck *Pack) getRawObjectAt(oid plumbing.Oid, objectOffset uint64) (o *objec
 	// Refs: This delta contains the SHA of the base object
 	// ofs: This Delta contains a negative offset to the base object
 	var baseObjectOffset uint64
-	var baseObjectOid plumbing.Oid
+	var baseObjectOid ginternals.Oid
 	switch objectType { //nolint:exhaustive // only 2 types have a special treatment
 	case object.ObjectDeltaRef:
-		baseObjectSHA := make([]byte, plumbing.OidSize)
+		baseObjectSHA := make([]byte, ginternals.OidSize)
 		_, err = buf.Read(baseObjectSHA)
 		if err != nil {
-			return nil, plumbing.NullOid, 0, xerrors.Errorf("could not get base object SHA: %w", err)
+			return nil, ginternals.NullOid, 0, xerrors.Errorf("could not get base object SHA: %w", err)
 		}
-		baseObjectOid, err = plumbing.NewOidFromHex(baseObjectSHA)
+		baseObjectOid, err = ginternals.NewOidFromHex(baseObjectSHA)
 		if err != nil {
-			return nil, plumbing.NullOid, 0, xerrors.Errorf("could not parse base object SHA %#v: %w", baseObjectSHA, err)
+			return nil, ginternals.NullOid, 0, xerrors.Errorf("could not parse base object SHA %#v: %w", baseObjectSHA, err)
 		}
 	case object.ObjectDeltaOFS:
 		// we're assuming the offset is no bigger than 9 bytes to fit an int64.
@@ -223,11 +223,11 @@ func (pck *Pack) getRawObjectAt(oid plumbing.Oid, objectOffset uint64) (o *objec
 		// so we need to read an extra byte
 		offsetParts, err := buf.Peek(9)
 		if err != nil {
-			return nil, plumbing.NullOid, 0, xerrors.Errorf("could not get base object offset: %w", err)
+			return nil, ginternals.NullOid, 0, xerrors.Errorf("could not get base object offset: %w", err)
 		}
 		offset, bytesRead, err := pck.readDeltaOffset(offsetParts)
 		if err != nil {
-			return nil, plumbing.NullOid, 0, xerrors.Errorf("couldn't read base object offset: %w", err)
+			return nil, ginternals.NullOid, 0, xerrors.Errorf("couldn't read base object offset: %w", err)
 		}
 		baseObjectOffset = objectOffset - offset
 
@@ -235,14 +235,14 @@ func (pck *Pack) getRawObjectAt(oid plumbing.Oid, objectOffset uint64) (o *objec
 		// now need to discard the right amount of bytes to move our internal
 		// cursor to the object data
 		if _, err = buf.Discard(bytesRead); err != nil {
-			return nil, plumbing.NullOid, 0, xerrors.Errorf("could not skip the offset: %w", err)
+			return nil, ginternals.NullOid, 0, xerrors.Errorf("could not skip the offset: %w", err)
 		}
 	}
 
 	// We can now fetch the actual data of the object, which is zlib encoded
 	zlibR, err := zlib.NewReader(buf)
 	if err != nil {
-		return nil, plumbing.NullOid, 0, xerrors.Errorf("could not get zlib reader: %w", err)
+		return nil, ginternals.NullOid, 0, xerrors.Errorf("could not get zlib reader: %w", err)
 	}
 	defer func() {
 		closeErr := zlibR.Close()
@@ -254,17 +254,17 @@ func (pck *Pack) getRawObjectAt(oid plumbing.Oid, objectOffset uint64) (o *objec
 	objectData := bytes.Buffer{}
 	_, err = io.Copy(&objectData, zlibR)
 	if err != nil {
-		return nil, plumbing.NullOid, 0, xerrors.Errorf("could not decompress: %w", err)
+		return nil, ginternals.NullOid, 0, xerrors.Errorf("could not decompress: %w", err)
 	}
 
 	if objectData.Len() != int(objectSize) {
-		return nil, plumbing.NullOid, 0, xerrors.Errorf("object size not valid. expecting %d, got %d", objectSize, objectData.Len())
+		return nil, ginternals.NullOid, 0, xerrors.Errorf("object size not valid. expecting %d, got %d", objectSize, objectData.Len())
 	}
 	return object.NewWithID(oid, objectType, objectData.Bytes()), baseObjectOid, baseObjectOffset, nil
 }
 
 // getObjectAt return the object located at the given offset
-func (pck *Pack) getObjectAt(oid plumbing.Oid, objectOffset uint64) (*object.Object, error) {
+func (pck *Pack) getObjectAt(oid ginternals.Oid, objectOffset uint64) (*object.Object, error) {
 	o, baseOid, baseOffset, err := pck.getRawObjectAt(oid, objectOffset)
 	if err != nil {
 		return nil, err
@@ -277,14 +277,14 @@ func (pck *Pack) getObjectAt(oid plumbing.Oid, objectOffset uint64) (*object.Obj
 
 	// we retrieve the base object
 	var base *object.Object
-	if baseOid != plumbing.NullOid {
+	if baseOid != ginternals.NullOid {
 		base, err = pck.GetObject(baseOid)
 		if err != nil {
 			return nil, xerrors.Errorf("could not get base object %s: %w", baseOid.String(), err)
 		}
 	} else {
 		// we pass NullOid because we don't know the SHA of the base
-		base, err = pck.getObjectAt(plumbing.NullOid, baseOffset)
+		base, err = pck.getObjectAt(ginternals.NullOid, baseOffset)
 		if err != nil {
 			return nil, xerrors.Errorf("could not get base object at offset %d: %w", baseOffset, err)
 		}
@@ -399,10 +399,10 @@ func (pck *Pack) getObjectAt(oid plumbing.Oid, objectOffset uint64) (*object.Obj
 }
 
 // GetObject returns the object that has the given SHA
-func (pck *Pack) GetObject(oid plumbing.Oid) (*object.Object, error) {
+func (pck *Pack) GetObject(oid ginternals.Oid) (*object.Object, error) {
 	objectOffset, err := pck.idx.GetObjectOffset(oid)
 	if err != nil {
-		if !errors.Is(err, plumbing.ErrObjectNotFound) {
+		if !errors.Is(err, ginternals.ErrObjectNotFound) {
 			return nil, xerrors.Errorf("could not get object index: %w", err)
 		}
 		return nil, err

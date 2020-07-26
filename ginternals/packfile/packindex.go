@@ -6,13 +6,13 @@ import (
 	"os"
 	"sort"
 
-	"github.com/Nivl/git-go/plumbing"
+	"github.com/Nivl/git-go/ginternals"
 	"golang.org/x/xerrors"
 )
 
 const (
 	layer1Size      = 1024
-	layer2EntrySize = plumbing.OidSize
+	layer2EntrySize = ginternals.OidSize
 	layer3EntrySize = 4
 	layer4EntrySize = 4
 	layer5EntrySize = 8
@@ -130,7 +130,7 @@ func (idx *PackIndex) Close() error {
 // - If the packfile is too big (> 2GB), we might need to look in layer5
 //   For the actual offset, because layer4 only store int32 offsets
 //   while layer5 stores int64 offsets
-func (idx *PackIndex) GetObjectOffset(oid plumbing.Oid) (uint64, error) {
+func (idx *PackIndex) GetObjectOffset(oid ginternals.Oid) (uint64, error) {
 	// First we need to check how many objects in the packfile start by
 	// oid[0], how many objects are between 0x00 and oid[0] (cumul), and
 	// how many objects are in the packfile
@@ -139,7 +139,7 @@ func (idx *PackIndex) GetObjectOffset(oid plumbing.Oid) (uint64, error) {
 		return 0, xerrors.Errorf("could not get object count: %w", err)
 	}
 	if objCount == 0 {
-		return 0, plumbing.ErrObjectNotFound
+		return 0, ginternals.ErrObjectNotFound
 	}
 
 	// Now that we have the cumul, the count and the total, we can
@@ -275,7 +275,7 @@ func (idx *PackIndex) ObjectCountAt(prefix byte) (count, cumul, total uint32, er
 // index searches for the index of $oid in layer2.
 // $oidCount represents the number of oids at oid[0]
 // $oidCumul represents the number of oids from 0x00 to oid[0]
-func (idx *PackIndex) index(oid plumbing.Oid, oidCount, oidCumul uint32) (int, error) {
+func (idx *PackIndex) index(oid ginternals.Oid, oidCount, oidCumul uint32) (int, error) {
 	// layer2offset corresponds to the beginning of layer2 in the file
 	layer2offset := len(indexHeader()) + layer1Size
 	// First index corresponds to the index of the first oid starting by
@@ -286,7 +286,7 @@ func (idx *PackIndex) index(oid plumbing.Oid, oidCount, oidCumul uint32) (int, e
 	listOffset := firstOidIndex * layer2EntrySize
 
 	// Now we grab all the oids that start by oid[0].
-	oidRange := make([]byte, oidCount*plumbing.OidSize)
+	oidRange := make([]byte, oidCount*ginternals.OidSize)
 	rangeOffset := int64(layer2offset + listOffset)
 	_, err := idx.r.ReadAt(oidRange, rangeOffset)
 	if err != nil {
@@ -296,15 +296,15 @@ func (idx *PackIndex) index(oid plumbing.Oid, oidCount, oidCumul uint32) (int, e
 	// The next step is to do a binary search to find our oid in the list
 	// (that's much faster than looping around everything on big packfile)
 	oidIdxRel := sort.Search(int(oidCount), func(i int) bool {
-		start := i * plumbing.OidSize
-		currentOid := oidRange[start : start+plumbing.OidSize]
+		start := i * ginternals.OidSize
+		currentOid := oidRange[start : start+ginternals.OidSize]
 		return bytes.Compare(oid.Bytes(), currentOid) <= 0
 	})
 
 	// We need to make sure we found our oid
-	start := oidIdxRel * plumbing.OidSize
-	if oidIdxRel >= int(oidCount) || !bytes.Equal(oid.Bytes(), oidRange[start:start+plumbing.OidSize]) {
-		return 0, plumbing.ErrObjectNotFound
+	start := oidIdxRel * ginternals.OidSize
+	if oidIdxRel >= int(oidCount) || !bytes.Equal(oid.Bytes(), oidRange[start:start+ginternals.OidSize]) {
+		return 0, ginternals.ErrObjectNotFound
 	}
 
 	return firstOidIndex + oidIdxRel, nil

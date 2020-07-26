@@ -5,7 +5,7 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/Nivl/git-go/plumbing/object"
+	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/spf13/cobra"
 	"golang.org/x/xerrors"
 )

@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/testhelper"
-	"github.com/Nivl/git-go/plumbing"
-	"github.com/Nivl/git-go/plumbing/object"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -105,7 +105,7 @@ func TestRepositoryGetObject(t *testing.T) {
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")
 
-		oid, err := plumbing.NewOidFromStr("b07e28976ac8972715598f390964d53cf4dbc1bd")
+		oid, err := ginternals.NewOidFromStr("b07e28976ac8972715598f390964d53cf4dbc1bd")
 		require.NoError(t, err)
 
 		obj, err := r.GetObject(oid)
@@ -126,7 +126,7 @@ func TestRepositoryGetObject(t *testing.T) {
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")
 
-		oid, err := plumbing.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
+		oid, err := ginternals.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
 		require.NoError(t, err)
 
 		obj, err := r.GetObject(oid)
@@ -148,7 +148,7 @@ func TestRepositoryNewBlob(t *testing.T) {
 	data := "abcdefghijklmnopqrstuvwxyz"
 	blob, err := r.NewBlob([]byte(data))
 	require.NoError(t, err)
-	assert.NotEqual(t, plumbing.NullOid, blob.ID())
+	assert.NotEqual(t, ginternals.NullOid, blob.ID())
 	assert.Equal(t, []byte(data), blob.Bytes())
 
 	// make sure the blob was persisted
@@ -164,7 +164,7 @@ func TestRepositoryGetCommit(t *testing.T) {
 	r, err := OpenRepository(repoPath)
 	require.NoError(t, err)
 
-	commitOid, err := plumbing.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
+	commitOid, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
 	require.NoError(t, err)
 
 	c, err := r.GetCommit(commitOid)
@@ -183,7 +183,7 @@ func TestRepositoryGetTree(t *testing.T) {
 	r, err := OpenRepository(repoPath)
 	require.NoError(t, err)
 
-	treeOid, err := plumbing.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
+	treeOid, err := ginternals.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
 	require.NoError(t, err)
 
 	tree, err := r.GetTree(treeOid)
@@ -200,7 +200,7 @@ func TestRepositoryNewCommit(t *testing.T) {
 	r, err := OpenRepository(repoPath)
 	require.NoError(t, err)
 
-	ref, err := r.dotGit.Reference(plumbing.MasterLocalRef)
+	ref, err := r.dotGit.Reference(ginternals.MasterLocalRef)
 	require.NoError(t, err)
 
 	headCommit, err := r.GetCommit(ref.Target())
@@ -210,8 +210,8 @@ func TestRepositoryNewCommit(t *testing.T) {
 	require.NoError(t, err)
 
 	sig := object.NewSignature("author", "author@domain.tld")
-	c, err := r.NewCommit(plumbing.MasterLocalRef, headTree, sig, &object.CommitOptions{
-		ParentsID: []plumbing.Oid{headCommit.ID()},
+	c, err := r.NewCommit(ginternals.MasterLocalRef, headTree, sig, &object.CommitOptions{
+		ParentsID: []ginternals.Oid{headCommit.ID()},
 		Message:   "new commit that doesn't do anything",
 	})
 	require.NoError(t, err)
@@ -221,7 +221,7 @@ func TestRepositoryNewCommit(t *testing.T) {
 	require.NoError(t, err)
 
 	// We update the ref since it should have changed
-	ref, err = r.dotGit.Reference(plumbing.MasterLocalRef)
+	ref, err = r.dotGit.Reference(ginternals.MasterLocalRef)
 	require.NoError(t, err)
 	assert.Equal(t, c.ID(), ref.Target())
 }
@@ -233,7 +233,7 @@ func TestRepositoryNewDetachedCommit(t *testing.T) {
 	r, err := OpenRepository(repoPath)
 	require.NoError(t, err)
 
-	ref, err := r.dotGit.Reference(plumbing.MasterLocalRef)
+	ref, err := r.dotGit.Reference(ginternals.MasterLocalRef)
 	require.NoError(t, err)
 
 	headCommit, err := r.GetCommit(ref.Target())
@@ -244,7 +244,7 @@ func TestRepositoryNewDetachedCommit(t *testing.T) {
 
 	sig := object.NewSignature("author", "author@domain.tld")
 	c, err := r.NewDetachedCommit(headTree, sig, &object.CommitOptions{
-		ParentsID: []plumbing.Oid{headCommit.ID()},
+		ParentsID: []ginternals.Oid{headCommit.ID()},
 		Message:   "new commit that doesn't do anything",
 	})
 	require.NoError(t, err)
@@ -254,7 +254,7 @@ func TestRepositoryNewDetachedCommit(t *testing.T) {
 	require.NoError(t, err)
 
 	// We update the ref to make sure it's not updated
-	updateddRef, err := r.dotGit.Reference(plumbing.MasterLocalRef)
+	updateddRef, err := r.dotGit.Reference(ginternals.MasterLocalRef)
 	require.NoError(t, err)
 	assert.Equal(t, ref.Target(), updateddRef.Target())
 }

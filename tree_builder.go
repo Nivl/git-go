@@ -4,8 +4,8 @@ import (
 	"sort"
 
 	"github.com/Nivl/git-go/backend"
-	"github.com/Nivl/git-go/plumbing"
-	"github.com/Nivl/git-go/plumbing/object"
+	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/object"
 	"golang.org/x/xerrors"
 )
 
@@ -37,7 +37,7 @@ func (r *Repository) NewTreeBuilderFromTree(t *object.Tree) *TreeBuilder {
 }
 
 // Insert inserts a new object in a tree
-func (tb *TreeBuilder) Insert(path string, oid plumbing.Oid, mode object.TreeObjectMode) error {
+func (tb *TreeBuilder) Insert(path string, oid ginternals.Oid, mode object.TreeObjectMode) error {
 	if !mode.IsValid() {
 		return xerrors.Errorf("invalid mode %o", mode)
 	}

@@ -8,14 +8,14 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/internal/gitpath"
-	"github.com/Nivl/git-go/plumbing"
 	"golang.org/x/xerrors"
 )
 
 // Reference returns a stored reference from its name
 // ErrRefNotFound is returned if the reference doesn't exists
-func (b *Backend) Reference(name string) (*plumbing.Reference, error) {
+func (b *Backend) Reference(name string) (*ginternals.Reference, error) {
 	var packedRef map[string]string
 
 	finder := func(name string) ([]byte, error) {
@@ -34,13 +34,13 @@ func (b *Backend) Reference(name string) (*plumbing.Reference, error) {
 			}
 			sha, ok := packedRef[name]
 			if !ok {
-				return nil, xerrors.Errorf(`ref "%s": %w`, name, plumbing.ErrRefNotFound)
+				return nil, xerrors.Errorf(`ref "%s": %w`, name, ginternals.ErrRefNotFound)
 			}
 			return []byte(sha), nil
 		}
 		return data, nil
 	}
-	return plumbing.ResolveReference(name, finder)
+	return ginternals.ResolveReference(name, finder)
 }
 
 // nameToPath returns a path from a ref name
@@ -88,7 +88,7 @@ func (b *Backend) parsePackedRefs() (refs map[string]string, err error) {
 		// "oid ref-name"
 		parts := strings.Split(line, " ")
 		if len(parts) != 2 {
-			return nil, xerrors.Errorf("unexpected data line %d: %w", i, plumbing.ErrPackedRefInvalid)
+			return nil, xerrors.Errorf("unexpected data line %d: %w", i, ginternals.ErrPackedRefInvalid)
 		}
 		refs[parts[1]] = parts[0]
 	}
@@ -102,19 +102,19 @@ func (b *Backend) parsePackedRefs() (refs map[string]string, err error) {
 
 // WriteReference writes the given reference on disk. If the
 // reference already exists it will be overwritten
-func (b *Backend) WriteReference(ref *plumbing.Reference) error {
-	if !plumbing.IsRefNameValid(ref.Name()) {
-		return plumbing.ErrRefNameInvalid
+func (b *Backend) WriteReference(ref *ginternals.Reference) error {
+	if !ginternals.IsRefNameValid(ref.Name()) {
+		return ginternals.ErrRefNameInvalid
 	}
 
 	target := ""
 	switch ref.Type() {
-	case plumbing.SymbolicReference:
+	case ginternals.SymbolicReference:
 		target = fmt.Sprintf("ref: %s\n", ref.SymbolicTarget())
-	case plumbing.OidReference:
+	case ginternals.OidReference:
 		target = fmt.Sprintf("%s\n", ref.Target().String())
 	default:
-		return xerrors.Errorf("reference type %d: %w", ref.Type(), plumbing.ErrUnknownRefType)
+		return xerrors.Errorf("reference type %d: %w", ref.Type(), ginternals.ErrUnknownRefType)
 	}
 	err := ioutil.WriteFile(b.nameToPath(ref.Name()), []byte(target), 0o644)
 	if err != nil {
@@ -125,9 +125,9 @@ func (b *Backend) WriteReference(ref *plumbing.Reference) error {
 
 // WriteReferenceSafe writes the given reference in the db
 // ErrRefExists is returned if the reference already exists
-func (b *Backend) WriteReferenceSafe(ref *plumbing.Reference) error {
-	if !plumbing.IsRefNameValid(ref.Name()) {
-		return plumbing.ErrRefNameInvalid
+func (b *Backend) WriteReferenceSafe(ref *ginternals.Reference) error {
+	if !ginternals.IsRefNameValid(ref.Name()) {
+		return ginternals.ErrRefNameInvalid
 	}
 
 	// First we check if the reference is on disk
@@ -137,7 +137,7 @@ func (b *Backend) WriteReferenceSafe(ref *plumbing.Reference) error {
 		if err != nil {
 			return xerrors.Errorf("could not check if reference exists on disk: %w", err)
 		}
-		return plumbing.ErrRefExists
+		return ginternals.ErrRefExists
 	}
 
 	// Now we check if the reference is on the packed-refs file
@@ -146,7 +146,7 @@ func (b *Backend) WriteReferenceSafe(ref *plumbing.Reference) error {
 		return xerrors.Errorf("could not check %s: %w", gitpath.PackedRefsPath, err)
 	}
 	if _, ok := refs[ref.Name()]; ok {
-		return plumbing.ErrRefExists
+		return ginternals.ErrRefExists
 	}
 
 	return b.WriteReference(ref)

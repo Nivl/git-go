@@ -3,8 +3,8 @@
 package backend
 
 import (
-	"github.com/Nivl/git-go/plumbing"
-	"github.com/Nivl/git-go/plumbing/object"
+	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/object"
 )
 
 // This line generates a mock of the interfaces using gomock
@@ -20,18 +20,18 @@ type Backend interface {
 	Init() error
 
 	// Reference returns a stored reference from its name
-	Reference(name string) (*plumbing.Reference, error)
+	Reference(name string) (*ginternals.Reference, error)
 	// WriteReference writes the given reference int the db. If the
 	// reference already exists it will be overwritten
-	WriteReference(ref *plumbing.Reference) error
+	WriteReference(ref *ginternals.Reference) error
 	// WriteReferenceSafe writes the given reference in the db
 	// ErrRefExists is returned if the reference already exists
-	WriteReferenceSafe(ref *plumbing.Reference) error
+	WriteReferenceSafe(ref *ginternals.Reference) error
 
 	// Object returns the object that has given oid
-	Object(plumbing.Oid) (*object.Object, error)
+	Object(ginternals.Oid) (*object.Object, error)
 	// HasObject returns whether an object exists in the odb
-	HasObject(plumbing.Oid) (bool, error)
+	HasObject(ginternals.Oid) (bool, error)
 	// WriteObject adds an object to the odb
-	WriteObject(*object.Object) (plumbing.Oid, error)
+	WriteObject(*object.Object) (ginternals.Oid, error)
 }
