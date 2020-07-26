@@ -112,17 +112,17 @@ func catFileCmd(out io.Writer, cfg *config, p catFileParams) error {
 			if err != nil {
 				return xerrors.Errorf("could not get commit %w", err)
 			}
-			fmt.Fprintf(out, "tree %s\n", c.TreeID.String())
-			for _, id := range c.ParentIDs {
+			fmt.Fprintf(out, "tree %s\n", c.TreeID().String())
+			for _, id := range c.ParentIDs() {
 				fmt.Fprintf(out, "parent %s\n", id.String())
 			}
-			fmt.Fprintf(out, "author %s\n", c.Author.String())
-			fmt.Fprintf(out, "committer %s\n", c.Committer.String())
-			if c.GPGSig != "" {
-				fmt.Fprintf(out, "gpgsig %s \n", c.GPGSig)
+			fmt.Fprintf(out, "author %s\n", c.Author().String())
+			fmt.Fprintf(out, "committer %s\n", c.Committer().String())
+			if c.GPGSig() != "" {
+				fmt.Fprintf(out, "gpgsig %s \n", c.GPGSig())
 			}
 			fmt.Fprintln(out, "")
-			fmt.Fprint(out, c.Message)
+			fmt.Fprint(out, c.Message())
 		case object.TypeTree:
 			tree, err := o.AsTree()
 			if err != nil {

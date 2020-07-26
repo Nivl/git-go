@@ -277,7 +277,10 @@ func (o *Object) AsCommit() (*Commit, error) {
 	if o.typ != TypeCommit {
 		return nil, xerrors.Errorf("type %s is not a commit", o.typ)
 	}
-	ci := &Commit{ID: o.id}
+	ci := &Commit{
+		id:        o.id,
+		rawObject: o,
+	}
 	offset := 0
 	objData := o.Bytes()
 	for {
@@ -292,7 +295,7 @@ func (o *Object) AsCommit() (*Commit, error) {
 		// if we got an empty line, it means everything from now to the end
 		// will be the commit message
 		if len(line) == 0 {
-			ci.Message = string(objData[offset:])
+			ci.message = string(objData[offset:])
 			break
 		}
 
@@ -304,31 +307,31 @@ func (o *Object) AsCommit() (*Commit, error) {
 			if err != nil {
 				return nil, xerrors.Errorf("could not parse tree id %#v: %w", kv[1], err)
 			}
-			ci.TreeID = oid
+			ci.treeID = oid
 		case "parent":
 			oid, err := plumbing.NewOidFromChars(kv[1])
 			if err != nil {
 				return nil, xerrors.Errorf("could not parse parent id %#v: %w", kv[1], err)
 			}
-			ci.ParentIDs = append(ci.ParentIDs, oid)
+			ci.parentIDs = append(ci.parentIDs, oid)
 		case "author":
 			sig, err := NewSignatureFromBytes(kv[1])
 			if err != nil {
 				return nil, xerrors.Errorf("could not parse signature [%s]: %w", string(kv[1]), err)
 			}
-			ci.Author = sig
+			ci.author = sig
 		case "committer":
 			sig, err := NewSignatureFromBytes(kv[1])
 			if err != nil {
 				return nil, xerrors.Errorf("could not parse signature [%s]: %w", string(kv[1]), err)
 			}
-			ci.Committer = sig
+			ci.committer = sig
 		case "gpgsig":
 			begin := string(kv[1]) + "\n"
-			end := "-----END PGP SIGNATURE-----\n"
+			end := "-----END PGP SIGNATURE-----"
 			i := bytes.Index(objData[offset:], []byte(end))
-			ci.GPGSig = begin + string(objData[offset:offset+i]) + end
-			offset += len(end) + i
+			ci.gpgSig = begin + string(objData[offset:offset+i]) + end
+			offset += len(end) + i + 1 // +1 to count the \n
 		}
 	}
 

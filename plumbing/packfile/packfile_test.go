@@ -75,22 +75,22 @@ func TestGetObject(t *testing.T) {
 			require.Equal(t, object.TypeCommit, o.Type())
 			commit, err := o.AsCommit()
 			require.NoError(t, err)
-			require.Equal(t, commitOid, commit.ID)
-			require.NotNil(t, commit.Author)
-			require.NotNil(t, commit.Committer)
+			require.Equal(t, commitOid, commit.ID())
+			require.NotZero(t, commit.Author())
+			require.NotZero(t, commit.Committer())
 
-			require.Len(t, commit.ParentIDs, 1)
+			require.Len(t, commit.ParentIDs(), 1)
 			parentOid, err := plumbing.NewOidFromStr("f96f63e52cb8862b2c2d1a8b868229259c57854e")
 			require.NoError(t, err)
-			assert.Equal(t, parentOid, commit.ParentIDs[0])
+			assert.Equal(t, parentOid, commit.ParentIDs()[0])
 
-			assert.Equal(t, "build: switch to go module\n", commit.Message)
-			assert.Equal(t, "Melvin Laplanche", commit.Author.Name)
-			assert.Equal(t, "Melvin Laplanche", commit.Committer.Name)
+			assert.Equal(t, "build: switch to go module\n", commit.Message())
+			assert.Equal(t, "Melvin Laplanche", commit.Author().Name)
+			assert.Equal(t, "Melvin Laplanche", commit.Committer().Name)
 
 			treeOid, err := plumbing.NewOidFromStr("c799e9129faae8d358e4b6de7813d6f970607893")
 			require.NoError(t, err)
-			assert.Equal(t, treeOid, commit.TreeID)
+			assert.Equal(t, treeOid, commit.TreeID())
 		})
 
 		t.Run("blob", func(t *testing.T) {

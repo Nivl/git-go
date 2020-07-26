@@ -80,7 +80,7 @@ func (t *Tree) ID() plumbing.Oid {
 }
 
 // ToObject returns an Object representing the tree
-func (t *Tree) ToObject() (*Object, error) {
+func (t *Tree) ToObject() *Object {
 	// Quick reminder that the Write* methods on bytes.Buffer never fails,
 	// the error returned is always nil
 	buf := new(bytes.Buffer)
@@ -102,7 +102,7 @@ func (t *Tree) ToObject() (*Object, error) {
 	}
 
 	if t.id != plumbing.NullOid {
-		return NewWithID(t.id, TypeTree, buf.Bytes()), nil
+		return NewWithID(t.id, TypeTree, buf.Bytes())
 	}
-	return New(TypeTree, buf.Bytes()), nil
+	return New(TypeTree, buf.Bytes())
 }
