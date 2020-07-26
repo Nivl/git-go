@@ -227,7 +227,7 @@ func (r *Repository) NewCommit(refname string, tree *object.Tree, author object.
 		return nil, xerrors.Errorf("could not write the object to the odb: %w", err)
 	}
 
-	// If we have a refname then the
+	// If we have a refname then we update it
 	if refname != "" {
 		ref := plumbing.NewReference(refname, o.ID())
 		if err := r.dotGit.WriteReference(ref); err != nil {

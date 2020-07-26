@@ -156,3 +156,105 @@ func TestRepositoryNewBlob(t *testing.T) {
 	_, err = os.Stat(p)
 	require.NoError(t, err)
 }
+
+func TestRepositoryGetCommit(t *testing.T) {
+	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+	defer cleanup()
+
+	r, err := OpenRepository(repoPath)
+	require.NoError(t, err)
+
+	commitOid, err := plumbing.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
+	require.NoError(t, err)
+
+	c, err := r.GetCommit(commitOid)
+	require.NoError(t, err)
+
+	assert.Equal(t, commitOid, c.ID())
+	assert.Equal(t, "e5b9e846e1b468bc9597ff95d71dfacda8bd54e3", c.TreeID().String())
+	require.Len(t, c.ParentIDs(), 1)
+	assert.Equal(t, "6097a04b7a327c4be68f222ca66e61b8e1abe5c1", c.ParentIDs()[0].String())
+}
+
+func TestRepositoryGetTree(t *testing.T) {
+	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+	defer cleanup()
+
+	r, err := OpenRepository(repoPath)
+	require.NoError(t, err)
+
+	treeOid, err := plumbing.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
+	require.NoError(t, err)
+
+	tree, err := r.GetTree(treeOid)
+	require.NoError(t, err)
+
+	assert.Equal(t, treeOid, tree.ID())
+	require.Len(t, tree.Entries(), 13)
+}
+
+func TestRepositoryNewCommit(t *testing.T) {
+	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+	defer cleanup()
+
+	r, err := OpenRepository(repoPath)
+	require.NoError(t, err)
+
+	ref, err := r.dotGit.Reference(plumbing.MasterLocalRef)
+	require.NoError(t, err)
+
+	headCommit, err := r.GetCommit(ref.Target())
+	require.NoError(t, err)
+
+	headTree, err := r.GetTree(headCommit.TreeID())
+	require.NoError(t, err)
+
+	sig := object.NewSignature("author", "author@domain.tld")
+	c, err := r.NewCommit(plumbing.MasterLocalRef, headTree, sig, &object.CommitOptions{
+		ParentsID: []plumbing.Oid{headCommit.ID()},
+		Message:   "new commit that doesn't do anything",
+	})
+	require.NoError(t, err)
+
+	// The commit should be findable
+	_, err = r.GetCommit(c.ID())
+	require.NoError(t, err)
+
+	// We update the ref since it should have changed
+	ref, err = r.dotGit.Reference(plumbing.MasterLocalRef)
+	require.NoError(t, err)
+	assert.Equal(t, c.ID(), ref.Target())
+}
+
+func TestRepositoryNewDetachedCommit(t *testing.T) {
+	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+	defer cleanup()
+
+	r, err := OpenRepository(repoPath)
+	require.NoError(t, err)
+
+	ref, err := r.dotGit.Reference(plumbing.MasterLocalRef)
+	require.NoError(t, err)
+
+	headCommit, err := r.GetCommit(ref.Target())
+	require.NoError(t, err)
+
+	headTree, err := r.GetTree(headCommit.TreeID())
+	require.NoError(t, err)
+
+	sig := object.NewSignature("author", "author@domain.tld")
+	c, err := r.NewDetachedCommit(headTree, sig, &object.CommitOptions{
+		ParentsID: []plumbing.Oid{headCommit.ID()},
+		Message:   "new commit that doesn't do anything",
+	})
+	require.NoError(t, err)
+
+	// The commit should be findable
+	_, err = r.GetCommit(c.ID())
+	require.NoError(t, err)
+
+	// We update the ref to make sure it's not updated
+	updateddRef, err := r.dotGit.Reference(plumbing.MasterLocalRef)
+	require.NoError(t, err)
+	assert.Equal(t, ref.Target(), updateddRef.Target())
+}
