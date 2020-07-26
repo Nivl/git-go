@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/internal/readutil"
-	"github.com/Nivl/git-go/plumbing"
 	"golang.org/x/xerrors"
 )
 
@@ -105,7 +105,7 @@ func NewSignatureFromBytes(b []byte) (Signature, error) {
 
 // CommitOptions represents all the optional data available to create a commit
 type CommitOptions struct {
-	ParentsID []plumbing.Oid
+	ParentsID []ginternals.Oid
 	Message   string
 	GPGSig    string
 	// Committer represent the person creating the commit.
@@ -123,13 +123,13 @@ type Commit struct {
 	gpgSig  string
 	message string
 
-	parentIDs []plumbing.Oid
-	id        plumbing.Oid
-	treeID    plumbing.Oid
+	parentIDs []ginternals.Oid
+	id        ginternals.Oid
+	treeID    ginternals.Oid
 }
 
 // NewCommit creates a new Commit object
-func NewCommit(treeID plumbing.Oid, author Signature, opts *CommitOptions) *Commit {
+func NewCommit(treeID ginternals.Oid, author Signature, opts *CommitOptions) *Commit {
 	c := &Commit{
 		treeID:    treeID,
 		author:    author,
@@ -147,7 +147,7 @@ func NewCommit(treeID plumbing.Oid, author Signature, opts *CommitOptions) *Comm
 }
 
 // ID returns the SHA of the commit object
-func (c *Commit) ID() plumbing.Oid {
+func (c *Commit) ID() ginternals.Oid {
 	return c.id
 }
 
@@ -170,14 +170,14 @@ func (c *Commit) Message() string {
 // - The first commit of an orphan branch has 0 parents
 // - A regular commit or the result of a fast-forward merge has 1 parent
 // - A true merge (no fast-forward) as 2 or more parents
-func (c *Commit) ParentIDs() []plumbing.Oid {
-	out := make([]plumbing.Oid, len(c.parentIDs))
+func (c *Commit) ParentIDs() []ginternals.Oid {
+	out := make([]ginternals.Oid, len(c.parentIDs))
 	copy(out, c.parentIDs)
 	return out
 }
 
 // TreeID returns the SHA of the commit's tree
-func (c *Commit) TreeID() plumbing.Oid {
+func (c *Commit) TreeID() ginternals.Oid {
 	return c.treeID
 }
 

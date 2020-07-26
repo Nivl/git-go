@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/Nivl/git-go/internal/testhelper"
-	"github.com/Nivl/git-go/plumbing"
-	"github.com/Nivl/git-go/plumbing/object"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/xerrors"
@@ -20,9 +20,9 @@ func TestAsCommit(t *testing.T) {
 	t.Run("regular commit with all the fields", func(t *testing.T) {
 		t.Parallel()
 
-		treeID, _ := plumbing.NewOidFromStr("f0b577644139c6e04216d82f1dd4a5a63addeeca")
-		oid, _ := plumbing.NewOidFromStr("0343d67ca3d80a531d0d163f0078a81c95c9085a")
-		parentID, _ := plumbing.NewOidFromStr("9785af758bcc96cd7237ba65eb2c9dd1ecaa3321")
+		treeID, _ := ginternals.NewOidFromStr("f0b577644139c6e04216d82f1dd4a5a63addeeca")
+		oid, _ := ginternals.NewOidFromStr("0343d67ca3d80a531d0d163f0078a81c95c9085a")
+		parentID, _ := ginternals.NewOidFromStr("9785af758bcc96cd7237ba65eb2c9dd1ecaa3321")
 
 		var b bytes.Buffer
 		b.WriteString("tree ")
@@ -122,7 +122,7 @@ func TestAsTree(t *testing.T) {
 		t.Parallel()
 
 		treeSHA := "e5b9e846e1b468bc9597ff95d71dfacda8bd54e3"
-		treeID, _ := plumbing.NewOidFromStr(treeSHA)
+		treeID, _ := ginternals.NewOidFromStr(treeSHA)
 
 		testFile := fmt.Sprintf("tree_%s", treeSHA)
 		content, err := ioutil.ReadFile(filepath.Join(testhelper.TestdataPath(t), testFile))
@@ -143,7 +143,7 @@ func TestAsBlob(t *testing.T) {
 	content, err := ioutil.ReadFile(filepath.Join(testhelper.TestdataPath(t), "blob_642480605b8b0fd464ab5762e044269cf29a60a3"))
 	require.NoError(t, err)
 
-	sha, err := plumbing.NewOidFromStr("642480605b8b0fd464ab5762e044269cf29a60a3")
+	sha, err := ginternals.NewOidFromStr("642480605b8b0fd464ab5762e044269cf29a60a3")
 	require.NoError(t, err)
 
 	o := object.NewWithID(sha, object.TypeBlob, content)
@@ -335,7 +335,7 @@ func TestCompress(t *testing.T) {
 		t.Parallel()
 
 		treeSHA := "e5b9e846e1b468bc9597ff95d71dfacda8bd54e3"
-		treeID, _ := plumbing.NewOidFromStr(treeSHA)
+		treeID, _ := ginternals.NewOidFromStr(treeSHA)
 
 		testFile := fmt.Sprintf("tree_%s", treeSHA)
 		content, err := ioutil.ReadFile(filepath.Join(testhelper.TestdataPath(t), testFile))
@@ -352,7 +352,7 @@ func TestCompress(t *testing.T) {
 	t.Run("should fail if ID missmatch", func(t *testing.T) {
 		t.Parallel()
 
-		fakeTreeID, err := plumbing.NewOidFromStr("d5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
+		fakeTreeID, err := ginternals.NewOidFromStr("d5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
 		require.NoError(t, err)
 
 		testFile := "tree_e5b9e846e1b468bc9597ff95d71dfacda8bd54e3"

@@ -8,16 +8,16 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/object"
+	"github.com/Nivl/git-go/ginternals/packfile"
 	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/readutil"
-	"github.com/Nivl/git-go/plumbing"
-	"github.com/Nivl/git-go/plumbing/object"
-	"github.com/Nivl/git-go/plumbing/packfile"
 	"golang.org/x/xerrors"
 )
 
 // Object returns the object that has given oid
-func (b *Backend) Object(oid plumbing.Oid) (*object.Object, error) {
+func (b *Backend) Object(oid ginternals.Oid) (*object.Object, error) {
 	if b.cache != nil {
 		if cachedO, found := b.cache.Get(oid); found {
 			if o, valid := cachedO.(*object.Object); valid {
@@ -58,7 +58,7 @@ func (b *Backend) looseObjectPath(sha string) string {
 // The format of an object is an ascii encoded type, an ascii encoded
 // space, then an ascii encoded length of the object, then a null
 // character, then the body of the object
-func (b *Backend) looseObject(oid plumbing.Oid) (*object.Object, error) {
+func (b *Backend) looseObject(oid ginternals.Oid) (*object.Object, error) {
 	strOid := oid.String()
 
 	p := b.looseObjectPath(strOid)
@@ -133,7 +133,7 @@ func (b *Backend) looseObject(oid plumbing.Oid) (*object.Object, error) {
 }
 
 // objectFromPackfile looks for an object in the packfiles
-func (b *Backend) objectFromPackfile(oid plumbing.Oid) (*object.Object, error) {
+func (b *Backend) objectFromPackfile(oid ginternals.Oid) (*object.Object, error) {
 	p := filepath.Join(b.root, gitpath.ObjectsPackPath)
 
 	// TODO(melvin): parse MIDX files instead
@@ -182,7 +182,7 @@ func (b *Backend) objectFromPackfile(oid plumbing.Oid) (*object.Object, error) {
 		if err == nil {
 			return do, pf.Close()
 		}
-		if errors.Is(err, plumbing.ErrObjectNotFound) {
+		if errors.Is(err, ginternals.ErrObjectNotFound) {
 			if err = pf.Close(); err != nil {
 				return nil, err
 			}
@@ -191,32 +191,32 @@ func (b *Backend) objectFromPackfile(oid plumbing.Oid) (*object.Object, error) {
 		pf.Close() //nolint:errcheck // it failed anyway
 		return nil, err
 	}
-	return nil, plumbing.ErrObjectNotFound
+	return nil, ginternals.ErrObjectNotFound
 }
 
 // HasObject returns whether an object exists in the odb
-func (b *Backend) HasObject(oid plumbing.Oid) (bool, error) {
+func (b *Backend) HasObject(oid ginternals.Oid) (bool, error) {
 	_, err := b.Object(oid)
 	if err == nil {
 		return true, nil
 	}
-	if xerrors.Is(err, plumbing.ErrObjectNotFound) {
+	if xerrors.Is(err, ginternals.ErrObjectNotFound) {
 		return false, nil
 	}
 	return false, xerrors.Errorf("could not get object: %w", err)
 }
 
 // WriteObject adds an object to the odb
-func (b *Backend) WriteObject(o *object.Object) (plumbing.Oid, error) {
+func (b *Backend) WriteObject(o *object.Object) (ginternals.Oid, error) {
 	data, err := o.Compress()
 	if err != nil {
-		return plumbing.NullOid, xerrors.Errorf("could not compress object: %w", err)
+		return ginternals.NullOid, xerrors.Errorf("could not compress object: %w", err)
 	}
 
 	// Make sure the object doesn't already exist anywhere
 	found, err := b.HasObject(o.ID())
 	if err != nil {
-		return plumbing.NullOid, xerrors.Errorf("could not check if object (%s) already exists: %w", o.ID().String(), err)
+		return ginternals.NullOid, xerrors.Errorf("could not check if object (%s) already exists: %w", o.ID().String(), err)
 	}
 	if found {
 		return o.ID(), nil
@@ -229,11 +229,11 @@ func (b *Backend) WriteObject(o *object.Object) (plumbing.Oid, error) {
 	// We need to make sure the dest dir exists
 	dest := filepath.Dir(p)
 	if err = os.MkdirAll(dest, 0o755); err != nil {
-		return plumbing.NullOid, xerrors.Errorf("could not create the destination directory %s: %w", dest, err)
+		return ginternals.NullOid, xerrors.Errorf("could not create the destination directory %s: %w", dest, err)
 	}
 
 	if err = ioutil.WriteFile(p, data, 0o644); err != nil {
-		return plumbing.NullOid, xerrors.Errorf("could not persist object %s at path %s: %w", sha, p, err)
+		return ginternals.NullOid, xerrors.Errorf("could not persist object %s at path %s: %w", sha, p, err)
 	}
 
 	// add the object to the cache

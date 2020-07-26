@@ -6,9 +6,9 @@ import (
 
 	"github.com/Nivl/git-go/backend"
 	"github.com/Nivl/git-go/backend/fsbackend"
+	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/Nivl/git-go/internal/gitpath"
-	"github.com/Nivl/git-go/plumbing"
-	"github.com/Nivl/git-go/plumbing/object"
 	"github.com/spf13/afero"
 	"golang.org/x/xerrors"
 )
@@ -85,9 +85,9 @@ func InitRepositoryWithOptions(repoPath string, opts InitOptions) (*Repository, 
 		return nil, err
 	}
 
-	ref := plumbing.NewSymbolicReference(plumbing.HEAD, plumbing.MasterLocalRef)
+	ref := ginternals.NewSymbolicReference(ginternals.HEAD, ginternals.MasterLocalRef)
 	if err := r.dotGit.WriteReference(ref); err != nil {
-		if xerrors.Is(err, plumbing.ErrRefExists) {
+		if xerrors.Is(err, ginternals.ErrRefExists) {
 			return nil, ErrRepositoryExists
 		}
 		return nil, err
@@ -144,7 +144,7 @@ func OpenRepositoryWithOptions(repoPath string, opts OpenOptions) (*Repository, 
 	// since we can't check if the directory exists on disk to
 	// validate if the repo exists, we're instead going to see if HEAD
 	// exists (since it should always be there)
-	_, err := r.dotGit.Reference(plumbing.HEAD)
+	_, err := r.dotGit.Reference(ginternals.HEAD)
 	if err != nil {
 		return nil, ErrRepositoryNotExist
 	}
@@ -173,12 +173,12 @@ func (r *Repository) IsBare() bool {
 }
 
 // GetObject returns the object matching the given ID
-func (r *Repository) GetObject(oid plumbing.Oid) (*object.Object, error) {
+func (r *Repository) GetObject(oid ginternals.Oid) (*object.Object, error) {
 	return r.dotGit.Object(oid)
 }
 
 // GetCommit returns the commit matching the given SHA
-func (r *Repository) GetCommit(oid plumbing.Oid) (*object.Commit, error) {
+func (r *Repository) GetCommit(oid ginternals.Oid) (*object.Commit, error) {
 	o, err := r.dotGit.Object(oid)
 	if err != nil {
 		return nil, err
@@ -187,7 +187,7 @@ func (r *Repository) GetCommit(oid plumbing.Oid) (*object.Commit, error) {
 }
 
 // GetTree returns the tree matching the given SHA
-func (r *Repository) GetTree(oid plumbing.Oid) (*object.Tree, error) {
+func (r *Repository) GetTree(oid ginternals.Oid) (*object.Tree, error) {
 	o, err := r.dotGit.Object(oid)
 	if err != nil {
 		return nil, err
@@ -229,7 +229,7 @@ func (r *Repository) NewCommit(refname string, tree *object.Tree, author object.
 
 	// If we have a refname then we update it
 	if refname != "" {
-		ref := plumbing.NewReference(refname, o.ID())
+		ref := ginternals.NewReference(refname, o.ID())
 		if err := r.dotGit.WriteReference(ref); err != nil {
 			return nil, xerrors.Errorf("could not update the HEAD of %s: %w", refname, err)
 		}

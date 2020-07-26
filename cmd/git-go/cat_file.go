@@ -6,8 +6,8 @@ import (
 	"io"
 	"strconv"
 
-	"github.com/Nivl/git-go/plumbing"
-	"github.com/Nivl/git-go/plumbing/object"
+	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/spf13/cobra"
 	"golang.org/x/xerrors"
 )
@@ -79,7 +79,7 @@ func catFileCmd(out io.Writer, cfg *config, p catFileParams) error {
 		return err
 	}
 
-	oid, err := plumbing.NewOidFromStr(p.sha)
+	oid, err := ginternals.NewOidFromStr(p.sha)
 	if err != nil {
 		return xerrors.Errorf("failed parsing sha: %w", err)
 	}

@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/Nivl/git-go/internal/testhelper"
-	"github.com/Nivl/git-go/plumbing"
-	"github.com/Nivl/git-go/plumbing/object"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -18,7 +18,7 @@ func TestTree(t *testing.T) {
 		t.Parallel()
 
 		treeSHA := "e5b9e846e1b468bc9597ff95d71dfacda8bd54e3"
-		treeID, err := plumbing.NewOidFromStr(treeSHA)
+		treeID, err := ginternals.NewOidFromStr(treeSHA)
 		require.NoError(t, err)
 
 		testFile := fmt.Sprintf("tree_%s", treeSHA)
@@ -38,11 +38,11 @@ func TestTree(t *testing.T) {
 		t.Parallel()
 
 		treeSHA := "e5b9e846e1b468bc9597ff95d71dfacda8bd54e3"
-		treeID, err := plumbing.NewOidFromStr(treeSHA)
+		treeID, err := ginternals.NewOidFromStr(treeSHA)
 		require.NoError(t, err)
 
 		blobSHA := "0343d67ca3d80a531d0d163f0078a81c95c9085a"
-		blobID, err := plumbing.NewOidFromStr(blobSHA)
+		blobID, err := ginternals.NewOidFromStr(blobSHA)
 		require.NoError(t, err)
 
 		tree := object.NewTreeWithID(treeID, []object.TreeEntry{

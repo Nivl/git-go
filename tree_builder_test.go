@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/testhelper"
-	"github.com/Nivl/git-go/plumbing"
-	"github.com/Nivl/git-go/plumbing/object"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/xerrors"
@@ -26,8 +26,8 @@ func TestTreeBuilderInsert(t *testing.T) {
 		}{
 			{
 				desc:          "should fail inserting an object that doesn't exist",
-				sha:           plumbing.NullOid.String(),
-				expectedError: plumbing.ErrObjectNotFound,
+				sha:           ginternals.NullOid.String(),
+				expectedError: ginternals.ErrObjectNotFound,
 			},
 			{
 				desc:          "should fail inserting a commit",
@@ -56,7 +56,7 @@ func TestTreeBuilderInsert(t *testing.T) {
 				require.NoError(t, err, "failed loading a repo")
 				require.NotNil(t, r, "repository should not be nil")
 
-				oid, err := plumbing.NewOidFromStr(tc.sha)
+				oid, err := ginternals.NewOidFromStr(tc.sha)
 				require.NoError(t, err)
 
 				tb := r.NewTreeBuilder()
@@ -85,13 +85,13 @@ func TestTreeBuilderInsert(t *testing.T) {
 		tb := r.NewTreeBuilder()
 
 		// insert a blob
-		oid, err := plumbing.NewOidFromStr("642480605b8b0fd464ab5762e044269cf29a60a3")
+		oid, err := ginternals.NewOidFromStr("642480605b8b0fd464ab5762e044269cf29a60a3")
 		require.NoError(t, err)
 		err = tb.Insert("blob", oid, object.ModeFile)
 		require.NoError(t, err)
 
 		// insert a tree
-		oid, err = plumbing.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
+		oid, err = ginternals.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
 		require.NoError(t, err)
 		err = tb.Insert("tree", oid, object.ModeDirectory)
 		require.NoError(t, err)
@@ -112,13 +112,13 @@ func TestTreeBuilderInsert(t *testing.T) {
 		tb := r.NewTreeBuilder()
 
 		// insert a blob
-		oid, err := plumbing.NewOidFromStr("642480605b8b0fd464ab5762e044269cf29a60a3")
+		oid, err := ginternals.NewOidFromStr("642480605b8b0fd464ab5762e044269cf29a60a3")
 		require.NoError(t, err)
 		err = tb.Insert("path", oid, object.ModeFile)
 		require.NoError(t, err)
 
 		// insert a tree
-		oid, err = plumbing.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
+		oid, err = ginternals.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
 		require.NoError(t, err)
 		err = tb.Insert("path", oid, object.ModeDirectory)
 		require.NoError(t, err)
@@ -142,7 +142,7 @@ func TestTreeBuilderInsert(t *testing.T) {
 		tb := r.NewTreeBuilder()
 
 		// insert a blob
-		oid, err := plumbing.NewOidFromStr("642480605b8b0fd464ab5762e044269cf29a60a3")
+		oid, err := ginternals.NewOidFromStr("642480605b8b0fd464ab5762e044269cf29a60a3")
 		require.NoError(t, err)
 		err = tb.Insert("path", oid, 0o644)
 		require.Error(t, err)
@@ -163,13 +163,13 @@ func TestTreeBuilderRemove(t *testing.T) {
 		tb := r.NewTreeBuilder()
 
 		// insert a blob
-		oid, err := plumbing.NewOidFromStr("642480605b8b0fd464ab5762e044269cf29a60a3")
+		oid, err := ginternals.NewOidFromStr("642480605b8b0fd464ab5762e044269cf29a60a3")
 		require.NoError(t, err)
 		err = tb.Insert("blob", oid, object.ModeFile)
 		require.NoError(t, err)
 
 		// insert a tree
-		oid, err = plumbing.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
+		oid, err = ginternals.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
 		require.NoError(t, err)
 		err = tb.Insert("tree", oid, object.ModeDirectory)
 		require.NoError(t, err)
@@ -239,13 +239,13 @@ func TestTreeBuilderWrite(t *testing.T) {
 		tb := r.NewTreeBuilder()
 
 		// insert a blob
-		oid, err := plumbing.NewOidFromStr("642480605b8b0fd464ab5762e044269cf29a60a3")
+		oid, err := ginternals.NewOidFromStr("642480605b8b0fd464ab5762e044269cf29a60a3")
 		require.NoError(t, err)
 		err = tb.Insert("blob", oid, object.ModeFile)
 		require.NoError(t, err)
 
 		// insert a tree
-		oid, err = plumbing.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
+		oid, err = ginternals.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
 		require.NoError(t, err)
 		err = tb.Insert("tree", oid, object.ModeDirectory)
 		require.NoError(t, err)
@@ -269,7 +269,7 @@ func TestTreeBuilderWrite(t *testing.T) {
 		require.NoError(t, err, "failed loading a repo")
 		require.NotNil(t, r, "repository should not be nil")
 
-		oid, err := plumbing.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
+		oid, err := ginternals.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
 		require.NoError(t, err)
 		o, err := r.GetObject(oid)
 		require.NoError(t, err)

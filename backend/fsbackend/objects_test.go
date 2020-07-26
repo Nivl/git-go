@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/testhelper"
-	"github.com/Nivl/git-go/plumbing"
-	"github.com/Nivl/git-go/plumbing/object"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/xerrors"
@@ -24,7 +24,7 @@ func TestObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		defer cleanup()
 
-		oid, err := plumbing.NewOidFromStr("b07e28976ac8972715598f390964d53cf4dbc1bd")
+		oid, err := ginternals.NewOidFromStr("b07e28976ac8972715598f390964d53cf4dbc1bd")
 		require.NoError(t, err)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
@@ -43,7 +43,7 @@ func TestObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		defer cleanup()
 
-		oid, err := plumbing.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
+		oid, err := ginternals.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
 		require.NoError(t, err)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
@@ -61,14 +61,14 @@ func TestObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		defer cleanup()
 
-		oid, err := plumbing.NewOidFromStr("2dcdadc2a420225783794fbffd51e2e137a69646")
+		oid, err := ginternals.NewOidFromStr("2dcdadc2a420225783794fbffd51e2e137a69646")
 		require.NoError(t, err)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
 		obj, err := b.Object(oid)
 		require.Error(t, err)
 		require.Nil(t, obj)
-		require.True(t, xerrors.Is(err, plumbing.ErrObjectNotFound), "unexpected error received")
+		require.True(t, xerrors.Is(err, ginternals.ErrObjectNotFound), "unexpected error received")
 	})
 }
 
@@ -81,7 +81,7 @@ func TestHasObject(t *testing.T) {
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
 
-		oid, err := plumbing.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
+		oid, err := ginternals.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
 		require.NoError(t, err)
 
 		exists, err := b.HasObject(oid)
@@ -97,7 +97,7 @@ func TestHasObject(t *testing.T) {
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
 
-		fakeOid, err := plumbing.NewOidFromStr("2dcdadc2a420225783794fbffd51e2e137a69646")
+		fakeOid, err := ginternals.NewOidFromStr("2dcdadc2a420225783794fbffd51e2e137a69646")
 		require.NoError(t, err)
 
 		exists, err := b.HasObject(fakeOid)
@@ -113,7 +113,7 @@ func TestHasObject(t *testing.T) {
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
 
-		oid, err := plumbing.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
+		oid, err := ginternals.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
 		require.NoError(t, err)
 
 		_, found := b.cache.Get(oid)
@@ -140,7 +140,7 @@ func TestHasObject(t *testing.T) {
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
 
-		oid, err := plumbing.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
+		oid, err := ginternals.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
 		require.NoError(t, err)
 
 		b.cache.Add(oid, "not a valid value")
@@ -169,7 +169,7 @@ func TestWriteObject(t *testing.T) {
 		o := object.New(object.TypeBlob, []byte("data"))
 		oid, err := b.WriteObject(o)
 		require.NoError(t, err)
-		assert.NotEqual(t, plumbing.NullOid, oid, "invalid oid returned")
+		assert.NotEqual(t, ginternals.NullOid, oid, "invalid oid returned")
 
 		// assert it's in disk
 		storedO, err := b.Object(oid)
@@ -177,7 +177,7 @@ func TestWriteObject(t *testing.T) {
 		assert.Equal(t, o.Type(), storedO.Type(), "invalid type")
 		assert.Equal(t, o.Size(), storedO.Size(), "invalid size")
 		assert.Equal(t, o.Bytes(), storedO.Bytes(), "invalid size")
-		assert.NotEqual(t, plumbing.NullOid, storedO.ID(), "invalid ID")
+		assert.NotEqual(t, ginternals.NullOid, storedO.ID(), "invalid ID")
 
 		// make sure the blob was persisted
 		p := filepath.Join(dotGitPath, gitpath.ObjectsPath, storedO.ID().String()[0:2], storedO.ID().String()[2:])
@@ -196,7 +196,7 @@ func TestWriteObject(t *testing.T) {
 		o := object.New(object.TypeBlob, []byte("data"))
 		oid, err := b.WriteObject(o)
 		require.NoError(t, err)
-		assert.NotEqual(t, plumbing.NullOid, oid, "invalid oid returned")
+		assert.NotEqual(t, ginternals.NullOid, oid, "invalid oid returned")
 
 		// assert it's on the disk
 		storedO, err := b.Object(oid)
@@ -204,7 +204,7 @@ func TestWriteObject(t *testing.T) {
 		assert.Equal(t, o.Type(), storedO.Type(), "invalid type")
 		assert.Equal(t, o.Size(), storedO.Size(), "invalid size")
 		assert.Equal(t, o.Bytes(), storedO.Bytes(), "invalid size")
-		assert.NotEqual(t, plumbing.NullOid, storedO.ID(), "invalid ID")
+		assert.NotEqual(t, ginternals.NullOid, storedO.ID(), "invalid ID")
 
 		// make sure the blob was persisted
 		p := filepath.Join(dotGitPath, gitpath.ObjectsPath, storedO.ID().String()[0:2], storedO.ID().String()[2:])

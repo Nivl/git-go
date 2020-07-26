@@ -3,8 +3,8 @@ package object_test
 import (
 	"testing"
 
-	"github.com/Nivl/git-go/plumbing"
-	"github.com/Nivl/git-go/plumbing/object"
+	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,7 +20,7 @@ func TestBlob(t *testing.T) {
 		assert.Equal(t, []byte(data), blob.Bytes())
 		assert.Equal(t, []byte(data), blob.BytesCopy())
 		assert.False(t, blob.IsPersisted())
-		assert.Equal(t, plumbing.NullOid, blob.ID())
+		assert.Equal(t, ginternals.NullOid, blob.ID())
 
 		assert.Equal(t, o, blob.ToObject())
 	})

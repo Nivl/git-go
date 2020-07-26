@@ -1,4 +1,4 @@
-package plumbing
+package ginternals
 
 import (
 	"bytes"

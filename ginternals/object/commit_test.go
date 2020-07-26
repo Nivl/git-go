@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/Nivl/git-go"
+	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/Nivl/git-go/internal/testhelper"
-	"github.com/Nivl/git-go/plumbing"
-	"github.com/Nivl/git-go/plumbing/object"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -182,15 +182,15 @@ func TestNewCommit(t *testing.T) {
 		t.Parallel()
 
 		// Find a tree
-		treeOID, err := plumbing.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
+		treeOID, err := ginternals.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
 		require.NoError(t, err)
 
 		// Find a commit
-		parentID, err := plumbing.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
+		parentID, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
 		require.NoError(t, err)
 
 		ci := object.NewCommit(treeOID, object.NewSignature("author", "email"), &object.CommitOptions{
-			ParentsID: []plumbing.Oid{parentID},
+			ParentsID: []ginternals.Oid{parentID},
 			Message:   "message",
 			GPGSig:    "gpgsig",
 			Committer: object.NewSignature("committer", "commiter@domain.tld"),
@@ -200,14 +200,14 @@ func TestNewCommit(t *testing.T) {
 		assert.Equal(t, "gpgsig", ci.GPGSig())
 		assert.Equal(t, "committer", ci.Committer().Name)
 		assert.Equal(t, "author", ci.Author().Name)
-		assert.Equal(t, []plumbing.Oid{parentID}, ci.ParentIDs())
+		assert.Equal(t, []ginternals.Oid{parentID}, ci.ParentIDs())
 	})
 
 	t.Run("NewCommit with no committer should use the author", func(t *testing.T) {
 		t.Parallel()
 
 		// Find a tree
-		treeOID, err := plumbing.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
+		treeOID, err := ginternals.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
 		require.NoError(t, err)
 
 		ci := object.NewCommit(treeOID, object.NewSignature("author", "email"), &object.CommitOptions{})
@@ -225,7 +225,7 @@ func TestToObject(t *testing.T) {
 		require.NoError(t, err)
 
 		// Find a commit
-		commitOID, err := plumbing.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
+		commitOID, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
 		require.NoError(t, err)
 		commit, err := r.GetCommit(commitOID)
 		require.NoError(t, err)
@@ -263,7 +263,7 @@ func TestToObject(t *testing.T) {
 		require.NoError(t, err)
 
 		// Find a commit
-		commitOID, err := plumbing.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
+		commitOID, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
 		require.NoError(t, err)
 		commit, err := r.GetCommit(commitOID)
 		require.NoError(t, err)
@@ -285,15 +285,15 @@ func TestToObject(t *testing.T) {
 		t.Parallel()
 
 		// Find a tree
-		treeOID, err := plumbing.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
+		treeOID, err := ginternals.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
 		require.NoError(t, err)
 
 		// Find a commit
-		parentID, err := plumbing.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
+		parentID, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
 		require.NoError(t, err)
 
 		ci := object.NewCommit(treeOID, object.NewSignature("author", "email"), &object.CommitOptions{
-			ParentsID: []plumbing.Oid{parentID},
+			ParentsID: []ginternals.Oid{parentID},
 			Message:   "message",
 			GPGSig:    "-----BEGIN PGP SIGNATURE-----\n\ndata\n-----END PGP SIGNATURE-----",
 			Committer: object.NewSignature("committer", "commiter@domain.tld"),
