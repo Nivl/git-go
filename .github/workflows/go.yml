@@ -1,6 +1,19 @@
 name: Go
 on: [push]
 jobs:
+  go-vulnerabilities-scan:
+    name: "Golang Vulnerabilities Scan"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Go 1.14
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.14
+
+      - name: Run Nancy
+        run: go list -m all | docker run -i sonatypecommunity/nancy:latest
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
