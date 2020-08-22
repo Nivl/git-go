@@ -16,7 +16,7 @@ jobs:
         # - CVE-2020-15114
         # - CVE-2020-15115
         # - CVE-2020-15136
-        run: go list -m all | docker run -i sonatypecommunity/nancy:latest -exclude-vulnerability=CVE-2020-15114,CVE-2020-15115,CVE-2020-15136
+        run: go list -m all | docker run -i sonatypecommunity/nancy:v0 -exclude-vulnerability=CVE-2020-15114,CVE-2020-15115,CVE-2020-15136
 
   lint:
     name: Lint
