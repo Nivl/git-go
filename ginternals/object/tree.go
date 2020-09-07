@@ -36,6 +36,21 @@ func (m TreeObjectMode) IsValid() bool {
 	}
 }
 
+// ObjectType returns the object type associated to a mode
+func (m TreeObjectMode) ObjectType() Type {
+	switch m {
+	case ModeDirectory:
+		return TypeTree
+	case ModeGitLink:
+		return TypeCommit
+	case ModeExecutable, ModeFile, ModeSymLink:
+		return TypeBlob
+	default:
+		// We treat anything unexpected as blob
+		return TypeBlob
+	}
+}
+
 // Tree represents a git tree object
 type Tree struct {
 	id ginternals.Oid

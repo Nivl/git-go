@@ -129,8 +129,7 @@ func catFileCmd(out io.Writer, cfg *config, p catFileParams) error {
 				return xerrors.Errorf("could not get tree %w", err)
 			}
 			for _, e := range tree.Entries() {
-				// TODO(melvin): add the type
-				fmt.Fprintf(out, "%06o %s\t%s\n", e.Mode, e.ID.String(), e.Path)
+				fmt.Fprintf(out, "%06o %s %s\t%s\n", e.Mode, e.Mode.ObjectType().String(), e.ID.String(), e.Path)
 			}
 		case object.TypeBlob:
 			fmt.Fprint(out, string(o.Bytes()))
