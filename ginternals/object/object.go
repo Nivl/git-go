@@ -242,6 +242,7 @@ func (o *Object) AsTree() (*Tree, error) {
 		if err != nil {
 			return nil, xerrors.Errorf("invalid SHA for entry %d (%s): %w", i, err.Error(), ErrTreeInvalid)
 		}
+		// TODO(melvin): Fetch object for type
 		offset += 20
 
 		entries = append(entries, entry)
@@ -336,4 +337,82 @@ func (o *Object) AsCommit() (*Commit, error) {
 	}
 
 	return ci, nil
+}
+
+// AsTag parses the object as Tag
+//
+// A tag has following format:
+//
+// object {sha}
+// type {target_object_type}
+// tag {tag_name}
+// tagger {author_name} <{author_email}> {author_date_seconds} {author_date_timezone}
+// gpgsig -----BEGIN PGP SIGNATURE-----
+// {gpg key over multiple lines}
+//  -----END PGP SIGNATURE-----
+// {a blank line}
+// {tag message}
+//
+// Note:
+// - The gpgsig is optional
+func (o *Object) AsTag() (*Tag, error) {
+	if o.typ != TypeTag {
+		return nil, xerrors.Errorf("type %s is not a commit", o.typ)
+	}
+	tag := &Tag{
+		id:        o.id,
+		rawObject: o,
+	}
+	offset := 0
+	objData := o.Bytes()
+	for {
+		line := readutil.ReadTo(objData[offset:], '\n')
+		offset += len(line) + 1 // +1 to count the \n
+
+		// If we didn't find anything then something is wrong
+		if len(line) == 0 && offset == 1 {
+			return nil, xerrors.Errorf("could not find commit first line: %w", ErrCommitInvalid)
+		}
+
+		// if we got an empty line, it means everything from now to the end
+		// will be the commit message
+		if len(line) == 0 {
+			tag.message = string(objData[offset:])
+			break
+		}
+
+		// Otherwise we're getting a key/value pair, separated by a space
+		kv := bytes.SplitN(line, []byte{' '}, 2)
+		switch string(kv[0]) {
+		case "object":
+			oid, err := ginternals.NewOidFromChars(kv[1])
+			if err != nil {
+				return nil, xerrors.Errorf("could not parse target id %#v: %w", kv[1], err)
+			}
+			tag.targetID = oid
+			// TODO(melvin): Fetch the object
+		case "type":
+			typ, err := NewTypeFromString(string(kv[1]))
+			if err != nil {
+				return nil, xerrors.Errorf("object type %s: %w", string(kv[1]), err)
+			}
+			tag.typ = typ
+		case "tagger":
+			sig, err := NewSignatureFromBytes(kv[1])
+			if err != nil {
+				return nil, xerrors.Errorf("could not parse signature [%s]: %w", string(kv[1]), err)
+			}
+			tag.tagger = sig
+		case "tag":
+			tag.tag = string(kv[1])
+		case "gpgsig":
+			begin := string(kv[1]) + "\n"
+			end := "-----END PGP SIGNATURE-----"
+			i := bytes.Index(objData[offset:], []byte(end))
+			tag.gpgSig = begin + string(objData[offset:offset+i]) + end
+			offset += len(end) + i + 1 // +1 to count the \n
+		}
+	}
+
+	return tag, nil
 }
