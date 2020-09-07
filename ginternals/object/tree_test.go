@@ -62,35 +62,91 @@ func TestTree(t *testing.T) {
 }
 
 func TestTreeObjectMode(t *testing.T) {
-	testCases := []struct {
-		desc    string
-		mode    object.TreeObjectMode
-		isValid bool
-	}{
-		{
-			desc:    "0o644 should not be valid",
-			mode:    0o644,
-			isValid: false,
-		},
-		{
-			desc:    "ModeFile should be valid",
-			mode:    object.ModeFile,
-			isValid: true,
-		},
-		{
-			desc:    "0o100755 should be valid",
-			mode:    0o100755,
-			isValid: true,
-		},
-	}
-	for i, tc := range testCases {
-		tc := tc
-		i := i
-		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
-			t.Parallel()
+	t.Parallel()
 
-			out := tc.mode.IsValid()
-			assert.Equal(t, tc.isValid, out)
-		})
-	}
+	t.Run("ObjectType()", func(t *testing.T) {
+		t.Parallel()
+
+		testCases := []struct {
+			desc     string
+			mode     object.TreeObjectMode
+			expected object.Type
+		}{
+			{
+				desc:     "unknown object should be blob",
+				mode:     0o644,
+				expected: object.TypeBlob,
+			},
+			{
+				desc:     "ModeFile should be a blob",
+				mode:     object.ModeFile,
+				expected: object.TypeBlob,
+			},
+			{
+				desc:     "ModeExecutable should be a blob",
+				mode:     object.ModeExecutable,
+				expected: object.TypeBlob,
+			},
+			{
+				desc:     "ModeSymLink should be a blob",
+				mode:     object.ModeSymLink,
+				expected: object.TypeBlob,
+			},
+			{
+				desc:     "ModeDirectory should be a tree",
+				mode:     object.ModeDirectory,
+				expected: object.TypeTree,
+			},
+			{
+				desc:     "ModeGitLink should be a commit",
+				mode:     object.ModeGitLink,
+				expected: object.TypeCommit,
+			},
+		}
+		for i, tc := range testCases {
+			tc := tc
+			i := i
+			t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
+				t.Parallel()
+
+				assert.Equal(t, tc.expected, tc.mode.ObjectType())
+			})
+		}
+	})
+
+	t.Run("IsValid()", func(t *testing.T) {
+		t.Parallel()
+
+		testCases := []struct {
+			desc    string
+			mode    object.TreeObjectMode
+			isValid bool
+		}{
+			{
+				desc:    "0o644 should not be valid",
+				mode:    0o644,
+				isValid: false,
+			},
+			{
+				desc:    "ModeFile should be valid",
+				mode:    object.ModeFile,
+				isValid: true,
+			},
+			{
+				desc:    "0o100755 should be valid",
+				mode:    0o100755,
+				isValid: true,
+			},
+		}
+		for i, tc := range testCases {
+			tc := tc
+			i := i
+			t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
+				t.Parallel()
+
+				out := tc.mode.IsValid()
+				assert.Equal(t, tc.isValid, out)
+			})
+		}
+	})
 }
