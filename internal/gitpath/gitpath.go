@@ -2,10 +2,15 @@
 // the .git directory
 package gitpath
 
-import "os"
+import (
+	"os"
+	"path"
+)
 
 // .git/ Files and directories
-// TODO(melvin): add method to get system-specific path
+// We keep the refs paths in unix format since they must be stored
+// this way. The backend is in charge to convert this to the current
+// system when needed
 const (
 	DotGitPath      = ".git"
 	ConfigPath      = "config"
@@ -20,3 +25,13 @@ const (
 	RefsHeadsPath   = RefsPath + "/heads"
 	RefsRemotesPath = RefsPath + "/heads"
 )
+
+// LocalTag returns the UNIX path of a tag
+func LocalTag(name string) string {
+	return path.Join(RefsTagsPath, name)
+}
+
+// LocalBranch returns the UNIX path of branch
+func LocalBranch(name string) string {
+	return path.Join(RefsHeadsPath, name)
+}

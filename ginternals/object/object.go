@@ -389,7 +389,6 @@ func (o *Object) AsTag() (*Tag, error) {
 				return nil, xerrors.Errorf("could not parse target id %#v: %w", kv[1], err)
 			}
 			tag.targetID = oid
-			// TODO(melvin): Fetch the object
 		case "type":
 			typ, err := NewTypeFromString(string(kv[1]))
 			if err != nil {

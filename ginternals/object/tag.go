@@ -25,14 +25,12 @@ type Tag struct {
 
 	id       ginternals.Oid
 	targetID ginternals.Oid
-	target   *Object
 }
 
 // NewTag creates a new Tag object
-func NewTag(target *Object, name string, tagger Signature, opts TagOptions) *Tag {
+func NewTag(targetID ginternals.Oid, name string, tagger Signature, opts TagOptions) *Tag {
 	c := &Tag{
-		target:   target,
-		targetID: target.ID(),
+		targetID: targetID,
 		tag:      name,
 		tagger:   tagger,
 		message:  opts.Message,
@@ -46,9 +44,9 @@ func (c *Tag) ID() ginternals.Oid {
 	return c.id
 }
 
-// Target returns the object targeted by the tag
-func (c *Tag) Target() *Object {
-	return nil
+// TargetID returns the ID of the object targeted by the tag
+func (c *Tag) TargetID() ginternals.Oid {
+	return c.targetID
 }
 
 // Type returns the type of the targeted object

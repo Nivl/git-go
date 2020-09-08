@@ -200,7 +200,7 @@ func TestRepositoryNewCommit(t *testing.T) {
 	r, err := OpenRepository(repoPath)
 	require.NoError(t, err)
 
-	ref, err := r.dotGit.Reference(ginternals.MasterLocalRef)
+	ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
 	require.NoError(t, err)
 
 	headCommit, err := r.GetCommit(ref.Target())
@@ -210,7 +210,7 @@ func TestRepositoryNewCommit(t *testing.T) {
 	require.NoError(t, err)
 
 	sig := object.NewSignature("author", "author@domain.tld")
-	c, err := r.NewCommit(ginternals.MasterLocalRef, headTree, sig, &object.CommitOptions{
+	c, err := r.NewCommit(gitpath.LocalBranch(ginternals.Master), headTree, sig, &object.CommitOptions{
 		ParentsID: []ginternals.Oid{headCommit.ID()},
 		Message:   "new commit that doesn't do anything",
 	})
@@ -221,7 +221,7 @@ func TestRepositoryNewCommit(t *testing.T) {
 	require.NoError(t, err)
 
 	// We update the ref since it should have changed
-	ref, err = r.dotGit.Reference(ginternals.MasterLocalRef)
+	ref, err = r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
 	require.NoError(t, err)
 	assert.Equal(t, c.ID(), ref.Target())
 }
@@ -233,7 +233,7 @@ func TestRepositoryNewDetachedCommit(t *testing.T) {
 	r, err := OpenRepository(repoPath)
 	require.NoError(t, err)
 
-	ref, err := r.dotGit.Reference(ginternals.MasterLocalRef)
+	ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
 	require.NoError(t, err)
 
 	headCommit, err := r.GetCommit(ref.Target())
@@ -254,7 +254,7 @@ func TestRepositoryNewDetachedCommit(t *testing.T) {
 	require.NoError(t, err)
 
 	// We update the ref to make sure it's not updated
-	updateddRef, err := r.dotGit.Reference(ginternals.MasterLocalRef)
+	updateddRef, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
 	require.NoError(t, err)
 	assert.Equal(t, ref.Target(), updateddRef.Target())
 }
