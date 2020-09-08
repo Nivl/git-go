@@ -242,7 +242,6 @@ func (o *Object) AsTree() (*Tree, error) {
 		if err != nil {
 			return nil, xerrors.Errorf("invalid SHA for entry %d (%s): %w", i, err.Error(), ErrTreeInvalid)
 		}
-		// TODO(melvin): Fetch object for type
 		offset += 20
 
 		entries = append(entries, entry)
