@@ -303,7 +303,7 @@ func TestRepositoryGetTag(t *testing.T) {
 		targettedCommitID, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
 		require.NoError(t, err)
 
-		tagRef, err := r.GetTag("lightweigth")
+		tagRef, err := r.GetTag("lightweight")
 		require.NoError(t, err)
 
 		require.Equal(t, targettedCommitID, tagRef.Target())
