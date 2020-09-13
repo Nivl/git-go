@@ -1,6 +1,7 @@
 package git
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -257,4 +258,73 @@ func TestRepositoryNewDetachedCommit(t *testing.T) {
 	updateddRef, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
 	require.NoError(t, err)
 	assert.Equal(t, ref.Target(), updateddRef.Target())
+}
+
+func TestRepositoryGetTag(t *testing.T) {
+	t.Run("annotated", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+
+		tagID, err := ginternals.NewOidFromStr("80316e01dbfdf5c2a8a20de66c747ecd4c4bd442")
+		require.NoError(t, err)
+
+		tagRef, err := r.GetTag("annotated")
+		require.NoError(t, err)
+
+		require.Equal(t, tagID, tagRef.Target())
+
+		rawTag, err := r.GetObject(tagRef.Target())
+		require.NoError(t, err)
+		tag, err := rawTag.AsTag()
+		require.NoError(t, err)
+
+		targettedCommitID, err := ginternals.NewOidFromStr("6097a04b7a327c4be68f222ca66e61b8e1abe5c1")
+		require.NoError(t, err)
+
+		assert.Equal(t, tagID, tag.ID())
+		assert.Equal(t, "annotated", tag.Name())
+		assert.Equal(t, targettedCommitID, tag.TargetID())
+	})
+
+	t.Run("lightweight", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+
+		targettedCommitID, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
+		require.NoError(t, err)
+
+		tagRef, err := r.GetTag("lightweigth")
+		require.NoError(t, err)
+
+		require.Equal(t, targettedCommitID, tagRef.Target())
+
+		commit, err := r.GetCommit(tagRef.Target())
+		require.NoError(t, err)
+
+		assert.Equal(t, targettedCommitID, commit.ID())
+	})
+
+	t.Run("unexisting tag", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+
+		_, err = r.GetTag("does-not-exist")
+		assert.Error(t, err)
+		assert.True(t, errors.Is(err, ErrTagNotFound), "invalid error type")
+	})
 }
