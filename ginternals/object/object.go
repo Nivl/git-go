@@ -21,6 +21,8 @@ var (
 	// ErrObjectInvalid represents an error thrown when an object contains
 	// unexpected data or when the wrong object is provided to a method.
 	// Ex. Inserting a ObjectDeltaOFS in a tree
+	// Ex.2 Creating a tag using a commit with no ID (commit not persisted
+	// 	to the odb)
 	ErrObjectInvalid = errors.New("invalid object")
 
 	// ErrTreeInvalid represents an error thrown when parsing an invalid
@@ -388,7 +390,7 @@ func (o *Object) AsTag() (*Tag, error) {
 			if err != nil {
 				return nil, xerrors.Errorf("could not parse target id %#v: %w", kv[1], err)
 			}
-			tag.targetID = oid
+			tag.target = oid
 		case "type":
 			typ, err := NewTypeFromString(string(kv[1]))
 			if err != nil {

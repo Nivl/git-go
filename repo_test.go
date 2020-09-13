@@ -288,7 +288,7 @@ func TestRepositoryGetTag(t *testing.T) {
 
 		assert.Equal(t, tagID, tag.ID())
 		assert.Equal(t, "annotated", tag.Name())
-		assert.Equal(t, targettedCommitID, tag.TargetID())
+		assert.Equal(t, targettedCommitID, tag.Target())
 	})
 
 	t.Run("lightweight", func(t *testing.T) {
@@ -326,5 +326,141 @@ func TestRepositoryGetTag(t *testing.T) {
 		_, err = r.GetTag("does-not-exist")
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, ErrTagNotFound), "invalid error type")
+	})
+}
+
+func TestRepositoryNewTag(t *testing.T) {
+	t.Run("create a new valid tag", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+
+		ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
+		require.NoError(t, err)
+
+		headCommit, err := r.GetCommit(ref.Target())
+		require.NoError(t, err)
+
+		// Create the tag
+		sig := object.NewSignature("author", "author@domain.tld")
+		tag, err := r.NewTag("v0.0.1-test", headCommit.ToObject(), sig, "v0.0.1-test", object.TagOptions{})
+		require.NoError(t, err)
+		// assert the returned object
+		assert.Equal(t, "v0.0.1-test", tag.Name())
+		assert.Equal(t, ref.Target(), tag.Target())
+		assert.Equal(t, "v0.0.1-test", tag.Message())
+
+		// Retrieve the tag
+		tagRef, err := r.GetTag("v0.0.1-test")
+		require.NoError(t, err)
+
+		rawTag, err := r.GetObject(tagRef.Target())
+		require.NoError(t, err)
+		fetchedTag, err := rawTag.AsTag()
+		require.NoError(t, err)
+
+		assert.Equal(t, tag.ID(), fetchedTag.ID())
+		assert.Equal(t, "v0.0.1-test", fetchedTag.Name())
+		assert.Equal(t, ref.Target(), fetchedTag.Target())
+	})
+
+	t.Run("should fail creating a tag that already exist", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+
+		ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
+		require.NoError(t, err)
+
+		headCommit, err := r.GetCommit(ref.Target())
+		require.NoError(t, err)
+
+		// Create the tag
+		sig := object.NewSignature("author", "author@domain.tld")
+		_, err = r.NewTag("annotated", headCommit.ToObject(), sig, "annotated", object.TagOptions{})
+		require.Error(t, err)
+		require.True(t, errors.Is(err, ErrTagExists))
+	})
+
+	t.Run("should fail creating a tag using a non-persisted object", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+
+		blob := object.New(object.TypeBlob, []byte(""))
+
+		// Create the tag
+		sig := object.NewSignature("author", "author@domain.tld")
+		_, err = r.NewTag("invalid", blob, sig, "invalid", object.TagOptions{})
+		require.Error(t, err)
+		require.True(t, errors.Is(err, object.ErrObjectInvalid))
+	})
+}
+
+func TestRepositoryNewLightweightTag(t *testing.T) {
+	t.Run("create a new valid tag", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+
+		ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
+		require.NoError(t, err)
+
+		// Create the tag
+		tagRef, err := r.NewLightweightTag("v0.0.1-test", ref.Target())
+		require.NoError(t, err)
+		// assert the returned object
+		assert.Equal(t, ref.Target(), tagRef.Target())
+	})
+
+	t.Run("should fail creating a tag that already exist", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+
+		ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
+		require.NoError(t, err)
+
+		// Create the tag
+		_, err = r.NewLightweightTag("lightweight", ref.Target())
+		require.Error(t, err)
+		require.True(t, errors.Is(err, ErrTagExists))
+	})
+
+	t.Run("should fail creating a tag using a non-persisted object", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+
+		blob := object.New(object.TypeBlob, []byte(""))
+
+		// Create the tag
+		_, err = r.NewLightweightTag("v0.0.1-test", blob.ID())
+		require.Error(t, err)
+		require.True(t, errors.Is(err, object.ErrObjectInvalid))
 	})
 }

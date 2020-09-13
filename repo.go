@@ -260,22 +260,28 @@ func (r *Repository) NewDetachedCommit(tree *object.Tree, author object.Signatur
 }
 
 // NewTag creates, stores, and returns a new annoted tag
-func (r *Repository) NewTag(tag string, targetID ginternals.Oid, tagger object.Signature, opts object.TagOptions) (*object.Tag, error) {
+func (r *Repository) NewTag(tag string, target *object.Object, tagger object.Signature, message string, opts object.TagOptions) (*object.Tag, error) {
+	// We first make sure the tag doesn't already exist
 	refname := gitpath.LocalTag(tag)
 	_, err := r.dotGit.Reference(refname)
 	if err == nil {
 		return nil, ErrTagExists
 	}
-	if errors.Is(err, ginternals.ErrRefNotFound) {
+	if !errors.Is(err, ginternals.ErrRefNotFound) {
 		return nil, xerrors.Errorf("could not check if tag already exists: %w", err)
 	}
 
-	c := object.NewTag(targetID, tag, tagger, opts)
+	// We create the tag and persist it to the object database
+	c, err := object.NewTag(target, tag, tagger, message, opts)
+	if err != nil {
+		return nil, xerrors.Errorf("could not create the object: %w", err)
+	}
 	o := c.ToObject()
 	if _, err := r.dotGit.WriteObject(o); err != nil {
 		return nil, xerrors.Errorf("could not write the object to the odb: %w", err)
 	}
 
+	// We create the reference for the tag
 	ref := ginternals.NewReference(refname, o.ID())
 	if err := r.dotGit.WriteReference(ref); err != nil {
 		return nil, xerrors.Errorf("could not write the ref at %s: %w", refname, err)
@@ -286,12 +292,16 @@ func (r *Repository) NewTag(tag string, targetID ginternals.Oid, tagger object.S
 
 // NewLightweightTag creates, stores, and returns a lightweight tag
 func (r *Repository) NewLightweightTag(tag string, targetID ginternals.Oid) (*ginternals.Reference, error) {
+	if targetID.IsZero() {
+		return nil, object.ErrObjectInvalid
+	}
+
 	refname := gitpath.LocalTag(tag)
 	_, err := r.dotGit.Reference(refname)
 	if err == nil {
 		return nil, ErrTagExists
 	}
-	if errors.Is(err, ginternals.ErrRefNotFound) {
+	if !errors.Is(err, ginternals.ErrRefNotFound) {
 		return nil, xerrors.Errorf("could not check if tag already exists: %w", err)
 	}
 
