@@ -266,7 +266,7 @@ func (r *Repository) NewTag(tag string, targetID ginternals.Oid, tagger object.S
 	if err == nil {
 		return nil, ErrTagExists
 	}
-	if err != ginternals.ErrRefNotFound {
+	if errors.Is(err, ginternals.ErrRefNotFound) {
 		return nil, xerrors.Errorf("could not check if tag already exists: %w", err)
 	}
 
@@ -291,7 +291,7 @@ func (r *Repository) NewLightweightTag(tag string, targetID ginternals.Oid) (*gi
 	if err == nil {
 		return nil, ErrTagExists
 	}
-	if err != ginternals.ErrRefNotFound {
+	if errors.Is(err, ginternals.ErrRefNotFound) {
 		return nil, xerrors.Errorf("could not check if tag already exists: %w", err)
 	}
 
