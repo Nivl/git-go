@@ -397,7 +397,12 @@ func TestRepositoryNewTag(t *testing.T) {
 
 		// Create the tag
 		sig := object.NewSignature("author", "author@domain.tld")
-		tag, err := r.NewTag("v0.0.1-test", headCommit.ToObject(), sig, "v0.0.1-test", object.TagOptions{})
+		tag, err := r.NewTag(&object.TagParams{
+			Name:    "v0.0.1-test",
+			Target:  headCommit.ToObject(),
+			Tagger:  sig,
+			Message: "v0.0.1-test",
+		})
 		require.NoError(t, err)
 		// assert the returned object
 		assert.Equal(t, "v0.0.1-test", tag.Name())
@@ -435,7 +440,12 @@ func TestRepositoryNewTag(t *testing.T) {
 
 		// Create the tag
 		sig := object.NewSignature("author", "author@domain.tld")
-		_, err = r.NewTag("annotated", headCommit.ToObject(), sig, "annotated", object.TagOptions{})
+		_, err = r.NewTag(&object.TagParams{
+			Name:    "annotated",
+			Target:  headCommit.ToObject(),
+			Tagger:  sig,
+			Message: "annotated",
+		})
 		require.Error(t, err)
 		require.True(t, errors.Is(err, ErrTagExists))
 	})
@@ -453,7 +463,12 @@ func TestRepositoryNewTag(t *testing.T) {
 
 		// Create the tag
 		sig := object.NewSignature("author", "author@domain.tld")
-		_, err = r.NewTag("invalid", blob, sig, "invalid", object.TagOptions{})
+		_, err = r.NewTag(&object.TagParams{
+			Name:    "invalid",
+			Target:  blob,
+			Tagger:  sig,
+			Message: "incvalid",
+		})
 		require.Error(t, err)
 		require.True(t, errors.Is(err, object.ErrObjectInvalid))
 	})

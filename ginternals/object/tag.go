@@ -6,9 +6,14 @@ import (
 	"github.com/Nivl/git-go/ginternals"
 )
 
-// TagOptions represents all the optional data available to create a Tag
-type TagOptions struct {
-	GPGSig string
+// TagParams represents all the data needed to create a Tag
+// Params starting by Opt are optionals
+type TagParams struct {
+	Target    *Object
+	Name      string
+	Tagger    Signature
+	Message   string
+	OptGPGSig string
 }
 
 // Tag represents a Tag object
@@ -27,19 +32,19 @@ type Tag struct {
 }
 
 // NewTag creates a new Tag object
-func NewTag(target *Object, name string, tagger Signature, message string, opts TagOptions) (*Tag, error) {
-	if target.ID().IsZero() {
+func NewTag(p *TagParams) (*Tag, error) {
+	if p.Target.ID().IsZero() {
 		return nil, ErrObjectInvalid
 	}
-	c := &Tag{
-		target:  target.ID(),
-		typ:     target.Type(),
-		tag:     name,
-		tagger:  tagger,
-		message: message,
-		gpgSig:  opts.GPGSig,
-	}
-	return c, nil
+
+	return &Tag{
+		target:  p.Target.ID(),
+		typ:     p.Target.Type(),
+		tag:     p.Name,
+		tagger:  p.Tagger,
+		message: p.Message,
+		gpgSig:  p.OptGPGSig,
+	}, nil
 }
 
 // ID returns the SHA of the tag object

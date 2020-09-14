@@ -265,9 +265,9 @@ func (r *Repository) NewDetachedCommit(tree *object.Tree, author object.Signatur
 }
 
 // NewTag creates, stores, and returns a new annoted tag
-func (r *Repository) NewTag(tag string, target *object.Object, tagger object.Signature, message string, opts object.TagOptions) (*object.Tag, error) {
+func (r *Repository) NewTag(p *object.TagParams) (*object.Tag, error) {
 	// We first make sure the tag doesn't already exist
-	refname := gitpath.LocalTag(tag)
+	refname := gitpath.LocalTag(p.Name)
 	_, err := r.dotGit.Reference(refname)
 	if err == nil {
 		return nil, ErrTagExists
@@ -277,7 +277,7 @@ func (r *Repository) NewTag(tag string, target *object.Object, tagger object.Sig
 	}
 
 	// We create the tag and persist it to the object database
-	c, err := object.NewTag(target, tag, tagger, message, opts)
+	c, err := object.NewTag(p)
 	if err != nil {
 		return nil, xerrors.Errorf("could not create the object: %w", err)
 	}
