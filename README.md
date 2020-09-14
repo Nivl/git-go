@@ -30,3 +30,13 @@ See the [CLI project](https://github.com/Nivl/git-go/projects/2)
 ### Library
 
 See the [Library project](https://github.com/Nivl/git-go/projects/1)
+
+## Dev
+
+We use [task](https://github.com/go-task/task) as task runner / build
+tool. The main commands are:
+
+- `task test` to run the tests
+- `task install` to install the `git-go` to the GOPATH
+- `task build` to create a `git` binary in the `./bin` directory
+- `task dev -w` to have the binary at `./bin/git` automatically rebuilt with every change in the code

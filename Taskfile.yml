@@ -1,0 +1,20 @@
+version: "2"
+
+tasks:
+  build:
+    cmds:
+      - go build -i -v -o ./bin/git github.com/Nivl/git-go/cmd/git-go
+
+  install:
+    cmds:
+      - go install github.com/Nivl/go-git/cmd/git-go
+
+  test:
+    cmds:
+      - go test -race -mod=readonly ./...
+
+  dev:
+    deps: [build]
+    sources:
+      - ./**/*.go
+      - go.mod
