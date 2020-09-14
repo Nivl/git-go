@@ -32,6 +32,10 @@ var (
 	// ErrCommitInvalid represents an error thrown when parsing an invalid
 	// commit object
 	ErrCommitInvalid = errors.New("invalid commit")
+
+	// ErrTagInvalid represents an error thrown when parsing an invalid
+	// tag object
+	ErrTagInvalid = errors.New("invalid tag")
 )
 
 // Type represents the type of an object as stored in a packfile
