@@ -137,6 +137,31 @@ func TestCatFile(t *testing.T) {
 				args:           []string{"cat-file", "commit", "bbb720a96e4c29b9950a4c577c98470a4d5dd089"},
 				expectedOutput: "file://commit_bbb720a96e4c29b9950a4c577c98470a4d5dd089",
 			},
+			{
+				desc:           "default should print raw object (annotated tag)",
+				args:           []string{"cat-file", "-p", "annotated"},
+				expectedOutput: "file://annotated",
+			},
+			{
+				desc:           "default should print raw object (HEAD)",
+				args:           []string{"cat-file", "-p", "HEAD"},
+				expectedOutput: "file://commit_bbb720a96e4c29b9950a4c577c98470a4d5dd089",
+			},
+			{
+				desc:           "default should print raw object (refs/heads/ml/packfile/tests)",
+				args:           []string{"cat-file", "-p", "refs/heads/ml/packfile/tests"},
+				expectedOutput: "file://commit_bbb720a96e4c29b9950a4c577c98470a4d5dd089",
+			},
+			{
+				desc:           "default should print raw object (heads/ml/packfile/tests)",
+				args:           []string{"cat-file", "-p", "heads/ml/packfile/tests"},
+				expectedOutput: "file://commit_bbb720a96e4c29b9950a4c577c98470a4d5dd089",
+			},
+			{
+				desc:           "default should print raw object (ml/packfile/tests)",
+				args:           []string{"cat-file", "-p", "ml/packfile/tests"},
+				expectedOutput: "file://commit_bbb720a96e4c29b9950a4c577c98470a4d5dd089",
+			},
 		}
 		for i, tc := range testCases {
 			tc := tc

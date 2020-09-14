@@ -35,3 +35,8 @@ func LocalTag(name string) string {
 func LocalBranch(name string) string {
 	return path.Join(RefsHeadsPath, name)
 }
+
+// Ref returns the UNIX path of a ref
+func Ref(name string) string {
+	return path.Join(RefsPath, name)
+}

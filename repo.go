@@ -210,6 +210,11 @@ func (r *Repository) GetTag(name string) (*ginternals.Reference, error) {
 	return ref, nil
 }
 
+// GetReference returns the reference matching the given name
+func (r *Repository) GetReference(name string) (*ginternals.Reference, error) {
+	return r.dotGit.Reference(name)
+}
+
 // NewBlob creates, stores, and returns a new Blob object
 func (r *Repository) NewBlob(data []byte) (*object.Blob, error) {
 	o := object.New(object.TypeBlob, data)
