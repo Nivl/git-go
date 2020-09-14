@@ -2,6 +2,7 @@ package git
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -175,6 +176,55 @@ func TestRepositoryGetCommit(t *testing.T) {
 	assert.Equal(t, "e5b9e846e1b468bc9597ff95d71dfacda8bd54e3", c.TreeID().String())
 	require.Len(t, c.ParentIDs(), 1)
 	assert.Equal(t, "6097a04b7a327c4be68f222ca66e61b8e1abe5c1", c.ParentIDs()[0].String())
+}
+
+func TestRepositoryGetReference(t *testing.T) {
+	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+	defer cleanup()
+	r, err := OpenRepository(repoPath)
+	require.NoError(t, err)
+
+	t.Run("Parallel", func(t *testing.T) {
+		testCases := []struct {
+			desc           string
+			refName        string
+			expectedError  error
+			expectedTarget string
+		}{
+			{
+				desc:           "HEAD should work",
+				refName:        "HEAD",
+				expectedTarget: "bbb720a96e4c29b9950a4c577c98470a4d5dd089",
+			},
+			{
+				desc:           "refs/heads/ml/packfile/tests should work",
+				refName:        "refs/heads/ml/packfile/tests",
+				expectedTarget: "bbb720a96e4c29b9950a4c577c98470a4d5dd089",
+			},
+			{
+				desc:          "an invalid name should fail",
+				refName:       "nope",
+				expectedError: ginternals.ErrRefNotFound,
+			},
+		}
+		for i, tc := range testCases {
+			tc := tc
+			i := i
+			t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
+				t.Parallel()
+
+				ref, err := r.GetReference(tc.refName)
+
+				if tc.expectedError != nil {
+					assert.True(t, errors.Is(err, tc.expectedError), "wrong error returned")
+					return
+				}
+
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedTarget, ref.Target().String())
+			})
+		}
+	})
 }
 
 func TestRepositoryGetTree(t *testing.T) {
