@@ -5,14 +5,15 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/Nivl/git-go/internal/gitpath"
 	"golang.org/x/xerrors"
 )
 
-// Path of commonly used references
+// Common ref names
 const (
-	HEAD           = "HEAD"
-	MasterLocalRef = gitpath.RefsHeadsPath + "/master"
+	HEAD = "HEAD"
+	// Master correspond to the default branch name if none was
+	// specified
+	Master = "master"
 )
 
 var (

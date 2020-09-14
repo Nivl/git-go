@@ -19,7 +19,7 @@ func (b *Backend) Reference(name string) (*ginternals.Reference, error) {
 	var packedRef map[string]string
 
 	finder := func(name string) ([]byte, error) {
-		data, err := ioutil.ReadFile(b.nameToPath(name))
+		data, err := ioutil.ReadFile(b.systemPath(name))
 		if err != nil {
 			if !os.IsNotExist(err) {
 				return nil, xerrors.Errorf("could not read reference content: %w", err)
@@ -43,16 +43,15 @@ func (b *Backend) Reference(name string) (*ginternals.Reference, error) {
 	return ginternals.ResolveReference(name, finder)
 }
 
-// nameToPath returns a path from a ref name
+// systemPath returns a path from a ref name
 // Ex.: On windows refs/heads/master would return refs\heads\master
-func (b *Backend) nameToPath(name string) string {
+func (b *Backend) systemPath(name string) string {
 	switch os.PathSeparator {
 	case '/':
 		return filepath.Join(b.root, name)
 	default:
-		parts := strings.Split(name, "/")
-		p := filepath.Join(parts...)
-		return filepath.Join(b.root, p)
+		name = filepath.FromSlash(name)
+		return filepath.Join(b.root, name)
 	}
 }
 
@@ -116,7 +115,7 @@ func (b *Backend) WriteReference(ref *ginternals.Reference) error {
 	default:
 		return xerrors.Errorf("reference type %d: %w", ref.Type(), ginternals.ErrUnknownRefType)
 	}
-	err := ioutil.WriteFile(b.nameToPath(ref.Name()), []byte(target), 0o644)
+	err := ioutil.WriteFile(b.systemPath(ref.Name()), []byte(target), 0o644)
 	if err != nil {
 		return xerrors.Errorf("could not persist reference to disk: %w", err)
 	}
@@ -131,7 +130,7 @@ func (b *Backend) WriteReferenceSafe(ref *ginternals.Reference) error {
 	}
 
 	// First we check if the reference is on disk
-	p := b.nameToPath(ref.Name())
+	p := b.systemPath(ref.Name())
 	_, err := os.Stat(p)
 	if !os.IsNotExist(err) {
 		if err != nil {

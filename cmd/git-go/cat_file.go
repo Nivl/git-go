@@ -6,6 +6,8 @@ import (
 	"io"
 	"strconv"
 
+	"github.com/Nivl/git-go/internal/gitpath"
+
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/spf13/cobra"
@@ -34,11 +36,11 @@ func newCatFileCmd(cfg *config) *cobra.Command {
 			typeOnly:    *typeOnly,
 			sizeOnly:    *sizeOnly,
 			prettyPrint: *prettyPrint,
-			sha:         args[0],
+			objectName:  args[0],
 		}
 		if len(args) == 2 {
 			p.typ = args[0]
-			p.sha = args[1]
+			p.objectName = args[1]
 		}
 		return catFileCmd(cmd.OutOrStdout(), cfg, p)
 	}
@@ -49,7 +51,7 @@ type catFileParams struct {
 	typeOnly    bool
 	sizeOnly    bool
 	prettyPrint bool
-	sha         string
+	objectName  string
 	typ         string
 }
 
@@ -79,9 +81,37 @@ func catFileCmd(out io.Writer, cfg *config, p catFileParams) error {
 		return err
 	}
 
-	oid, err := ginternals.NewOidFromStr(p.sha)
+	oid, err := ginternals.NewOidFromStr(p.objectName)
 	if err != nil {
-		return xerrors.Errorf("failed parsing sha: %w", err)
+		// If that failed it means we might have provided different name,
+		// like a reference
+		toTry := []string{
+			// catches stuff like HEADS or refs/heads/master
+			p.objectName,
+			// catches heads/master
+			gitpath.Ref(p.objectName),
+			// catches local branch names
+			gitpath.LocalBranch(p.objectName),
+			// catches local tag names
+			gitpath.LocalTag(p.objectName),
+		}
+
+		for _, refName := range toTry {
+			ref, err := r.GetReference(refName)
+			if err == nil {
+				oid = ref.Target()
+				break
+			}
+
+			// if the ref doesn't exist we test the the next one
+			if !errors.Is(err, ginternals.ErrRefNotFound) {
+				return xerrors.Errorf("could not check if ref %s exists: %w", refName, err)
+			}
+		}
+
+		if oid.IsZero() {
+			return xerrors.Errorf("not a valid object name %s", p.objectName)
+		}
 	}
 
 	o, err := r.GetObject(oid)
@@ -96,7 +126,7 @@ func catFileCmd(out io.Writer, cfg *config, p catFileParams) error {
 		}
 
 		if o.Type().String() != p.typ {
-			return xerrors.Errorf("%s: %w", p.sha, errBadFile)
+			return xerrors.Errorf("%s: %w", p.objectName, errBadFile)
 		}
 	}
 
@@ -123,6 +153,20 @@ func catFileCmd(out io.Writer, cfg *config, p catFileParams) error {
 			}
 			fmt.Fprintln(out, "")
 			fmt.Fprint(out, c.Message())
+		case object.TypeTag:
+			tag, err := o.AsTag()
+			if err != nil {
+				return xerrors.Errorf("could not get tag %w", err)
+			}
+			fmt.Fprintf(out, "object %s\n", tag.Target().String())
+			fmt.Fprintf(out, "type %s\n", tag.Type().String())
+			fmt.Fprintf(out, "tag %s\n", tag.Name())
+			fmt.Fprintf(out, "tagger %s\n", tag.Tagger().String())
+			if tag.GPGSig() != "" {
+				fmt.Fprintf(out, "gpgsig %s \n", tag.GPGSig())
+			}
+			fmt.Fprintln(out, "")
+			fmt.Fprint(out, tag.Message())
 		case object.TypeTree:
 			tree, err := o.AsTree()
 			if err != nil {
@@ -133,7 +177,7 @@ func catFileCmd(out io.Writer, cfg *config, p catFileParams) error {
 			}
 		case object.TypeBlob:
 			fmt.Fprint(out, string(o.Bytes()))
-		case object.TypeTag, object.ObjectDeltaOFS, object.ObjectDeltaRef:
+		case object.ObjectDeltaOFS, object.ObjectDeltaRef:
 			fallthrough
 		default:
 			return xerrors.Errorf("pretty-print not supported for type %s", o.Type().String())

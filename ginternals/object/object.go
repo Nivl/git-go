@@ -21,6 +21,8 @@ var (
 	// ErrObjectInvalid represents an error thrown when an object contains
 	// unexpected data or when the wrong object is provided to a method.
 	// Ex. Inserting a ObjectDeltaOFS in a tree
+	// Ex.2 Creating a tag using a commit with no ID (commit not persisted
+	// 	to the odb)
 	ErrObjectInvalid = errors.New("invalid object")
 
 	// ErrTreeInvalid represents an error thrown when parsing an invalid
@@ -30,6 +32,10 @@ var (
 	// ErrCommitInvalid represents an error thrown when parsing an invalid
 	// commit object
 	ErrCommitInvalid = errors.New("invalid commit")
+
+	// ErrTagInvalid represents an error thrown when parsing an invalid
+	// tag object
+	ErrTagInvalid = errors.New("invalid tag")
 )
 
 // Type represents the type of an object as stored in a packfile
@@ -336,4 +342,81 @@ func (o *Object) AsCommit() (*Commit, error) {
 	}
 
 	return ci, nil
+}
+
+// AsTag parses the object as Tag
+//
+// A tag has following format:
+//
+// object {sha}
+// type {target_object_type}
+// tag {tag_name}
+// tagger {author_name} <{author_email}> {author_date_seconds} {author_date_timezone}
+// gpgsig -----BEGIN PGP SIGNATURE-----
+// {gpg key over multiple lines}
+//  -----END PGP SIGNATURE-----
+// {a blank line}
+// {tag message}
+//
+// Note:
+// - The gpgsig is optional
+func (o *Object) AsTag() (*Tag, error) {
+	if o.typ != TypeTag {
+		return nil, xerrors.Errorf("type %s is not a tag", o.typ)
+	}
+	tag := &Tag{
+		id:        o.id,
+		rawObject: o,
+	}
+	offset := 0
+	objData := o.Bytes()
+	for {
+		line := readutil.ReadTo(objData[offset:], '\n')
+		offset += len(line) + 1 // +1 to count the \n
+
+		// If we didn't find anything then something is wrong
+		if len(line) == 0 && offset == 1 {
+			return nil, xerrors.Errorf("could not find tag first line: %w", ErrTagInvalid)
+		}
+
+		// if we got an empty line, it means everything from now to the end
+		// will be the tag message
+		if len(line) == 0 {
+			tag.message = string(objData[offset:])
+			break
+		}
+
+		// Otherwise we're getting a key/value pair, separated by a space
+		kv := bytes.SplitN(line, []byte{' '}, 2)
+		switch string(kv[0]) {
+		case "object":
+			oid, err := ginternals.NewOidFromChars(kv[1])
+			if err != nil {
+				return nil, xerrors.Errorf("could not parse target id %#v: %w", kv[1], err)
+			}
+			tag.target = oid
+		case "type":
+			typ, err := NewTypeFromString(string(kv[1]))
+			if err != nil {
+				return nil, xerrors.Errorf("object type %s: %w", string(kv[1]), err)
+			}
+			tag.typ = typ
+		case "tagger":
+			sig, err := NewSignatureFromBytes(kv[1])
+			if err != nil {
+				return nil, xerrors.Errorf("could not parse signature [%s]: %w", string(kv[1]), err)
+			}
+			tag.tagger = sig
+		case "tag":
+			tag.tag = string(kv[1])
+		case "gpgsig":
+			begin := string(kv[1]) + "\n"
+			end := "-----END PGP SIGNATURE-----"
+			i := bytes.Index(objData[offset:], []byte(end))
+			tag.gpgSig = begin + string(objData[offset:offset+i]) + end
+			offset += len(end) + i + 1 // +1 to count the \n
+		}
+	}
+
+	return tag, nil
 }

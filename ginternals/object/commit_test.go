@@ -215,7 +215,7 @@ func TestNewCommit(t *testing.T) {
 	})
 }
 
-func TestToObject(t *testing.T) {
+func TestCommitToObject(t *testing.T) {
 	t.Run("duplicating a commit should work", func(t *testing.T) {
 		t.Parallel()
 

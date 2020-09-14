@@ -1,6 +1,8 @@
 package git
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -176,6 +178,55 @@ func TestRepositoryGetCommit(t *testing.T) {
 	assert.Equal(t, "6097a04b7a327c4be68f222ca66e61b8e1abe5c1", c.ParentIDs()[0].String())
 }
 
+func TestRepositoryGetReference(t *testing.T) {
+	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+	defer cleanup()
+	r, err := OpenRepository(repoPath)
+	require.NoError(t, err)
+
+	t.Run("Parallel", func(t *testing.T) {
+		testCases := []struct {
+			desc           string
+			refName        string
+			expectedError  error
+			expectedTarget string
+		}{
+			{
+				desc:           "HEAD should work",
+				refName:        "HEAD",
+				expectedTarget: "bbb720a96e4c29b9950a4c577c98470a4d5dd089",
+			},
+			{
+				desc:           "refs/heads/ml/packfile/tests should work",
+				refName:        "refs/heads/ml/packfile/tests",
+				expectedTarget: "bbb720a96e4c29b9950a4c577c98470a4d5dd089",
+			},
+			{
+				desc:          "an invalid name should fail",
+				refName:       "nope",
+				expectedError: ginternals.ErrRefNotFound,
+			},
+		}
+		for i, tc := range testCases {
+			tc := tc
+			i := i
+			t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
+				t.Parallel()
+
+				ref, err := r.GetReference(tc.refName)
+
+				if tc.expectedError != nil {
+					assert.True(t, errors.Is(err, tc.expectedError), "wrong error returned")
+					return
+				}
+
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedTarget, ref.Target().String())
+			})
+		}
+	})
+}
+
 func TestRepositoryGetTree(t *testing.T) {
 	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 	defer cleanup()
@@ -200,7 +251,7 @@ func TestRepositoryNewCommit(t *testing.T) {
 	r, err := OpenRepository(repoPath)
 	require.NoError(t, err)
 
-	ref, err := r.dotGit.Reference(ginternals.MasterLocalRef)
+	ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
 	require.NoError(t, err)
 
 	headCommit, err := r.GetCommit(ref.Target())
@@ -210,7 +261,7 @@ func TestRepositoryNewCommit(t *testing.T) {
 	require.NoError(t, err)
 
 	sig := object.NewSignature("author", "author@domain.tld")
-	c, err := r.NewCommit(ginternals.MasterLocalRef, headTree, sig, &object.CommitOptions{
+	c, err := r.NewCommit(gitpath.LocalBranch(ginternals.Master), headTree, sig, &object.CommitOptions{
 		ParentsID: []ginternals.Oid{headCommit.ID()},
 		Message:   "new commit that doesn't do anything",
 	})
@@ -221,7 +272,7 @@ func TestRepositoryNewCommit(t *testing.T) {
 	require.NoError(t, err)
 
 	// We update the ref since it should have changed
-	ref, err = r.dotGit.Reference(ginternals.MasterLocalRef)
+	ref, err = r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
 	require.NoError(t, err)
 	assert.Equal(t, c.ID(), ref.Target())
 }
@@ -233,7 +284,7 @@ func TestRepositoryNewDetachedCommit(t *testing.T) {
 	r, err := OpenRepository(repoPath)
 	require.NoError(t, err)
 
-	ref, err := r.dotGit.Reference(ginternals.MasterLocalRef)
+	ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
 	require.NoError(t, err)
 
 	headCommit, err := r.GetCommit(ref.Target())
@@ -254,7 +305,227 @@ func TestRepositoryNewDetachedCommit(t *testing.T) {
 	require.NoError(t, err)
 
 	// We update the ref to make sure it's not updated
-	updateddRef, err := r.dotGit.Reference(ginternals.MasterLocalRef)
+	updateddRef, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
 	require.NoError(t, err)
 	assert.Equal(t, ref.Target(), updateddRef.Target())
+}
+
+func TestRepositoryGetTag(t *testing.T) {
+	t.Run("annotated", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+
+		tagID, err := ginternals.NewOidFromStr("80316e01dbfdf5c2a8a20de66c747ecd4c4bd442")
+		require.NoError(t, err)
+
+		tagRef, err := r.GetTag("annotated")
+		require.NoError(t, err)
+
+		require.Equal(t, tagID, tagRef.Target())
+
+		rawTag, err := r.GetObject(tagRef.Target())
+		require.NoError(t, err)
+		tag, err := rawTag.AsTag()
+		require.NoError(t, err)
+
+		targettedCommitID, err := ginternals.NewOidFromStr("6097a04b7a327c4be68f222ca66e61b8e1abe5c1")
+		require.NoError(t, err)
+
+		assert.Equal(t, tagID, tag.ID())
+		assert.Equal(t, "annotated", tag.Name())
+		assert.Equal(t, targettedCommitID, tag.Target())
+	})
+
+	t.Run("lightweight", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+
+		targettedCommitID, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
+		require.NoError(t, err)
+
+		tagRef, err := r.GetTag("lightweight")
+		require.NoError(t, err)
+
+		require.Equal(t, targettedCommitID, tagRef.Target())
+
+		commit, err := r.GetCommit(tagRef.Target())
+		require.NoError(t, err)
+
+		assert.Equal(t, targettedCommitID, commit.ID())
+	})
+
+	t.Run("unexisting tag", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+
+		_, err = r.GetTag("does-not-exist")
+		assert.Error(t, err)
+		assert.True(t, errors.Is(err, ErrTagNotFound), "invalid error type")
+	})
+}
+
+func TestRepositoryNewTag(t *testing.T) {
+	t.Run("create a new valid tag", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+
+		ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
+		require.NoError(t, err)
+
+		headCommit, err := r.GetCommit(ref.Target())
+		require.NoError(t, err)
+
+		// Create the tag
+		sig := object.NewSignature("author", "author@domain.tld")
+		tag, err := r.NewTag(&object.TagParams{
+			Name:    "v0.0.1-test",
+			Target:  headCommit.ToObject(),
+			Tagger:  sig,
+			Message: "v0.0.1-test",
+		})
+		require.NoError(t, err)
+		// assert the returned object
+		assert.Equal(t, "v0.0.1-test", tag.Name())
+		assert.Equal(t, ref.Target(), tag.Target())
+		assert.Equal(t, "v0.0.1-test", tag.Message())
+
+		// Retrieve the tag
+		tagRef, err := r.GetTag("v0.0.1-test")
+		require.NoError(t, err)
+
+		rawTag, err := r.GetObject(tagRef.Target())
+		require.NoError(t, err)
+		fetchedTag, err := rawTag.AsTag()
+		require.NoError(t, err)
+
+		assert.Equal(t, tag.ID(), fetchedTag.ID())
+		assert.Equal(t, "v0.0.1-test", fetchedTag.Name())
+		assert.Equal(t, ref.Target(), fetchedTag.Target())
+	})
+
+	t.Run("should fail creating a tag that already exist", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+
+		ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
+		require.NoError(t, err)
+
+		headCommit, err := r.GetCommit(ref.Target())
+		require.NoError(t, err)
+
+		// Create the tag
+		sig := object.NewSignature("author", "author@domain.tld")
+		_, err = r.NewTag(&object.TagParams{
+			Name:    "annotated",
+			Target:  headCommit.ToObject(),
+			Tagger:  sig,
+			Message: "annotated",
+		})
+		require.Error(t, err)
+		require.True(t, errors.Is(err, ErrTagExists))
+	})
+
+	t.Run("should fail creating a tag using a non-persisted object", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+
+		blob := object.New(object.TypeBlob, []byte(""))
+
+		// Create the tag
+		sig := object.NewSignature("author", "author@domain.tld")
+		_, err = r.NewTag(&object.TagParams{
+			Name:    "invalid",
+			Target:  blob,
+			Tagger:  sig,
+			Message: "incvalid",
+		})
+		require.Error(t, err)
+		require.True(t, errors.Is(err, object.ErrObjectInvalid))
+	})
+}
+
+func TestRepositoryNewLightweightTag(t *testing.T) {
+	t.Run("create a new valid tag", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+
+		ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
+		require.NoError(t, err)
+
+		// Create the tag
+		tagRef, err := r.NewLightweightTag("v0.0.1-test", ref.Target())
+		require.NoError(t, err)
+		// assert the returned object
+		assert.Equal(t, ref.Target(), tagRef.Target())
+	})
+
+	t.Run("should fail creating a tag that already exist", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+
+		ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
+		require.NoError(t, err)
+
+		// Create the tag
+		_, err = r.NewLightweightTag("lightweight", ref.Target())
+		require.Error(t, err)
+		require.True(t, errors.Is(err, ErrTagExists))
+	})
+
+	t.Run("should fail creating a tag using a non-persisted object", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		defer cleanup()
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+
+		blob := object.New(object.TypeBlob, []byte(""))
+
+		// Create the tag
+		_, err = r.NewLightweightTag("v0.0.1-test", blob.ID())
+		require.Error(t, err)
+		require.True(t, errors.Is(err, object.ErrObjectInvalid))
+	})
 }

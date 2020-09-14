@@ -18,6 +18,8 @@ var (
 	ErrRepositoryNotExist           = errors.New("repository does not exist")
 	ErrRepositoryUnsupportedVersion = errors.New("repository nor supported")
 	ErrRepositoryExists             = errors.New("repository already exists")
+	ErrTagNotFound                  = errors.New("tag not found")
+	ErrTagExists                    = errors.New("tag already exists")
 )
 
 // Repository represent a git repository
@@ -85,7 +87,7 @@ func InitRepositoryWithOptions(repoPath string, opts InitOptions) (*Repository, 
 		return nil, err
 	}
 
-	ref := ginternals.NewSymbolicReference(ginternals.HEAD, ginternals.MasterLocalRef)
+	ref := ginternals.NewSymbolicReference(ginternals.HEAD, gitpath.LocalBranch(ginternals.Master))
 	if err := r.dotGit.WriteReference(ref); err != nil {
 		if xerrors.Is(err, ginternals.ErrRefExists) {
 			return nil, ErrRepositoryExists
@@ -195,6 +197,24 @@ func (r *Repository) GetTree(oid ginternals.Oid) (*object.Tree, error) {
 	return o.AsTree()
 }
 
+// GetTag returns the reference for the given tag
+// To know if the tag is annoted or lightweight, call repo.GetObject()
+// on the reference's target ad make sure that the returned object is
+// not a tag with the same name (note that it's technically possible for
+// a tag to target another tag)
+func (r *Repository) GetTag(name string) (*ginternals.Reference, error) {
+	ref, err := r.dotGit.Reference(gitpath.LocalTag(name))
+	if err != nil {
+		return nil, ErrTagNotFound
+	}
+	return ref, nil
+}
+
+// GetReference returns the reference matching the given name
+func (r *Repository) GetReference(name string) (*ginternals.Reference, error) {
+	return r.dotGit.Reference(name)
+}
+
 // NewBlob creates, stores, and returns a new Blob object
 func (r *Repository) NewBlob(data []byte) (*object.Blob, error) {
 	o := object.New(object.TypeBlob, data)
@@ -242,4 +262,57 @@ func (r *Repository) NewCommit(refname string, tree *object.Tree, author object.
 // not attached to any reference
 func (r *Repository) NewDetachedCommit(tree *object.Tree, author object.Signature, opts *object.CommitOptions) (*object.Commit, error) {
 	return r.NewCommit("", tree, author, opts)
+}
+
+// NewTag creates, stores, and returns a new annoted tag
+func (r *Repository) NewTag(p *object.TagParams) (*object.Tag, error) {
+	// We first make sure the tag doesn't already exist
+	refname := gitpath.LocalTag(p.Name)
+	_, err := r.dotGit.Reference(refname)
+	if err == nil {
+		return nil, ErrTagExists
+	}
+	if !errors.Is(err, ginternals.ErrRefNotFound) {
+		return nil, xerrors.Errorf("could not check if tag already exists: %w", err)
+	}
+
+	// We create the tag and persist it to the object database
+	c, err := object.NewTag(p)
+	if err != nil {
+		return nil, xerrors.Errorf("could not create the object: %w", err)
+	}
+	o := c.ToObject()
+	if _, err := r.dotGit.WriteObject(o); err != nil {
+		return nil, xerrors.Errorf("could not write the object to the odb: %w", err)
+	}
+
+	// We create the reference for the tag
+	ref := ginternals.NewReference(refname, o.ID())
+	if err := r.dotGit.WriteReference(ref); err != nil {
+		return nil, xerrors.Errorf("could not write the ref at %s: %w", refname, err)
+	}
+
+	return o.AsTag()
+}
+
+// NewLightweightTag creates, stores, and returns a lightweight tag
+func (r *Repository) NewLightweightTag(tag string, targetID ginternals.Oid) (*ginternals.Reference, error) {
+	if targetID.IsZero() {
+		return nil, object.ErrObjectInvalid
+	}
+
+	refname := gitpath.LocalTag(tag)
+	_, err := r.dotGit.Reference(refname)
+	if err == nil {
+		return nil, ErrTagExists
+	}
+	if !errors.Is(err, ginternals.ErrRefNotFound) {
+		return nil, xerrors.Errorf("could not check if tag already exists: %w", err)
+	}
+
+	ref := ginternals.NewReference(refname, targetID)
+	if err := r.dotGit.WriteReference(ref); err != nil {
+		return nil, xerrors.Errorf("could not write the ref at %s: %w", refname, err)
+	}
+	return ref, nil
 }

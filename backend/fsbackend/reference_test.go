@@ -52,13 +52,13 @@ func TestReference(t *testing.T) {
 		defer cleanup()
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
-		ref, err := b.Reference(ginternals.MasterLocalRef)
+		ref, err := b.Reference(gitpath.LocalBranch(ginternals.Master))
 		require.NoError(t, err)
 		require.NotNil(t, ref)
 
 		expectedTarget, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
 		require.NoError(t, err)
-		assert.Equal(t, ginternals.MasterLocalRef, ref.Name())
+		assert.Equal(t, gitpath.LocalBranch(ginternals.Master), ref.Name())
 		assert.Empty(t, ref.SymbolicTarget())
 		assert.Equal(t, expectedTarget, ref.Target())
 	})
