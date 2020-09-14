@@ -365,3 +365,83 @@ func TestCompress(t *testing.T) {
 		require.True(t, xerrors.Is(err, object.ErrObjectInvalid))
 	})
 }
+
+func TestAsTag(t *testing.T) {
+	t.Parallel()
+	t.Run("regular tag with all the fields", func(t *testing.T) {
+		t.Parallel()
+
+		oid, _ := ginternals.NewOidFromStr("0343d67ca3d80a531d0d163f0078a81c95c9085a")
+		objID, _ := ginternals.NewOidFromStr("9785af758bcc96cd7237ba65eb2c9dd1ecaa3321")
+
+		var b bytes.Buffer
+		b.WriteString("object ")
+		b.WriteString(objID.String())
+		b.WriteString("\n")
+
+		b.WriteString(`type commit
+tag tag.name
+tagger Melvin Laplanche <melvin.wont.reply@gmail.com> 1566115917 -0700
+gpgsig -----BEGIN PGP SIGNATURE-----
+
+ iQIzBAABCAAdFiEE9vjmBp5ZMl+LWBekLDB+DQQTNEsFAl1ZCE0ACgkQLDB+DQQT
+ NEuyIQ/+P14N/BK8dnqnLcMhjoGS86fy14MCqo3hPJxPWl0Qw0JQ5APDRNqnPiT6
+ 7z25y7e+RqeRR6OnNQhK5Tgv34BGrXcLuqQqE+9QWSZZV6XzbBNwkPBp/ZgzncQh
+ ZL6ywGD0LAYom3g+KuJpeeBdVZ7XCmh7a2sLYEQG2gmasU2CslRPdooMGZ4RvdLd
+ KjiykE5wMKXH2/6TgI7sxGgFXni+63x3yF2gBcAQAPn6j3YpPPW8yBrYjYTfWS/G
+ mNbluh0jwCWXeTCJof5eCO3WYvUpoAuG4JYMoVV3hxM/RbtbZxtdX5MKYIlEb2Un
+ M4VY8RUkzXvvlMigQFO2BPP5JKD5ep3nVYqKpEiTc+Qx1pInq8iELGDni4H2dtPV
+ DlFkiEs2Rdlxn17pEs6OWIlJtpCRcKUAg2ehyiiybqCaNYtTAWUO+/Ku0SnovLTp
+ sTtvd466SP0GyC8WqqG223ljPwVgPOe/y5ZvRuUY+1CcT4I3iIE/wXcbw9ldZd51
+ Tmvx/aZSXpRE8DvYsN4yQpeeJFNVaoTO0IRNf8AG8YQzchRUxdd1l0uy5o2evGXE
+ /mZenHRSs/LNfYEwfNhJy6tPGAI9to/O15UHVRS1nneuacMSIyjxYg/kfhmSZKoz
+ o9fizcxapx+JwVYHviO6wVdSbgS2aO1u9/whof3Fkm+/Luvo0J4=
+ =/Zem
+ -----END PGP SIGNATURE-----
+
+tag message`)
+		rawData := b.Bytes()
+
+		o := object.NewWithID(oid, object.TypeTag, rawData)
+		expectedSigName := "Melvin Laplanche"
+		expectedSigEmail := "melvin.wont.reply@gmail.com"
+		expectedSigTimestamp := int64(1566115917)
+		expectedSigOffset := 3600 * -7
+
+		tag, err := o.AsTag()
+		require.NoError(t, err)
+
+		assert.Equal(t, o.ID(), tag.ID())
+		assert.Equal(t, objID, tag.Target())
+
+		require.NotZero(t, tag.Tagger(), "tagger missing")
+		assert.Equal(t, expectedSigName, tag.Tagger().Name, "invalid tagger name")
+		assert.Equal(t, expectedSigEmail, tag.Tagger().Email, "invalid tagger email")
+		assert.Equal(t, expectedSigTimestamp, tag.Tagger().Time.Unix(), "invalid tagger timestamp")
+		_, tzOffset := tag.Tagger().Time.Zone()
+		assert.Equal(t, expectedSigOffset, tzOffset, "invalid tagger timezone offset")
+
+		assert.Equal(t, object.TypeCommit, tag.Type(), "invalid commit type")
+
+		expectedGPG := `-----BEGIN PGP SIGNATURE-----
+
+ iQIzBAABCAAdFiEE9vjmBp5ZMl+LWBekLDB+DQQTNEsFAl1ZCE0ACgkQLDB+DQQT
+ NEuyIQ/+P14N/BK8dnqnLcMhjoGS86fy14MCqo3hPJxPWl0Qw0JQ5APDRNqnPiT6
+ 7z25y7e+RqeRR6OnNQhK5Tgv34BGrXcLuqQqE+9QWSZZV6XzbBNwkPBp/ZgzncQh
+ ZL6ywGD0LAYom3g+KuJpeeBdVZ7XCmh7a2sLYEQG2gmasU2CslRPdooMGZ4RvdLd
+ KjiykE5wMKXH2/6TgI7sxGgFXni+63x3yF2gBcAQAPn6j3YpPPW8yBrYjYTfWS/G
+ mNbluh0jwCWXeTCJof5eCO3WYvUpoAuG4JYMoVV3hxM/RbtbZxtdX5MKYIlEb2Un
+ M4VY8RUkzXvvlMigQFO2BPP5JKD5ep3nVYqKpEiTc+Qx1pInq8iELGDni4H2dtPV
+ DlFkiEs2Rdlxn17pEs6OWIlJtpCRcKUAg2ehyiiybqCaNYtTAWUO+/Ku0SnovLTp
+ sTtvd466SP0GyC8WqqG223ljPwVgPOe/y5ZvRuUY+1CcT4I3iIE/wXcbw9ldZd51
+ Tmvx/aZSXpRE8DvYsN4yQpeeJFNVaoTO0IRNf8AG8YQzchRUxdd1l0uy5o2evGXE
+ /mZenHRSs/LNfYEwfNhJy6tPGAI9to/O15UHVRS1nneuacMSIyjxYg/kfhmSZKoz
+ o9fizcxapx+JwVYHviO6wVdSbgS2aO1u9/whof3Fkm+/Luvo0J4=
+ =/Zem
+ -----END PGP SIGNATURE-----`
+		assert.Equal(t, expectedGPG, tag.GPGSig(), "invalid gpgsig")
+
+		expectedMessage := `tag message`
+		assert.Equal(t, expectedMessage, tag.Message(), "invalid Message")
+	})
+}

@@ -358,7 +358,7 @@ func (o *Object) AsCommit() (*Commit, error) {
 // - The gpgsig is optional
 func (o *Object) AsTag() (*Tag, error) {
 	if o.typ != TypeTag {
-		return nil, xerrors.Errorf("type %s is not a commit", o.typ)
+		return nil, xerrors.Errorf("type %s is not a tag", o.typ)
 	}
 	tag := &Tag{
 		id:        o.id,
@@ -372,11 +372,11 @@ func (o *Object) AsTag() (*Tag, error) {
 
 		// If we didn't find anything then something is wrong
 		if len(line) == 0 && offset == 1 {
-			return nil, xerrors.Errorf("could not find commit first line: %w", ErrCommitInvalid)
+			return nil, xerrors.Errorf("could not find tag first line: %w", ErrTagInvalid)
 		}
 
 		// if we got an empty line, it means everything from now to the end
-		// will be the commit message
+		// will be the tag message
 		if len(line) == 0 {
 			tag.message = string(objData[offset:])
 			break
