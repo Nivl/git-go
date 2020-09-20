@@ -413,9 +413,22 @@ func (pck *Pack) GetObject(oid ginternals.Oid) (*object.Object, error) {
 	return pck.getObjectAt(oid, objectOffset)
 }
 
-// ObjectCount returns the number of object in the packfile
+// ObjectCount returns the number of objects in the packfile
 func (pck *Pack) ObjectCount() uint32 {
 	return binary.BigEndian.Uint32(pck.header[8:])
+}
+
+// ID returns the ID of the packfile
+func (pck *Pack) ID() (ginternals.Oid, error) {
+	id := make([]byte, ginternals.OidSize)
+	offset, err := pck.r.Seek(-ginternals.OidSize, os.SEEK_END)
+	if err != nil {
+		return ginternals.NullOid, xerrors.Errorf("could not get the offset of the ID: %w", err)
+	}
+	if _, err := pck.r.ReadAt(id, offset); err != nil {
+		return ginternals.NullOid, xerrors.Errorf("could not read the ID: %w", err)
+	}
+	return ginternals.NewOidFromHex(id)
 }
 
 // Close frees the resources
