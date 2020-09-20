@@ -7,14 +7,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
-
+      - name: Generate go.list
+        run: go list -json -m all > go.list
       - name: Run Nancy
-        # see https://github.com/Nivl/git-go/pull/34 for:
-        # - CVE-2020-15114
-        # - CVE-2020-15115
-        # - CVE-2020-15136
-        run: go list -m all | docker run -i sonatypecommunity/nancy:v0 -exclude-vulnerability=CVE-2020-15114,CVE-2020-15115,CVE-2020-15136
-
+        uses: sonatype-nexus-community/nancy-github-action@master
   lint:
     name: Lint
     runs-on: ubuntu-latest

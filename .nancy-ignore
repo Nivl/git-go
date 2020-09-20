@@ -1,0 +1,13 @@
+# Affected package: github.com/coreos/etcd
+# see https://github.com/Nivl/git-go/pull/34
+CVE-2020-15114
+CVE-2020-15115
+CVE-2020-15136
+
+# Affected package: golang/golang.org/x/net
+# see https://github.com/Nivl/git-go/pull/47:
+CVE-2018-17142
+CVE-2018-17143
+CVE-2018-17846
+CVE-2018-17847
+CVE-2018-17848
