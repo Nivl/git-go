@@ -22,7 +22,7 @@ func TestObject(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		oid, err := ginternals.NewOidFromStr("b07e28976ac8972715598f390964d53cf4dbc1bd")
 		require.NoError(t, err)
@@ -41,7 +41,7 @@ func TestObject(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		oid, err := ginternals.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
 		require.NoError(t, err)
@@ -59,7 +59,7 @@ func TestObject(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		oid, err := ginternals.NewOidFromStr("2dcdadc2a420225783794fbffd51e2e137a69646")
 		require.NoError(t, err)
@@ -77,7 +77,7 @@ func TestHasObject(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
 
@@ -93,7 +93,7 @@ func TestHasObject(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
 
@@ -109,7 +109,7 @@ func TestHasObject(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
 
@@ -136,7 +136,7 @@ func TestHasObject(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
 
@@ -162,7 +162,7 @@ func TestWriteObject(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		dotGitPath := filepath.Join(repoPath, gitpath.DotGitPath)
 		b := New(dotGitPath)
@@ -190,7 +190,7 @@ func TestWriteObject(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		dotGitPath := filepath.Join(repoPath, gitpath.DotGitPath)
 		b := New(dotGitPath)

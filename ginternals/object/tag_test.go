@@ -18,7 +18,7 @@ func TestNewTag(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		r, err := git.OpenRepository(repoPath)
 		require.NoError(t, err)
@@ -66,7 +66,7 @@ func TestTagToObject(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 		r, err := git.OpenRepository(repoPath)
 		require.NoError(t, err)
 
@@ -87,7 +87,7 @@ func TestTagToObject(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 		r, err := git.OpenRepository(repoPath)
 		require.NoError(t, err)
 		commitOid, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")

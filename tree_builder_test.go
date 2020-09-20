@@ -50,7 +50,7 @@ func TestTreeBuilderInsert(t *testing.T) {
 				t.Parallel()
 
 				repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-				defer cleanup()
+				t.Cleanup(cleanup)
 
 				r, err := OpenRepository(repoPath)
 				require.NoError(t, err, "failed loading a repo")
@@ -76,7 +76,7 @@ func TestTreeBuilderInsert(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")
@@ -103,7 +103,7 @@ func TestTreeBuilderInsert(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")
@@ -133,7 +133,7 @@ func TestTreeBuilderInsert(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")
@@ -154,7 +154,7 @@ func TestTreeBuilderRemove(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")
@@ -188,7 +188,7 @@ func TestTreeBuilderRemove(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")
@@ -213,7 +213,7 @@ func TestTreeBuilderWrite(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")
@@ -230,7 +230,7 @@ func TestTreeBuilderWrite(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")
@@ -263,7 +263,7 @@ func TestTreeBuilderWrite(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")

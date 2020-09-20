@@ -220,7 +220,7 @@ func TestCommitToObject(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 		r, err := git.OpenRepository(repoPath)
 		require.NoError(t, err)
 
@@ -258,7 +258,7 @@ func TestCommitToObject(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 		r, err := git.OpenRepository(repoPath)
 		require.NoError(t, err)
 

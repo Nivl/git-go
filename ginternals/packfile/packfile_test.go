@@ -21,23 +21,23 @@ func TestNewFromFile(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		packFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.pack"
 		packFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, packFileName)
 		pack, err := packfile.NewFromFile(packFilePath)
 		require.NoError(t, err)
 		assert.NotNil(t, pack)
-		defer func() {
+		t.Cleanup(func() {
 			require.NoError(t, pack.Close())
-		}()
+		})
 	})
 
 	t.Run("indexfile should fail", func(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		packFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.idx"
 		packFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, packFileName)
@@ -55,16 +55,16 @@ func TestGetObject(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		packFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.pack"
 		packFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, packFileName)
 		pack, err := packfile.NewFromFile(packFilePath)
 		require.NoError(t, err)
 		assert.NotNil(t, pack)
-		defer func() {
+		t.Cleanup(func() {
 			require.NoError(t, pack.Close())
-		}()
+		})
 
 		// TODO(melvin): Test multiple parents
 		t.Run("commit", func(t *testing.T) {
