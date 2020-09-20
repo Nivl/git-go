@@ -76,12 +76,15 @@ var (
 //         Contains the SHA1 sum of the packfile (without this SHA)
 // https://github.com/git/git/blob/master/Documentation/technical/pack-format.txt
 type Pack struct {
-	r   *os.File
-	idx *PackIndex
+	r      *os.File
+	idx    *PackIndex
+	header [packfileHeaderSize]byte
 }
 
 // NewFromFile returns a pack object from the given file
 // The pack will need to be closed using Close()
+// TODO(melvin): should take r and idx as param instead of
+// using the fs
 func NewFromFile(filePath string) (pack *Pack, err error) {
 	f, err := os.Open(filePath)
 	if err != nil {
@@ -94,29 +97,29 @@ func NewFromFile(filePath string) (pack *Pack, err error) {
 		}
 	}()
 
-	// Let's validate the header
-	header := make([]byte, packfileHeaderSize)
-	_, err = f.ReadAt(header, 0)
-	if err != nil {
-		return nil, xerrors.Errorf("could read header of index file: %w", err)
+	p := &Pack{
+		r: f,
 	}
-	if !bytes.Equal(header[0:4], packfileMagic()) {
+
+	// Let's validate the header
+	_, err = f.ReadAt(p.header[:], 0)
+	if err != nil {
+		return nil, xerrors.Errorf("could read header of packfile: %w", err)
+	}
+	if !bytes.Equal(p.header[0:4], packfileMagic()) {
 		return nil, xerrors.Errorf("invalid header: %w", ErrInvalidMagic)
 	}
-	if !bytes.Equal(header[4:8], packfileVersion()) {
+	if !bytes.Equal(p.header[4:8], packfileVersion()) {
 		return nil, xerrors.Errorf("invalid header: %w", ErrInvalidVersion)
 	}
 
 	indexFilePath := strings.TrimSuffix(filePath, ExtPackfile) + ExtIndex
-	idx, err := NewIndexFromFile(indexFilePath)
+	p.idx, err = NewIndexFromFile(indexFilePath)
 	if err != nil {
 		return nil, xerrors.Errorf("could not open index file at %s: %w", indexFilePath, err)
 	}
 
-	return &Pack{
-		r:   f,
-		idx: idx,
-	}, nil
+	return p, nil
 }
 
 // getRawObjectAt return the raw object located at the given offset,
@@ -408,6 +411,11 @@ func (pck *Pack) GetObject(oid ginternals.Oid) (*object.Object, error) {
 		return nil, err
 	}
 	return pck.getObjectAt(oid, objectOffset)
+}
+
+// ObjectCount returns the number of object in the packfile
+func (pck *Pack) ObjectCount() uint32 {
+	return binary.BigEndian.Uint32(pck.header[8:])
 }
 
 // Close frees the resources
