@@ -181,8 +181,9 @@ func TestWriteObject(t *testing.T) {
 
 		// make sure the blob was persisted
 		p := filepath.Join(dotGitPath, gitpath.ObjectsPath, storedO.ID().String()[0:2], storedO.ID().String()[2:])
-		_, err = os.Stat(p)
+		info, err := os.Stat(p)
 		require.NoError(t, err)
+		assert.Equal(t, os.FileMode(0o444), info.Mode(), "objects should be read only")
 	})
 
 	t.Run("Writing the same object twice should not trigger a rewrite", func(t *testing.T) {
