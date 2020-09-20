@@ -13,6 +13,11 @@ tasks:
     cmds:
       - go test -race -mod=readonly ./...
 
+  deps-upgrade:
+    cmds:
+      - go get -t -u ./...
+      - go mod tidy
+
   dev:
     deps: [build]
     sources:
