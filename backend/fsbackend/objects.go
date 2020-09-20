@@ -232,7 +232,8 @@ func (b *Backend) WriteObject(o *object.Object) (ginternals.Oid, error) {
 		return ginternals.NullOid, xerrors.Errorf("could not create the destination directory %s: %w", dest, err)
 	}
 
-	if err = ioutil.WriteFile(p, data, 0o644); err != nil {
+	// We use 444 because git object are read-only
+	if err = ioutil.WriteFile(p, data, 0o444); err != nil {
 		return ginternals.NullOid, xerrors.Errorf("could not persist object %s at path %s: %w", sha, p, err)
 	}
 
