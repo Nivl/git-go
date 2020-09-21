@@ -14,6 +14,8 @@ import (
 )
 
 func TestCatFileParams(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		desc string
 		args []string
@@ -55,6 +57,8 @@ func TestCatFileParams(t *testing.T) {
 		tc := tc
 		i := i
 		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
+			t.Parallel()
+
 			cmd := newRootCmd()
 			cmd.SetArgs(tc.args)
 
@@ -68,6 +72,8 @@ func TestCatFileParams(t *testing.T) {
 }
 
 func TestCatFile(t *testing.T) {
+	t.Parallel()
+
 	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 	t.Cleanup(cleanup)
 

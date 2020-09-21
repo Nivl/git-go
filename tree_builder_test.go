@@ -16,6 +16,8 @@ import (
 )
 
 func TestTreeBuilderInsert(t *testing.T) {
+	t.Parallel()
+
 	t.Run("single pass/fail", func(t *testing.T) {
 		t.Parallel()
 
@@ -150,6 +152,8 @@ func TestTreeBuilderInsert(t *testing.T) {
 }
 
 func TestTreeBuilderRemove(t *testing.T) {
+	t.Parallel()
+
 	t.Run("should remove elements", func(t *testing.T) {
 		t.Parallel()
 
@@ -209,6 +213,8 @@ func TestTreeBuilderRemove(t *testing.T) {
 }
 
 func TestTreeBuilderWrite(t *testing.T) {
+	t.Parallel()
+
 	t.Run("should return 4b825dc642cb6eb9a060e54bf8d69288fbee4904 for empty tree", func(t *testing.T) {
 		t.Parallel()
 

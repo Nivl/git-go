@@ -11,6 +11,8 @@ import (
 )
 
 func TestNewOidFromStr(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		desc          string
 		id            string
@@ -56,6 +58,8 @@ func TestNewOidFromStr(t *testing.T) {
 }
 
 func TestNewOidFromChars(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		desc          string
 		id            []byte
@@ -101,6 +105,8 @@ func TestNewOidFromChars(t *testing.T) {
 }
 
 func TestNewOidFromHex(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		desc          string
 		id            []byte
@@ -144,6 +150,8 @@ func TestNewOidFromHex(t *testing.T) {
 }
 
 func TestNewOidFromContent(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		desc       string
 		content    []byte
@@ -168,6 +176,8 @@ func TestNewOidFromContent(t *testing.T) {
 }
 
 func TestIsZero(t *testing.T) {
+	t.Parallel()
+
 	t.Run("from string", func(t *testing.T) {
 		t.Parallel()
 

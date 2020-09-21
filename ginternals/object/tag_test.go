@@ -14,6 +14,8 @@ import (
 )
 
 func TestNewTag(t *testing.T) {
+	t.Parallel()
+
 	t.Run("NewTag with all data sets", func(t *testing.T) {
 		t.Parallel()
 
@@ -62,6 +64,8 @@ func TestNewTag(t *testing.T) {
 }
 
 func TestTagToObject(t *testing.T) {
+	t.Parallel()
+
 	t.Run("ToObject should return the raw object", func(t *testing.T) {
 		t.Parallel()
 

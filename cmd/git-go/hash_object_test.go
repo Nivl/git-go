@@ -12,6 +12,8 @@ import (
 )
 
 func TestHashObjectCmd(t *testing.T) {
+	t.Parallel()
+
 	t.Run("blob", func(t *testing.T) {
 		t.Parallel()
 

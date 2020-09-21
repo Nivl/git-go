@@ -9,6 +9,8 @@ import (
 )
 
 func TestLoadRepository(t *testing.T) {
+	t.Parallel()
+
 	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 	t.Cleanup(cleanup)
 

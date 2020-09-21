@@ -68,6 +68,8 @@ func TestGetObject(t *testing.T) {
 
 		// TODO(melvin): Test multiple parents
 		t.Run("commit", func(t *testing.T) {
+			t.Parallel()
+
 			commitOid, err := ginternals.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
 			require.NoError(t, err)
 			o, err := pack.GetObject(commitOid)
@@ -94,6 +96,8 @@ func TestGetObject(t *testing.T) {
 		})
 
 		t.Run("blob", func(t *testing.T) {
+			t.Parallel()
+
 			blobOid, err := ginternals.NewOidFromStr("3f2f87160d5b4217125264310c22bcdad5b0d8bb")
 			require.NoError(t, err)
 			o, err := pack.GetObject(blobOid)
@@ -107,6 +111,8 @@ func TestGetObject(t *testing.T) {
 		})
 
 		t.Run("tree", func(t *testing.T) {
+			t.Parallel()
+
 			treeOid, err := ginternals.NewOidFromStr("c799e9129faae8d358e4b6de7813d6f970607893")
 			require.NoError(t, err)
 			o, err := pack.GetObject(treeOid)
@@ -130,6 +136,8 @@ func TestGetObject(t *testing.T) {
 		})
 
 		t.Run("tag", func(t *testing.T) {
+			t.Parallel()
+
 			t.Skip("tags not yet supported")
 		})
 	})

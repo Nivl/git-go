@@ -16,6 +16,8 @@ import (
 )
 
 func TestInit(t *testing.T) {
+	t.Parallel()
+
 	t.Run("regular repo should work", func(t *testing.T) {
 		t.Parallel()
 

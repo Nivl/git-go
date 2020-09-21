@@ -73,6 +73,8 @@ func TestObject(t *testing.T) {
 }
 
 func TestHasObject(t *testing.T) {
+	t.Parallel()
+
 	t.Run("existing object should exist", func(t *testing.T) {
 		t.Parallel()
 

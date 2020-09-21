@@ -17,6 +17,7 @@ import (
 
 func TestAsCommit(t *testing.T) {
 	t.Parallel()
+
 	t.Run("regular commit with all the fields", func(t *testing.T) {
 		t.Parallel()
 
@@ -155,6 +156,8 @@ func TestAsBlob(t *testing.T) {
 }
 
 func TestType(t *testing.T) {
+	t.Parallel()
+
 	t.Run("type.String()", func(t *testing.T) {
 		t.Parallel()
 
@@ -368,6 +371,7 @@ func TestCompress(t *testing.T) {
 
 func TestAsTag(t *testing.T) {
 	t.Parallel()
+
 	t.Run("regular tag with all the fields", func(t *testing.T) {
 		t.Parallel()
 

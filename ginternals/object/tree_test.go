@@ -14,6 +14,8 @@ import (
 )
 
 func TestTree(t *testing.T) {
+	t.Parallel()
+
 	t.Run("o.AsTree().ToObject() should return the same object", func(t *testing.T) {
 		t.Parallel()
 

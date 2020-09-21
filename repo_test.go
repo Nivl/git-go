@@ -16,6 +16,8 @@ import (
 )
 
 func TestInit(t *testing.T) {
+	t.Parallel()
+
 	t.Run("repo with working tree", func(t *testing.T) {
 		t.Parallel()
 
@@ -56,6 +58,8 @@ func TestInit(t *testing.T) {
 }
 
 func TestOpen(t *testing.T) {
+	t.Parallel()
+
 	t.Run("repo with working tree", func(t *testing.T) {
 		t.Parallel()
 
@@ -141,6 +145,8 @@ func TestRepositoryGetObject(t *testing.T) {
 }
 
 func TestRepositoryNewBlob(t *testing.T) {
+	t.Parallel()
+
 	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 	t.Cleanup(cleanup)
 
@@ -160,6 +166,8 @@ func TestRepositoryNewBlob(t *testing.T) {
 }
 
 func TestRepositoryGetCommit(t *testing.T) {
+	t.Parallel()
+
 	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 	t.Cleanup(cleanup)
 
@@ -179,6 +187,8 @@ func TestRepositoryGetCommit(t *testing.T) {
 }
 
 func TestRepositoryGetReference(t *testing.T) {
+	t.Parallel()
+
 	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 	t.Cleanup(cleanup)
 	r, err := OpenRepository(repoPath)
@@ -226,6 +236,8 @@ func TestRepositoryGetReference(t *testing.T) {
 }
 
 func TestRepositoryGetTree(t *testing.T) {
+	t.Parallel()
+
 	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 	t.Cleanup(cleanup)
 
@@ -243,6 +255,8 @@ func TestRepositoryGetTree(t *testing.T) {
 }
 
 func TestRepositoryNewCommit(t *testing.T) {
+	t.Parallel()
+
 	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 	t.Cleanup(cleanup)
 
@@ -276,6 +290,8 @@ func TestRepositoryNewCommit(t *testing.T) {
 }
 
 func TestRepositoryNewDetachedCommit(t *testing.T) {
+	t.Parallel()
+
 	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 	t.Cleanup(cleanup)
 
@@ -309,6 +325,8 @@ func TestRepositoryNewDetachedCommit(t *testing.T) {
 }
 
 func TestRepositoryGetTag(t *testing.T) {
+	t.Parallel()
+
 	t.Run("annotated", func(t *testing.T) {
 		t.Parallel()
 
@@ -378,6 +396,8 @@ func TestRepositoryGetTag(t *testing.T) {
 }
 
 func TestRepositoryNewTag(t *testing.T) {
+	t.Parallel()
+
 	t.Run("create a new valid tag", func(t *testing.T) {
 		t.Parallel()
 
@@ -473,6 +493,8 @@ func TestRepositoryNewTag(t *testing.T) {
 }
 
 func TestRepositoryNewLightweightTag(t *testing.T) {
+	t.Parallel()
+
 	t.Run("create a new valid tag", func(t *testing.T) {
 		t.Parallel()
 

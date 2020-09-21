@@ -14,6 +14,8 @@ import (
 )
 
 func TestReference(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Should fail if reference doesn't exists", func(t *testing.T) {
 		t.Parallel()
 
@@ -65,6 +67,8 @@ func TestReference(t *testing.T) {
 }
 
 func TestParsePackedRefs(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Should return empty list if no files", func(t *testing.T) {
 		t.Parallel()
 
@@ -142,6 +146,8 @@ func TestParsePackedRefs(t *testing.T) {
 }
 
 func TestWriteReference(t *testing.T) {
+	t.Parallel()
+
 	t.Run("should pass writing a new symbolic reference", func(t *testing.T) {
 		t.Parallel()
 
@@ -249,6 +255,8 @@ func TestWriteReference(t *testing.T) {
 }
 
 func TestWriteReferenceSafe(t *testing.T) {
+	t.Parallel()
+
 	t.Run("should pass writing a new symbolic reference", func(t *testing.T) {
 		t.Parallel()
 
