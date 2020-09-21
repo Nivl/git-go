@@ -12,6 +12,8 @@ import (
 )
 
 func TestHashObjectCmd(t *testing.T) {
+	t.Parallel()
+
 	t.Run("blob", func(t *testing.T) {
 		t.Parallel()
 
@@ -19,7 +21,7 @@ func TestHashObjectCmd(t *testing.T) {
 			t.Parallel()
 
 			repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-			defer cleanup()
+			t.Cleanup(cleanup)
 
 			outBuf := bytes.NewBufferString("")
 			cmd := newRootCmd()

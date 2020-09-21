@@ -14,6 +14,8 @@ import (
 )
 
 func TestSignatureString(t *testing.T) {
+	t.Parallel()
+
 	sig := object.NewSignature("John Doe", "john@domain.tld")
 	// for the sake of the test we gonna cheat a little bit and force
 	// the time to be UTC. Otherwise the test would not be consistent
@@ -26,6 +28,8 @@ func TestSignatureString(t *testing.T) {
 }
 
 func TestNewSignatureFromBytes(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		desc                 string
 		signature            string
@@ -118,6 +122,8 @@ func TestNewSignatureFromBytes(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+
 			sig, err := object.NewSignatureFromBytes([]byte(tc.signature))
 			if tc.expectsError {
 				require.Error(t, err, "NewSignatureFromBytes should have failed")
@@ -135,6 +141,8 @@ func TestNewSignatureFromBytes(t *testing.T) {
 }
 
 func TestSignatureIsZero(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		desc   string
 		sig    object.Signature
@@ -178,6 +186,8 @@ func TestSignatureIsZero(t *testing.T) {
 }
 
 func TestNewCommit(t *testing.T) {
+	t.Parallel()
+
 	t.Run("NewCommit with all data sets", func(t *testing.T) {
 		t.Parallel()
 
@@ -216,11 +226,13 @@ func TestNewCommit(t *testing.T) {
 }
 
 func TestCommitToObject(t *testing.T) {
+	t.Parallel()
+
 	t.Run("duplicating a commit should work", func(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 		r, err := git.OpenRepository(repoPath)
 		require.NoError(t, err)
 
@@ -258,7 +270,7 @@ func TestCommitToObject(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 		r, err := git.OpenRepository(repoPath)
 		require.NoError(t, err)
 

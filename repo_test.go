@@ -16,12 +16,14 @@ import (
 )
 
 func TestInit(t *testing.T) {
+	t.Parallel()
+
 	t.Run("repo with working tree", func(t *testing.T) {
 		t.Parallel()
 
 		// Setup
 		d, cleanup := testhelper.TempDir(t)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		// Run logic
 		r, err := InitRepository(d)
@@ -39,7 +41,7 @@ func TestInit(t *testing.T) {
 
 		// Setup
 		d, cleanup := testhelper.TempDir(t)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		// Run logic
 		r, err := InitRepositoryWithOptions(d, InitOptions{
@@ -56,11 +58,13 @@ func TestInit(t *testing.T) {
 }
 
 func TestOpen(t *testing.T) {
+	t.Parallel()
+
 	t.Run("repo with working tree", func(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")
@@ -77,7 +81,7 @@ func TestOpen(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 		repoPath = filepath.Join(repoPath, gitpath.DotGitPath)
 
 		r, err := OpenRepositoryWithOptions(repoPath, OpenOptions{
@@ -102,7 +106,7 @@ func TestRepositoryGetObject(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")
@@ -123,7 +127,7 @@ func TestRepositoryGetObject(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")
@@ -141,8 +145,10 @@ func TestRepositoryGetObject(t *testing.T) {
 }
 
 func TestRepositoryNewBlob(t *testing.T) {
+	t.Parallel()
+
 	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-	defer cleanup()
+	t.Cleanup(cleanup)
 
 	r, err := OpenRepository(repoPath)
 	require.NoError(t, err, "failed loading a repo")
@@ -160,8 +166,10 @@ func TestRepositoryNewBlob(t *testing.T) {
 }
 
 func TestRepositoryGetCommit(t *testing.T) {
+	t.Parallel()
+
 	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-	defer cleanup()
+	t.Cleanup(cleanup)
 
 	r, err := OpenRepository(repoPath)
 	require.NoError(t, err)
@@ -179,57 +187,59 @@ func TestRepositoryGetCommit(t *testing.T) {
 }
 
 func TestRepositoryGetReference(t *testing.T) {
+	t.Parallel()
+
 	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-	defer cleanup()
+	t.Cleanup(cleanup)
 	r, err := OpenRepository(repoPath)
 	require.NoError(t, err)
 
-	t.Run("Parallel", func(t *testing.T) {
-		testCases := []struct {
-			desc           string
-			refName        string
-			expectedError  error
-			expectedTarget string
-		}{
-			{
-				desc:           "HEAD should work",
-				refName:        "HEAD",
-				expectedTarget: "bbb720a96e4c29b9950a4c577c98470a4d5dd089",
-			},
-			{
-				desc:           "refs/heads/ml/packfile/tests should work",
-				refName:        "refs/heads/ml/packfile/tests",
-				expectedTarget: "bbb720a96e4c29b9950a4c577c98470a4d5dd089",
-			},
-			{
-				desc:          "an invalid name should fail",
-				refName:       "nope",
-				expectedError: ginternals.ErrRefNotFound,
-			},
-		}
-		for i, tc := range testCases {
-			tc := tc
-			i := i
-			t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
-				t.Parallel()
+	testCases := []struct {
+		desc           string
+		refName        string
+		expectedError  error
+		expectedTarget string
+	}{
+		{
+			desc:           "HEAD should work",
+			refName:        "HEAD",
+			expectedTarget: "bbb720a96e4c29b9950a4c577c98470a4d5dd089",
+		},
+		{
+			desc:           "refs/heads/ml/packfile/tests should work",
+			refName:        "refs/heads/ml/packfile/tests",
+			expectedTarget: "bbb720a96e4c29b9950a4c577c98470a4d5dd089",
+		},
+		{
+			desc:          "an invalid name should fail",
+			refName:       "nope",
+			expectedError: ginternals.ErrRefNotFound,
+		},
+	}
+	for i, tc := range testCases {
+		tc := tc
+		i := i
+		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
+			t.Parallel()
 
-				ref, err := r.GetReference(tc.refName)
+			ref, err := r.GetReference(tc.refName)
 
-				if tc.expectedError != nil {
-					assert.True(t, errors.Is(err, tc.expectedError), "wrong error returned")
-					return
-				}
+			if tc.expectedError != nil {
+				assert.True(t, errors.Is(err, tc.expectedError), "wrong error returned")
+				return
+			}
 
-				require.NoError(t, err)
-				assert.Equal(t, tc.expectedTarget, ref.Target().String())
-			})
-		}
-	})
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedTarget, ref.Target().String())
+		})
+	}
 }
 
 func TestRepositoryGetTree(t *testing.T) {
+	t.Parallel()
+
 	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-	defer cleanup()
+	t.Cleanup(cleanup)
 
 	r, err := OpenRepository(repoPath)
 	require.NoError(t, err)
@@ -245,8 +255,10 @@ func TestRepositoryGetTree(t *testing.T) {
 }
 
 func TestRepositoryNewCommit(t *testing.T) {
+	t.Parallel()
+
 	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-	defer cleanup()
+	t.Cleanup(cleanup)
 
 	r, err := OpenRepository(repoPath)
 	require.NoError(t, err)
@@ -278,8 +290,10 @@ func TestRepositoryNewCommit(t *testing.T) {
 }
 
 func TestRepositoryNewDetachedCommit(t *testing.T) {
+	t.Parallel()
+
 	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-	defer cleanup()
+	t.Cleanup(cleanup)
 
 	r, err := OpenRepository(repoPath)
 	require.NoError(t, err)
@@ -311,11 +325,13 @@ func TestRepositoryNewDetachedCommit(t *testing.T) {
 }
 
 func TestRepositoryGetTag(t *testing.T) {
+	t.Parallel()
+
 	t.Run("annotated", func(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err)
@@ -345,7 +361,7 @@ func TestRepositoryGetTag(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err)
@@ -368,7 +384,7 @@ func TestRepositoryGetTag(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err)
@@ -380,11 +396,13 @@ func TestRepositoryGetTag(t *testing.T) {
 }
 
 func TestRepositoryNewTag(t *testing.T) {
+	t.Parallel()
+
 	t.Run("create a new valid tag", func(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err)
@@ -427,7 +445,7 @@ func TestRepositoryNewTag(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err)
@@ -454,7 +472,7 @@ func TestRepositoryNewTag(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err)
@@ -475,11 +493,13 @@ func TestRepositoryNewTag(t *testing.T) {
 }
 
 func TestRepositoryNewLightweightTag(t *testing.T) {
+	t.Parallel()
+
 	t.Run("create a new valid tag", func(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err)
@@ -498,7 +518,7 @@ func TestRepositoryNewLightweightTag(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err)
@@ -516,7 +536,7 @@ func TestRepositoryNewLightweightTag(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err)

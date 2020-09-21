@@ -16,11 +16,13 @@ import (
 )
 
 func TestInit(t *testing.T) {
+	t.Parallel()
+
 	t.Run("regular repo should work", func(t *testing.T) {
 		t.Parallel()
 
 		dir, cleanup := testhelper.TempDir(t)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		err := fsbackend.New(filepath.Join(dir, gitpath.DotGitPath)).Init()
 		require.NoError(t, err)
@@ -30,7 +32,7 @@ func TestInit(t *testing.T) {
 		t.Parallel()
 
 		dir, cleanup := testhelper.TempDir(t)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		err := fsbackend.New(dir).Init()
 		require.NoError(t, err)
@@ -40,7 +42,7 @@ func TestInit(t *testing.T) {
 		t.Parallel()
 
 		dir, cleanup := testhelper.TempDir(t)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		// create a directory
 		err := os.MkdirAll(filepath.Join(dir, gitpath.ObjectsPath), 0o750)
@@ -63,7 +65,7 @@ func TestInit(t *testing.T) {
 		}
 
 		dir, cleanup := testhelper.TempDir(t)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		// create a directory
 		err := os.MkdirAll(filepath.Join(dir, gitpath.ObjectsPath), 0o550)
@@ -80,7 +82,7 @@ func TestInit(t *testing.T) {
 		t.Parallel()
 
 		dir, cleanup := testhelper.TempDir(t)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		// create a file
 		err := ioutil.WriteFile(filepath.Join(dir, gitpath.DescriptionPath), []byte{}, 0o444)

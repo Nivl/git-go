@@ -14,11 +14,13 @@ import (
 )
 
 func TestReference(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Should fail if reference doesn't exists", func(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
 		ref, err := b.Reference("refs/heads/doesnt_exists")
@@ -31,7 +33,7 @@ func TestReference(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
 		ref, err := b.Reference(ginternals.HEAD)
@@ -49,7 +51,7 @@ func TestReference(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
 		ref, err := b.Reference(gitpath.LocalBranch(ginternals.Master))
@@ -65,11 +67,13 @@ func TestReference(t *testing.T) {
 }
 
 func TestParsePackedRefs(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Should return empty list if no files", func(t *testing.T) {
 		t.Parallel()
 
 		dir, cleanup := testhelper.TempDir(t)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		b := New(dir)
 		err := b.Init()
@@ -85,7 +89,7 @@ func TestParsePackedRefs(t *testing.T) {
 		t.Parallel()
 
 		dir, cleanup := testhelper.TempDir(t)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		b := New(dir)
 		err := b.Init()
@@ -103,7 +107,7 @@ func TestParsePackedRefs(t *testing.T) {
 		t.Parallel()
 
 		dir, cleanup := testhelper.TempDir(t)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		b := New(dir)
 		err := b.Init()
@@ -120,7 +124,7 @@ func TestParsePackedRefs(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
 
@@ -142,11 +146,13 @@ func TestParsePackedRefs(t *testing.T) {
 }
 
 func TestWriteReference(t *testing.T) {
+	t.Parallel()
+
 	t.Run("should pass writing a new symbolic reference", func(t *testing.T) {
 		t.Parallel()
 
 		dir, cleanup := testhelper.TempDir(t)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		b := New(dir)
 		err := b.Init()
@@ -165,7 +171,7 @@ func TestWriteReference(t *testing.T) {
 		t.Parallel()
 
 		dir, cleanup := testhelper.TempDir(t)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		b := New(dir)
 		err := b.Init()
@@ -186,7 +192,7 @@ func TestWriteReference(t *testing.T) {
 		t.Parallel()
 
 		dir, cleanup := testhelper.TempDir(t)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		b := New(dir)
 		err := b.Init()
@@ -205,7 +211,7 @@ func TestWriteReference(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
 
@@ -227,7 +233,7 @@ func TestWriteReference(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
 
@@ -249,11 +255,13 @@ func TestWriteReference(t *testing.T) {
 }
 
 func TestWriteReferenceSafe(t *testing.T) {
+	t.Parallel()
+
 	t.Run("should pass writing a new symbolic reference", func(t *testing.T) {
 		t.Parallel()
 
 		dir, cleanup := testhelper.TempDir(t)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		b := New(dir)
 		err := b.Init()
@@ -273,7 +281,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 		t.Parallel()
 
 		dir, cleanup := testhelper.TempDir(t)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		b := New(dir)
 		err := b.Init()
@@ -295,7 +303,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 		t.Parallel()
 
 		dir, cleanup := testhelper.TempDir(t)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		b := New(dir)
 		err := b.Init()
@@ -315,7 +323,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
 
@@ -339,7 +347,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
 

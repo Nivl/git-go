@@ -20,23 +20,23 @@ func TestNewIndexFromFile(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		indexFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.idx"
 		indexFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, indexFileName)
 		index, err := packfile.NewIndexFromFile(indexFilePath)
 		require.NoError(t, err)
 		assert.NotNil(t, index)
-		defer func() {
+		t.Cleanup(func() {
 			require.NoError(t, index.Close())
-		}()
+		})
 	})
 
 	t.Run("a packfile should fail", func(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		indexFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.pack"
 		indexFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, indexFileName)
@@ -51,19 +51,23 @@ func TestGetObjectOffset(t *testing.T) {
 	t.Parallel()
 
 	t.Run(string(testhelper.RepoSmall), func(t *testing.T) {
+		t.Parallel()
+
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		indexFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.idx"
 		indexFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, indexFileName)
 		index, err := packfile.NewIndexFromFile(indexFilePath)
 		require.NoError(t, err)
 		assert.NotNil(t, index)
-		defer func() {
+		t.Cleanup(func() {
 			require.NoError(t, index.Close())
-		}()
+		})
 
 		t.Run("should work with valid oid", func(t *testing.T) {
+			t.Parallel()
+
 			oid, err := ginternals.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
 			require.NoError(t, err)
 			offset, err := index.GetObjectOffset(oid)
@@ -72,6 +76,8 @@ func TestGetObjectOffset(t *testing.T) {
 		})
 
 		t.Run("should fail with invalid oid", func(t *testing.T) {
+			t.Parallel()
+
 			oid, err := ginternals.NewOidFromStr("1acdadc2a420225783794fbffd51e2e137a69646")
 			require.NoError(t, err)
 			_, err = index.GetObjectOffset(oid)

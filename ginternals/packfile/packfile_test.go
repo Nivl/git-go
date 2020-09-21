@@ -21,23 +21,23 @@ func TestNewFromFile(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		packFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.pack"
 		packFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, packFileName)
 		pack, err := packfile.NewFromFile(packFilePath)
 		require.NoError(t, err)
 		assert.NotNil(t, pack)
-		defer func() {
+		t.Cleanup(func() {
 			require.NoError(t, pack.Close())
-		}()
+		})
 	})
 
 	t.Run("indexfile should fail", func(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		packFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.idx"
 		packFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, packFileName)
@@ -55,19 +55,21 @@ func TestGetObject(t *testing.T) {
 		t.Parallel()
 
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-		defer cleanup()
+		t.Cleanup(cleanup)
 
 		packFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.pack"
 		packFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, packFileName)
 		pack, err := packfile.NewFromFile(packFilePath)
 		require.NoError(t, err)
 		assert.NotNil(t, pack)
-		defer func() {
+		t.Cleanup(func() {
 			require.NoError(t, pack.Close())
-		}()
+		})
 
 		// TODO(melvin): Test multiple parents
 		t.Run("commit", func(t *testing.T) {
+			t.Parallel()
+
 			commitOid, err := ginternals.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
 			require.NoError(t, err)
 			o, err := pack.GetObject(commitOid)
@@ -94,6 +96,8 @@ func TestGetObject(t *testing.T) {
 		})
 
 		t.Run("blob", func(t *testing.T) {
+			t.Parallel()
+
 			blobOid, err := ginternals.NewOidFromStr("3f2f87160d5b4217125264310c22bcdad5b0d8bb")
 			require.NoError(t, err)
 			o, err := pack.GetObject(blobOid)
@@ -107,6 +111,8 @@ func TestGetObject(t *testing.T) {
 		})
 
 		t.Run("tree", func(t *testing.T) {
+			t.Parallel()
+
 			treeOid, err := ginternals.NewOidFromStr("c799e9129faae8d358e4b6de7813d6f970607893")
 			require.NoError(t, err)
 			o, err := pack.GetObject(treeOid)
@@ -130,6 +136,8 @@ func TestGetObject(t *testing.T) {
 		})
 
 		t.Run("tag", func(t *testing.T) {
+			t.Parallel()
+
 			t.Skip("tags not yet supported")
 		})
 	})

@@ -11,6 +11,8 @@ import (
 )
 
 func TestIsRefNameValid(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		desc       string
 		name       string
@@ -140,6 +142,8 @@ func TestIsRefNameValid(t *testing.T) {
 }
 
 func TestResolveReference(t *testing.T) {
+	t.Parallel()
+
 	t.Run("should resolve oid reference", func(t *testing.T) {
 		t.Parallel()
 

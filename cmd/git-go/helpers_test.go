@@ -9,47 +9,47 @@ import (
 )
 
 func TestLoadRepository(t *testing.T) {
+	t.Parallel()
+
 	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-	defer cleanup()
+	t.Cleanup(cleanup)
 
-	t.Run("Parallel", func(t *testing.T) {
-		testCases := []struct {
-			desc        string
-			C           string
-			expectError bool
-		}{
-			{
-				desc: "no path should use the current directory",
-				C:    "",
-			},
-			{
-				desc: "A given path should be used",
-				C:    repoPath,
-			},
-			{
-				desc:        "Invalid path should return an error",
-				C:           "/invalid/path",
-				expectError: true,
-			},
-		}
-		for i, tc := range testCases {
-			tc := tc
-			i := i
-			t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
-				t.Parallel()
+	testCases := []struct {
+		desc        string
+		C           string
+		expectError bool
+	}{
+		{
+			desc: "no path should use the current directory",
+			C:    "",
+		},
+		{
+			desc: "A given path should be used",
+			C:    repoPath,
+		},
+		{
+			desc:        "Invalid path should return an error",
+			C:           "/invalid/path",
+			expectError: true,
+		},
+	}
+	for i, tc := range testCases {
+		tc := tc
+		i := i
+		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
+			t.Parallel()
 
-				cfg := &config{
-					C: tc.C,
-				}
-				repo, err := loadRepository(cfg)
-				if tc.expectError {
-					require.Error(t, err)
-					return
-				}
+			cfg := &config{
+				C: tc.C,
+			}
+			repo, err := loadRepository(cfg)
+			if tc.expectError {
+				require.Error(t, err)
+				return
+			}
 
-				require.NoError(t, err)
-				require.NotNil(t, repo)
-			})
-		}
-	})
+			require.NoError(t, err)
+			require.NotNil(t, repo)
+		})
+	}
 }
