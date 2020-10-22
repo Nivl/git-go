@@ -10,7 +10,7 @@ jobs:
       - name: Generate go.list
         run: go list -json -m all > go.list
       - name: Run Nancy
-        uses: sonatype-nexus-community/nancy-github-action@master
+        uses: sonatype-nexus-community/nancy-github-action@main
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -72,16 +72,14 @@ jobs:
           curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
           chmod +x ./cc-test-reporter
 
-      - name: Extract branch name
+      - name: Set env
         shell: bash
-        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
-        id: extract_branch
+        run: |
+          echo "CC_TEST_REPORTER_ID=${{ secrets.CC_TEST_REPORTER_ID }}" >> $GITHUB_ENV
+          echo "GIT_COMMIT_SHA=${{ github.sha }}" >> $GITHUB_ENV
+          echo "GIT_BRANCH=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
 
       - name: initialize reporter
-        env:
-          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
-          GIT_COMMIT_SHA: ${{ github.sha }}
-          GIT_BRANCH: ${{ steps.extract_branch.outputs.branch }}
         run: ./cc-test-reporter before-build
 
       - name: Upload binaries
@@ -101,19 +99,17 @@ jobs:
       # even move the command to the test job
       - uses: actions/checkout@v2
 
-      - name: Extract branch name
+      - name: Set env
         shell: bash
-        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
-        id: extract_branch
+        run: |
+          echo "CC_TEST_REPORTER_ID=${{ secrets.CC_TEST_REPORTER_ID }}" >> $GITHUB_ENV
+          echo "GIT_COMMIT_SHA=${{ github.sha }}" >> $GITHUB_ENV
+          echo "GIT_BRANCH=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
 
       - name: Download test-results
         uses: actions/download-artifact@v2
 
       - name: Report coverage
-        env:
-          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
-          GIT_COMMIT_SHA: ${{ github.sha }}
-          GIT_BRANCH: ${{ steps.extract_branch.outputs.branch }}
         run: |
           chmod +x ./cc-bin/cc-test-reporter
           ./cc-bin/cc-test-reporter format-coverage -p github.com/Nivl/git-go/ -t gocov tests-results/cc.macos-latest.out -o cc.macos-latest.json
