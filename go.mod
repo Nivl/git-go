@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
-	github.com/spf13/afero v1.4.1
+	github.com/spf13/afero v1.5.1
 	// We use a specific commit because 1.0.0 contains a vulnerability
 	// that has been fixed in the targeted commit
 	github.com/spf13/cobra v1.0.1-0.20200713175500-884edc58ad08
