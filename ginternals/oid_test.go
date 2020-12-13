@@ -38,7 +38,6 @@ func TestNewOidFromStr(t *testing.T) {
 	}
 	for i, tc := range testCases {
 		tc := tc
-		i := i
 		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
 			t.Parallel()
 
@@ -85,7 +84,6 @@ func TestNewOidFromChars(t *testing.T) {
 	}
 	for i, tc := range testCases {
 		tc := tc
-		i := i
 		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
 			t.Parallel()
 
@@ -129,7 +127,6 @@ func TestNewOidFromHex(t *testing.T) {
 	}
 	for i, tc := range testCases {
 		tc := tc
-		i := i
 		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
 			t.Parallel()
 
@@ -165,7 +162,6 @@ func TestNewOidFromContent(t *testing.T) {
 	}
 	for i, tc := range testCases {
 		tc := tc
-		i := i
 		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
 			t.Parallel()
 
@@ -199,7 +195,6 @@ func TestIsZero(t *testing.T) {
 		}
 		for i, tc := range testCases {
 			tc := tc
-			i := i
 			t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
 				t.Parallel()
 

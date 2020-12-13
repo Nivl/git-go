@@ -75,6 +75,8 @@ linters:
     - noctx
     - exportloopref
     - gofumpt # replaces gofmt
+    - tparallel
+    - errorlint
 
 linters-settings:
   govet:

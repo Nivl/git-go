@@ -13,6 +13,8 @@ import (
 )
 
 func TestRun(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		cmd            string
 		args           []string
@@ -34,8 +36,9 @@ func TestRun(t *testing.T) {
 	}
 	for i, tc := range testCases {
 		tc := tc
-		i := i
 		t.Run(fmt.Sprintf("%d/%s %s", i, tc.cmd, tc.args), func(t *testing.T) {
+			t.Parallel()
+
 			out, err := exe.Run(tc.cmd, tc.args...)
 			if tc.expectedError != nil {
 				require.Error(t, err)
