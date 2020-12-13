@@ -35,7 +35,6 @@ func TestLoadRepository(t *testing.T) {
 	}
 	for i, tc := range testCases {
 		tc := tc
-		i := i
 		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
 			t.Parallel()
 

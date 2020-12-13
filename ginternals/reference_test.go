@@ -131,7 +131,6 @@ func TestIsRefNameValid(t *testing.T) {
 	}
 	for i, tc := range testCases {
 		tc := tc
-		i := i
 		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
 			t.Parallel()
 
@@ -267,6 +266,8 @@ func TestResolveReference(t *testing.T) {
 }
 
 func TestNewReference(t *testing.T) {
+	t.Parallel()
+
 	oid, err := NewOidFromStr("0eaf966ff79d8f61958aaefe163620d952606516")
 	require.NoError(t, err)
 
@@ -278,6 +279,8 @@ func TestNewReference(t *testing.T) {
 }
 
 func TestNewSymbolicReference(t *testing.T) {
+	t.Parallel()
+
 	ref := NewSymbolicReference("HEAD", "refs/heads/master")
 	assert.Equal(t, SymbolicReference, ref.Type())
 	assert.Equal(t, "HEAD", ref.Name())
