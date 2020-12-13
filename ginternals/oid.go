@@ -43,6 +43,8 @@ func NewOidFromContent(bytes []byte) Oid {
 }
 
 // NewOidFromHex returns an Oid from the provided byte-encoded oid
+// This basically cast a slice that contains an encoded oid into
+// a Oid object
 func NewOidFromHex(id []byte) (Oid, error) {
 	if len(id) < OidSize {
 		return NullOid, ErrInvalidOid

@@ -3,4 +3,19 @@ updates:
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
+      day: "friday"
+      time: "16:00"
+      timezone: "America/Los_Angeles"
+    assignees:
+      - "Nivl"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      day: "friday"
+      time: "16:00"
+      timezone: "America/Los_Angeles"
+    assignees:
+      - "Nivl"
