@@ -76,21 +76,20 @@ var (
 //         Contains the SHA1 sum of the packfile (without this SHA)
 // https://github.com/git/git/blob/master/Documentation/technical/pack-format.txt
 type Pack struct {
-	r      *os.File
-	idx    *PackIndex
-	header [packfileHeaderSize]byte
+	r       *os.File
+	idxFile *os.File
+	idx     *PackIndex
+	header  [packfileHeaderSize]byte
 }
 
 // NewFromFile returns a pack object from the given file
 // The pack will need to be closed using Close()
-// TODO(melvin): should take r and idx as param instead of
-// using the fs
+// TODO(melvin): need to take an afero object
 func NewFromFile(filePath string) (pack *Pack, err error) {
 	f, err := os.Open(filePath)
 	if err != nil {
 		return nil, xerrors.Errorf("could not open %s: %w", filePath, err)
 	}
-
 	defer func() {
 		if err != nil {
 			f.Close() //nolint:errcheck // it already failed
@@ -113,10 +112,20 @@ func NewFromFile(filePath string) (pack *Pack, err error) {
 		return nil, xerrors.Errorf("invalid header: %w", ErrInvalidVersion)
 	}
 
+	// Now we load the index file
 	indexFilePath := strings.TrimSuffix(filePath, ExtPackfile) + ExtIndex
-	p.idx, err = NewIndexFromFile(indexFilePath)
+	p.idxFile, err = os.Open(indexFilePath)
 	if err != nil {
-		return nil, xerrors.Errorf("could not open index file at %s: %w", indexFilePath, err)
+		return nil, xerrors.Errorf("could not open %s: %w", indexFilePath, err)
+	}
+	defer func() {
+		if err != nil {
+			p.idxFile.Close() //nolint:errcheck // it already failed
+		}
+	}()
+	p.idx, err = NewIndex(bufio.NewReader(p.idxFile))
+	if err != nil {
+		return nil, xerrors.Errorf("could create index for %s: %w", indexFilePath, err)
 	}
 
 	return p, nil
@@ -434,12 +443,14 @@ func (pck *Pack) ID() (ginternals.Oid, error) {
 // Close frees the resources
 func (pck *Pack) Close() error {
 	packErr := pck.r.Close()
-	idxErr := pck.idx.Close()
-
+	idxErr := pck.idxFile.Close()
 	if packErr != nil {
 		return packErr
 	}
-	return idxErr
+	if idxErr != nil {
+		return idxErr
+	}
+	return nil
 }
 
 // readSize reads the provided bytes to extract what's left for the

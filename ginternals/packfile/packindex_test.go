@@ -1,6 +1,8 @@
 package packfile_test
 
 import (
+	"bufio"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -13,7 +15,7 @@ import (
 	"golang.org/x/xerrors"
 )
 
-func TestNewIndexFromFile(t *testing.T) {
+func TestNewIndex(t *testing.T) {
 	t.Parallel()
 
 	t.Run("valid indexfile should pass", func(t *testing.T) {
@@ -24,12 +26,15 @@ func TestNewIndexFromFile(t *testing.T) {
 
 		indexFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.idx"
 		indexFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, indexFileName)
-		index, err := packfile.NewIndexFromFile(indexFilePath)
+		f, err := os.Open(indexFilePath)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, f.Close())
+		})
+
+		index, err := packfile.NewIndex(bufio.NewReader(f))
 		require.NoError(t, err)
 		assert.NotNil(t, index)
-		t.Cleanup(func() {
-			require.NoError(t, index.Close())
-		})
 	})
 
 	t.Run("a packfile should fail", func(t *testing.T) {
@@ -40,7 +45,13 @@ func TestNewIndexFromFile(t *testing.T) {
 
 		indexFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.pack"
 		indexFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, indexFileName)
-		index, err := packfile.NewIndexFromFile(indexFilePath)
+		f, err := os.Open(indexFilePath)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, f.Close())
+		})
+
+		index, err := packfile.NewIndex(bufio.NewReader(f))
 		require.Error(t, err)
 		assert.Nil(t, index)
 		assert.True(t, xerrors.Is(err, packfile.ErrInvalidMagic))
@@ -58,12 +69,15 @@ func TestGetObjectOffset(t *testing.T) {
 
 		indexFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.idx"
 		indexFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, indexFileName)
-		index, err := packfile.NewIndexFromFile(indexFilePath)
+		f, err := os.Open(indexFilePath)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, f.Close())
+		})
+
+		index, err := packfile.NewIndex(bufio.NewReader(f))
 		require.NoError(t, err)
 		assert.NotNil(t, index)
-		t.Cleanup(func() {
-			require.NoError(t, index.Close())
-		})
 
 		t.Run("should work with valid oid", func(t *testing.T) {
 			t.Parallel()
@@ -82,7 +96,7 @@ func TestGetObjectOffset(t *testing.T) {
 			require.NoError(t, err)
 			_, err = index.GetObjectOffset(oid)
 			require.Error(t, err)
-			require.True(t, xerrors.Is(err, ginternals.ErrObjectNotFound))
+			require.True(t, xerrors.Is(err, ginternals.ErrObjectNotFound), "invalid error returned: %s", err.Error())
 		})
 	})
 }
