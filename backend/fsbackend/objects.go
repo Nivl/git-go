@@ -13,6 +13,7 @@ import (
 	"github.com/Nivl/git-go/ginternals/packfile"
 	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/readutil"
+	"github.com/spf13/afero"
 	"golang.org/x/xerrors"
 )
 
@@ -62,7 +63,7 @@ func (b *Backend) looseObject(oid ginternals.Oid) (*object.Object, error) {
 	strOid := oid.String()
 
 	p := b.looseObjectPath(strOid)
-	f, err := os.Open(p)
+	f, err := b.fs.Open(p)
 	if err != nil {
 		return nil, xerrors.Errorf("could not find object %s at path %s: %w", strOid, p, err)
 	}
@@ -140,7 +141,7 @@ func (b *Backend) objectFromPackfile(oid ginternals.Oid) (*object.Object, error)
 	// MIDX file: https://git-scm.com/docs/multi-pack-index
 	// https://github.com/Nivl/git-go/issues/13
 	packfiles := []string{}
-	err := filepath.Walk(p, func(path string, info os.FileInfo, err error) error {
+	err := afero.Walk(b.fs, p, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			// in case of error we just skip it and move on.
 			return nil
@@ -173,7 +174,7 @@ func (b *Backend) objectFromPackfile(oid ginternals.Oid) (*object.Object, error)
 		// the idx extension
 
 		packFilePath := filepath.Join(p, filename)
-		pf, err := packfile.NewFromFile(packFilePath)
+		pf, err := packfile.NewFromFile(b.fs, packFilePath)
 		if err != nil {
 			pf.Close() //nolint:errcheck // it failed anyway
 			return nil, xerrors.Errorf("could not open packfile: %w", err)
@@ -228,7 +229,7 @@ func (b *Backend) WriteObject(o *object.Object) (ginternals.Oid, error) {
 
 	// We need to make sure the dest dir exists
 	dest := filepath.Dir(p)
-	if err = os.MkdirAll(dest, 0o755); err != nil {
+	if err = b.fs.MkdirAll(dest, 0o755); err != nil {
 		return ginternals.NullOid, xerrors.Errorf("could not create the destination directory %s: %w", dest, err)
 	}
 

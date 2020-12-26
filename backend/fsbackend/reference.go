@@ -60,7 +60,7 @@ func (b *Backend) systemPath(name string) string {
 // https://git-scm.com/docs/git-pack-refs
 func (b *Backend) parsePackedRefs() (refs map[string]string, err error) {
 	refs = map[string]string{}
-	f, err := os.Open(filepath.Join(b.root, gitpath.PackedRefsPath))
+	f, err := b.fs.Open(filepath.Join(b.root, gitpath.PackedRefsPath))
 	if err != nil {
 		// if the file doesn't exist we just return an empty map
 		if os.IsNotExist(err) {
@@ -131,7 +131,7 @@ func (b *Backend) WriteReferenceSafe(ref *ginternals.Reference) error {
 
 	// First we check if the reference is on disk
 	p := b.systemPath(ref.Name())
-	_, err := os.Stat(p)
+	_, err := b.fs.Stat(p)
 	if !os.IsNotExist(err) {
 		if err != nil {
 			return xerrors.Errorf("could not check if reference exists on disk: %w", err)
