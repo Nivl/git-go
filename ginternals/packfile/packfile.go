@@ -10,9 +10,11 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/object"
+	"github.com/spf13/afero"
 	"golang.org/x/xerrors"
 )
 
@@ -76,17 +78,21 @@ var (
 //         Contains the SHA1 sum of the packfile (without this SHA)
 // https://github.com/git/git/blob/master/Documentation/technical/pack-format.txt
 type Pack struct {
-	r       *os.File
-	idxFile *os.File
+	r       afero.File
+	idxFile afero.File
 	idx     *PackIndex
 	header  [packfileHeaderSize]byte
+	id      ginternals.Oid
+
+	// Mutex used to protect the exported methods from being called
+	// concurrently
+	mu sync.Mutex
 }
 
 // NewFromFile returns a pack object from the given file
 // The pack will need to be closed using Close()
-// TODO(melvin): need to take an afero object
-func NewFromFile(filePath string) (pack *Pack, err error) {
-	f, err := os.Open(filePath)
+func NewFromFile(fs afero.Fs, filePath string) (pack *Pack, err error) {
+	f, err := fs.Open(filePath)
 	if err != nil {
 		return nil, xerrors.Errorf("could not open %s: %w", filePath, err)
 	}
@@ -97,7 +103,8 @@ func NewFromFile(filePath string) (pack *Pack, err error) {
 	}()
 
 	p := &Pack{
-		r: f,
+		r:  f,
+		id: ginternals.NullOid,
 	}
 
 	// Let's validate the header
@@ -412,6 +419,9 @@ func (pck *Pack) getObjectAt(oid ginternals.Oid, objectOffset uint64) (*object.O
 
 // GetObject returns the object that has the given SHA
 func (pck *Pack) GetObject(oid ginternals.Oid) (*object.Object, error) {
+	pck.mu.Lock()
+	defer pck.mu.Unlock()
+
 	objectOffset, err := pck.idx.GetObjectOffset(oid)
 	if err != nil {
 		if !errors.Is(err, ginternals.ErrObjectNotFound) {
@@ -429,19 +439,33 @@ func (pck *Pack) ObjectCount() uint32 {
 
 // ID returns the ID of the packfile
 func (pck *Pack) ID() (ginternals.Oid, error) {
+	pck.mu.Lock()
+	defer pck.mu.Unlock()
+
+	if pck.id != ginternals.NullOid {
+		return pck.id, nil
+	}
+
 	id := make([]byte, ginternals.OidSize)
 	offset, err := pck.r.Seek(-ginternals.OidSize, os.SEEK_END)
 	if err != nil {
 		return ginternals.NullOid, xerrors.Errorf("could not get the offset of the ID: %w", err)
 	}
-	if _, err := pck.r.ReadAt(id, offset); err != nil {
+	if _, err = pck.r.ReadAt(id, offset); err != nil {
 		return ginternals.NullOid, xerrors.Errorf("could not read the ID: %w", err)
 	}
-	return ginternals.NewOidFromHex(id)
+	pck.id, err = ginternals.NewOidFromHex(id)
+	if err != nil {
+		return ginternals.NullOid, xerrors.Errorf("could not generate oid from %v: %w", id, err)
+	}
+	return pck.id, nil
 }
 
 // Close frees the resources
 func (pck *Pack) Close() error {
+	pck.mu.Lock()
+	defer pck.mu.Unlock()
+
 	packErr := pck.r.Close()
 	idxErr := pck.idxFile.Close()
 	if packErr != nil {

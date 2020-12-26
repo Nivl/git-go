@@ -4,12 +4,12 @@ package fsbackend
 
 import (
 	"io/ioutil"
-	"os"
 	"path/filepath"
 
 	"github.com/Nivl/git-go/backend"
 	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/golang/groupcache/lru"
+	"github.com/spf13/afero"
 	"golang.org/x/xerrors"
 )
 
@@ -18,6 +18,10 @@ var _ backend.Backend = (*Backend)(nil)
 
 // Backend is a Backend implementation that uses the filesystem to store data
 type Backend struct {
+	// we use afero.Fs instead of the regular os package
+	// because some part of the library requires an Fs object.
+	// It's easier and cleaner to use the same thing everywhere.
+	fs    afero.Fs
 	root  string
 	cache *lru.Cache
 }
@@ -25,6 +29,7 @@ type Backend struct {
 // New returns a new Backend object
 func New(dotGitPath string) *Backend {
 	return &Backend{
+		fs:    afero.NewOsFs(),
 		root:  dotGitPath,
 		cache: lru.New(1000),
 	}
@@ -42,7 +47,7 @@ func (b *Backend) Init() error {
 	}
 	for _, d := range dirs {
 		fullPath := filepath.Join(b.root, d)
-		if err := os.MkdirAll(fullPath, 0o750); err != nil {
+		if err := b.fs.MkdirAll(fullPath, 0o750); err != nil {
 			return xerrors.Errorf("could not create directory %s: %w", d, err)
 		}
 	}
