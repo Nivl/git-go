@@ -5,8 +5,11 @@ package fsbackend
 import (
 	"io/ioutil"
 	"path/filepath"
+	"sync"
 
 	"github.com/Nivl/git-go/backend"
+	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/packfile"
 	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/golang/groupcache/lru"
 	"github.com/spf13/afero"
@@ -24,14 +27,18 @@ type Backend struct {
 	fs    afero.Fs
 	root  string
 	cache *lru.Cache
+
+	packfileParsing sync.Once
+	packfiles       map[ginternals.Oid]*packfile.Pack
 }
 
 // New returns a new Backend object
 func New(dotGitPath string) *Backend {
 	return &Backend{
-		fs:    afero.NewOsFs(),
-		root:  dotGitPath,
-		cache: lru.New(1000),
+		fs:        afero.NewOsFs(),
+		root:      dotGitPath,
+		cache:     lru.New(1000),
+		packfiles: map[ginternals.Oid]*packfile.Pack{},
 	}
 }
 

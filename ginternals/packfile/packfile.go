@@ -103,8 +103,7 @@ func NewFromFile(fs afero.Fs, filePath string) (pack *Pack, err error) {
 	}()
 
 	p := &Pack{
-		r:  f,
-		id: ginternals.NullOid,
+		r: f,
 	}
 
 	// Let's validate the header
@@ -117,6 +116,20 @@ func NewFromFile(fs afero.Fs, filePath string) (pack *Pack, err error) {
 	}
 	if !bytes.Equal(p.header[4:8], packfileVersion()) {
 		return nil, xerrors.Errorf("invalid header: %w", ErrInvalidVersion)
+	}
+
+	// Let's find the ID of the packfile (last element of the file)
+	id := make([]byte, ginternals.OidSize)
+	offset, err := f.Seek(-ginternals.OidSize, os.SEEK_END)
+	if err != nil {
+		return nil, xerrors.Errorf("could not get to the offset of the ID: %w", err)
+	}
+	if _, err = f.ReadAt(id, offset); err != nil {
+		return nil, xerrors.Errorf("could not read the ID: %w", err)
+	}
+	p.id, err = ginternals.NewOidFromHex(id)
+	if err != nil {
+		return nil, xerrors.Errorf("could not generate oid from %v: %w", id, err)
 	}
 
 	// Now we load the index file
@@ -438,27 +451,8 @@ func (pck *Pack) ObjectCount() uint32 {
 }
 
 // ID returns the ID of the packfile
-func (pck *Pack) ID() (ginternals.Oid, error) {
-	pck.mu.Lock()
-	defer pck.mu.Unlock()
-
-	if pck.id != ginternals.NullOid {
-		return pck.id, nil
-	}
-
-	id := make([]byte, ginternals.OidSize)
-	offset, err := pck.r.Seek(-ginternals.OidSize, os.SEEK_END)
-	if err != nil {
-		return ginternals.NullOid, xerrors.Errorf("could not get the offset of the ID: %w", err)
-	}
-	if _, err = pck.r.ReadAt(id, offset); err != nil {
-		return ginternals.NullOid, xerrors.Errorf("could not read the ID: %w", err)
-	}
-	pck.id, err = ginternals.NewOidFromHex(id)
-	if err != nil {
-		return ginternals.NullOid, xerrors.Errorf("could not generate oid from %v: %w", id, err)
-	}
-	return pck.id, nil
+func (pck *Pack) ID() ginternals.Oid {
+	return pck.id
 }
 
 // Close frees the resources
