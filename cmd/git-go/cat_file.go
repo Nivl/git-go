@@ -6,6 +6,7 @@ import (
 	"io"
 	"strconv"
 
+	"github.com/Nivl/git-go/internal/errutil"
 	"github.com/Nivl/git-go/internal/gitpath"
 
 	"github.com/Nivl/git-go/ginternals"
@@ -55,7 +56,7 @@ type catFileParams struct {
 	typ         string
 }
 
-func catFileCmd(out io.Writer, cfg *config, p catFileParams) error {
+func catFileCmd(out io.Writer, cfg *config, p catFileParams) (err error) {
 	// Validate options
 	if p.typ != "" && (p.typeOnly || p.sizeOnly || p.prettyPrint) {
 		return errors.New("type not supported with options -t, -s, -p")
@@ -80,6 +81,7 @@ func catFileCmd(out io.Writer, cfg *config, p catFileParams) error {
 	if err != nil {
 		return err
 	}
+	defer errutil.Close(r, &err)
 
 	oid, err := ginternals.NewOidFromStr(p.objectName)
 	if err != nil {

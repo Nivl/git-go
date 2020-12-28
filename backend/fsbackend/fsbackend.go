@@ -24,8 +24,10 @@ type Backend struct {
 	// we use afero.Fs instead of the regular os package
 	// because some part of the library requires an Fs object.
 	// It's easier and cleaner to use the same thing everywhere.
-	fs    afero.Fs
-	root  string
+	fs   afero.Fs
+	root string
+
+	// TODO(melvin): not goroutine-safe
 	cache *lru.Cache
 
 	packfileParsing sync.Once
@@ -40,6 +42,18 @@ func New(dotGitPath string) *Backend {
 		cache:     lru.New(1000),
 		packfiles: map[ginternals.Oid]*packfile.Pack{},
 	}
+}
+
+// Close frees the resources used by the Backend
+func (b *Backend) Close() (err error) {
+	for oid, pack := range b.packfiles {
+		if e := pack.Close(); e != nil {
+			// we don't return directly because we still want to try to
+			// close the other packfiles
+			err = xerrors.Errorf("could not close packfile %s: %w", oid.String(), err)
+		}
+	}
+	return err
 }
 
 // Init initializes a repository

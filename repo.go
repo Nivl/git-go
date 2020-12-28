@@ -32,6 +32,8 @@ type Repository struct {
 	dotGit     backend.Backend
 	repoRoot   string
 	wt         afero.Fs
+
+	shouldCleanBackend bool
 }
 
 // InitOptions contains all the optional data used to initialized a
@@ -74,6 +76,7 @@ func InitRepositoryWithOptions(repoPath string, opts InitOptions) (*Repository, 
 
 	if opts.GitBackend == nil {
 		r.dotGit = fsbackend.New(r.dotGitPath)
+		r.shouldCleanBackend = true
 	}
 
 	if !opts.IsBare {
@@ -134,6 +137,7 @@ func OpenRepositoryWithOptions(repoPath string, opts OpenOptions) (*Repository, 
 
 	if opts.GitBackend == nil {
 		r.dotGit = fsbackend.New(r.dotGitPath)
+		r.shouldCleanBackend = true
 	}
 
 	if !opts.IsBare {
@@ -315,4 +319,12 @@ func (r *Repository) NewLightweightTag(tag string, targetID ginternals.Oid) (*gi
 		return nil, xerrors.Errorf("could not write the ref at %s: %w", refname, err)
 	}
 	return ref, nil
+}
+
+// Close frees the resources used by the repository
+func (r *Repository) Close() error {
+	if r.shouldCleanBackend {
+		return r.dotGit.Close()
+	}
+	return nil
 }
