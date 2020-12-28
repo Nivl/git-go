@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/internal/errutil"
 	"github.com/Nivl/git-go/internal/readutil"
 	"golang.org/x/xerrors"
 )
@@ -188,17 +189,10 @@ func (o *Object) Compress() (data []byte, err error) {
 	o.id = newID
 	compressedContent := new(bytes.Buffer)
 	zw := zlib.NewWriter(compressedContent)
-	defer func() {
-		closeErr := zw.Close()
-		if err == nil {
-			err = closeErr
-		}
-	}()
+	defer errutil.Close(zw, &err)
+
 	if _, err = zw.Write(fileContent); err != nil {
 		return nil, xerrors.Errorf("could not zlib the object: %w", err)
-	}
-	if err = zw.Close(); err != nil {
-		return nil, xerrors.Errorf("could not close the compressor: %w", err)
 	}
 	return compressedContent.Bytes(), nil
 }

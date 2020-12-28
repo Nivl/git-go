@@ -11,6 +11,7 @@ import (
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/Nivl/git-go/ginternals/packfile"
+	"github.com/Nivl/git-go/internal/errutil"
 	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/readutil"
 	"github.com/spf13/afero"
@@ -59,7 +60,7 @@ func (b *Backend) looseObjectPath(sha string) string {
 // The format of an object is an ascii encoded type, an ascii encoded
 // space, then an ascii encoded length of the object, then a null
 // character, then the body of the object
-func (b *Backend) looseObject(oid ginternals.Oid) (*object.Object, error) {
+func (b *Backend) looseObject(oid ginternals.Oid) (o *object.Object, err error) {
 	strOid := oid.String()
 
 	p := b.looseObjectPath(strOid)
@@ -67,24 +68,14 @@ func (b *Backend) looseObject(oid ginternals.Oid) (*object.Object, error) {
 	if err != nil {
 		return nil, xerrors.Errorf("could not find object %s at path %s: %w", strOid, p, err)
 	}
-	defer func() {
-		closeErr := f.Close()
-		if err == nil {
-			err = closeErr
-		}
-	}()
+	defer errutil.Close(f, &err)
 
 	// Objects are zlib encoded
 	zlibReader, err := zlib.NewReader(f)
 	if err != nil {
 		return nil, xerrors.Errorf("could not decompress parts of object %s at path %s: %w", strOid, p, err)
 	}
-	defer func() {
-		closeErr := zlibReader.Close()
-		if err == nil {
-			err = closeErr
-		}
-	}()
+	defer errutil.Close(zlibReader, &err)
 
 	// We directly read the entire file since most of it is the content we
 	// need, this allows us to be able to easily store the object's content

@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/internal/errutil"
 	"github.com/Nivl/git-go/internal/gitpath"
 	"golang.org/x/xerrors"
 )
@@ -68,12 +69,7 @@ func (b *Backend) parsePackedRefs() (refs map[string]string, err error) {
 		}
 		return nil, xerrors.Errorf("could not open %s: %w", gitpath.PackedRefsPath, err)
 	}
-	defer func() {
-		closeErr := f.Close()
-		if err == nil {
-			err = closeErr
-		}
-	}()
+	defer errutil.Close(f, &err)
 
 	sc := bufio.NewScanner(f)
 	for i := 1; sc.Scan(); i++ {
