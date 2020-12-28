@@ -24,8 +24,12 @@ func TestInit(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		err := fsbackend.New(filepath.Join(dir, gitpath.DotGitPath)).Init()
-		require.NoError(t, err)
+		b := fsbackend.New(filepath.Join(dir, gitpath.DotGitPath))
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+
+		require.NoError(t, b.Init())
 	})
 
 	t.Run("bare repo should work", func(t *testing.T) {
@@ -34,8 +38,12 @@ func TestInit(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		err := fsbackend.New(dir).Init()
-		require.NoError(t, err)
+		b := fsbackend.New(dir)
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+
+		require.NoError(t, b.Init())
 	})
 
 	t.Run("repo with existing data should work", func(t *testing.T) {
@@ -52,8 +60,12 @@ func TestInit(t *testing.T) {
 		err = ioutil.WriteFile(filepath.Join(dir, gitpath.DescriptionPath), []byte{}, 0o644)
 		require.NoError(t, err)
 
-		err = fsbackend.New(dir).Init()
-		require.NoError(t, err)
+		b := fsbackend.New(dir)
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+
+		require.NoError(t, b.Init())
 	})
 
 	t.Run("should fail if directory exists without write perm", func(t *testing.T) {
@@ -71,7 +83,11 @@ func TestInit(t *testing.T) {
 		err := os.MkdirAll(filepath.Join(dir, gitpath.ObjectsPath), 0o550)
 		require.NoError(t, err)
 
-		err = fsbackend.New(dir).Init()
+		b := fsbackend.New(dir)
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+		err = b.Init()
 		require.Error(t, err)
 		var perror *os.PathError
 		require.True(t, xerrors.As(err, &perror), "error should be os.PathError")
@@ -88,7 +104,11 @@ func TestInit(t *testing.T) {
 		err := ioutil.WriteFile(filepath.Join(dir, gitpath.DescriptionPath), []byte{}, 0o444)
 		require.NoError(t, err)
 
-		err = fsbackend.New(dir).Init()
+		b := fsbackend.New(dir)
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+		err = b.Init()
 		require.Error(t, err)
 		var perror *os.PathError
 		require.True(t, xerrors.As(err, &perror), "error should be os.PathError")

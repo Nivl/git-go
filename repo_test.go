@@ -28,6 +28,9 @@ func TestInit(t *testing.T) {
 		// Run logic
 		r, err := InitRepository(d)
 		require.NoError(t, err, "failed creating a repo")
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 
 		// assert returned repository
 		assert.Equal(t, d, r.repoRoot)
@@ -89,6 +92,9 @@ func TestOpen(t *testing.T) {
 		})
 		require.NoError(t, err, "failed loading a repo")
 		require.NotNil(t, r, "repository should not be nil")
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 
 		// assert returned repository
 		// assert returned repository
@@ -110,6 +116,9 @@ func TestRepositoryGetObject(t *testing.T) {
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 
 		oid, err := ginternals.NewOidFromStr("b07e28976ac8972715598f390964d53cf4dbc1bd")
 		require.NoError(t, err)
@@ -131,6 +140,9 @@ func TestRepositoryGetObject(t *testing.T) {
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 
 		oid, err := ginternals.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
 		require.NoError(t, err)
@@ -152,6 +164,9 @@ func TestRepositoryNewBlob(t *testing.T) {
 
 	r, err := OpenRepository(repoPath)
 	require.NoError(t, err, "failed loading a repo")
+	t.Cleanup(func() {
+		require.NoError(t, r.Close(), "failed closing repo")
+	})
 
 	data := "abcdefghijklmnopqrstuvwxyz"
 	blob, err := r.NewBlob([]byte(data))
@@ -173,6 +188,9 @@ func TestRepositoryGetCommit(t *testing.T) {
 
 	r, err := OpenRepository(repoPath)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, r.Close(), "failed closing repo")
+	})
 
 	commitOid, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
 	require.NoError(t, err)
@@ -193,6 +211,9 @@ func TestRepositoryGetReference(t *testing.T) {
 	t.Cleanup(cleanup)
 	r, err := OpenRepository(repoPath)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, r.Close(), "failed closing repo")
+	})
 
 	testCases := []struct {
 		desc           string
@@ -242,6 +263,9 @@ func TestRepositoryGetTree(t *testing.T) {
 
 	r, err := OpenRepository(repoPath)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, r.Close(), "failed closing repo")
+	})
 
 	treeOid, err := ginternals.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
 	require.NoError(t, err)
@@ -261,6 +285,9 @@ func TestRepositoryNewCommit(t *testing.T) {
 
 	r, err := OpenRepository(repoPath)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, r.Close(), "failed closing repo")
+	})
 
 	ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
 	require.NoError(t, err)
@@ -296,6 +323,9 @@ func TestRepositoryNewDetachedCommit(t *testing.T) {
 
 	r, err := OpenRepository(repoPath)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, r.Close(), "failed closing repo")
+	})
 
 	ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
 	require.NoError(t, err)
@@ -334,6 +364,9 @@ func TestRepositoryGetTag(t *testing.T) {
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 
 		tagID, err := ginternals.NewOidFromStr("80316e01dbfdf5c2a8a20de66c747ecd4c4bd442")
 		require.NoError(t, err)
@@ -364,6 +397,9 @@ func TestRepositoryGetTag(t *testing.T) {
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 
 		targettedCommitID, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
 		require.NoError(t, err)
@@ -387,6 +423,9 @@ func TestRepositoryGetTag(t *testing.T) {
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 
 		_, err = r.GetTag("does-not-exist")
 		assert.Error(t, err)
@@ -405,6 +444,9 @@ func TestRepositoryNewTag(t *testing.T) {
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 
 		ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
 		require.NoError(t, err)
@@ -448,6 +490,9 @@ func TestRepositoryNewTag(t *testing.T) {
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 
 		ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
 		require.NoError(t, err)
@@ -475,6 +520,9 @@ func TestRepositoryNewTag(t *testing.T) {
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 
 		blob := object.New(object.TypeBlob, []byte(""))
 
@@ -502,6 +550,9 @@ func TestRepositoryNewLightweightTag(t *testing.T) {
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 
 		ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
 		require.NoError(t, err)
@@ -521,6 +572,9 @@ func TestRepositoryNewLightweightTag(t *testing.T) {
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 
 		ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
 		require.NoError(t, err)
@@ -539,6 +593,9 @@ func TestRepositoryNewLightweightTag(t *testing.T) {
 
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 
 		blob := object.New(object.TypeBlob, []byte(""))
 

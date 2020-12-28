@@ -28,6 +28,10 @@ func TestObject(t *testing.T) {
 		require.NoError(t, err)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+
 		obj, err := b.Object(oid)
 		require.NoError(t, err)
 		require.NotNil(t, obj)
@@ -47,6 +51,10 @@ func TestObject(t *testing.T) {
 		require.NoError(t, err)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+
 		obj, err := b.Object(oid)
 		require.NoError(t, err)
 		require.NotNil(t, obj)
@@ -65,6 +73,10 @@ func TestObject(t *testing.T) {
 		require.NoError(t, err)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+
 		obj, err := b.Object(oid)
 		require.Error(t, err)
 		require.Nil(t, obj)
@@ -82,6 +94,9 @@ func TestHasObject(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
 
 		oid, err := ginternals.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
 		require.NoError(t, err)
@@ -98,6 +113,9 @@ func TestHasObject(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
 
 		fakeOid, err := ginternals.NewOidFromStr("2dcdadc2a420225783794fbffd51e2e137a69646")
 		require.NoError(t, err)
@@ -114,6 +132,9 @@ func TestHasObject(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
 
 		oid, err := ginternals.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
 		require.NoError(t, err)
@@ -141,6 +162,9 @@ func TestHasObject(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
 
 		oid, err := ginternals.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
 		require.NoError(t, err)
@@ -168,6 +192,9 @@ func TestWriteObject(t *testing.T) {
 
 		dotGitPath := filepath.Join(repoPath, gitpath.DotGitPath)
 		b := New(dotGitPath)
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
 		o := object.New(object.TypeBlob, []byte("data"))
 		oid, err := b.WriteObject(o)
 		require.NoError(t, err)
@@ -196,6 +223,9 @@ func TestWriteObject(t *testing.T) {
 
 		dotGitPath := filepath.Join(repoPath, gitpath.DotGitPath)
 		b := New(dotGitPath)
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
 		o := object.New(object.TypeBlob, []byte("data"))
 		oid, err := b.WriteObject(o)
 		require.NoError(t, err)

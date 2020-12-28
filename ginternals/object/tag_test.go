@@ -24,6 +24,9 @@ func TestNewTag(t *testing.T) {
 
 		r, err := git.OpenRepository(repoPath)
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 		commitOid, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
 		require.NoError(t, err)
 
@@ -73,6 +76,9 @@ func TestTagToObject(t *testing.T) {
 		t.Cleanup(cleanup)
 		r, err := git.OpenRepository(repoPath)
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 
 		// Find a tag
 		tagRef, err := r.GetTag("annotated")
@@ -94,6 +100,9 @@ func TestTagToObject(t *testing.T) {
 		t.Cleanup(cleanup)
 		r, err := git.OpenRepository(repoPath)
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 		commitOid, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
 		require.NoError(t, err)
 

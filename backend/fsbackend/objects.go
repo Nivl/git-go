@@ -137,59 +137,54 @@ func (b *Backend) looseObject(oid ginternals.Oid) (*object.Object, error) {
 func (b *Backend) objectFromPackfile(oid ginternals.Oid) (*object.Object, error) {
 	p := filepath.Join(b.root, gitpath.ObjectsPackPath)
 
-	// TODO(melvin): parse MIDX files instead
-	// MIDX file: https://git-scm.com/docs/multi-pack-index
-	// https://github.com/Nivl/git-go/issues/13
-	packfiles := []string{}
-	err := afero.Walk(b.fs, p, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			// in case of error we just skip it and move on.
+	var err error
+	b.packfileParsing.Do(func() {
+		err = afero.Walk(b.fs, p, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				// in case of error we just skip it and move on.
+				return nil
+			}
+
+			if info.Name() == "pack" {
+				return nil
+			}
+
+			// There should be no directories, but just in case,
+			// we make sure we don't go in them
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
+
+			// We're only interested in packfiles
+			if filepath.Ext(info.Name()) != packfile.ExtPackfile {
+				return nil
+			}
+
+			packFilePath := filepath.Join(p, info.Name())
+			pack, err := packfile.NewFromFile(b.fs, packFilePath)
+			if err != nil {
+				return xerrors.Errorf("could not parse packfile at %s: %w", packFilePath, err)
+			}
+			b.packfiles[pack.ID()] = pack
+
 			return nil
-		}
-
-		if info.Name() == "pack" {
-			return nil
-		}
-
-		// There should be no directories, but just in case,
-		// we make sure we don't go in them
-		if info.IsDir() {
-			return filepath.SkipDir
-		}
-
-		// We're only interested in packfiles
-		if filepath.Ext(info.Name()) != packfile.ExtPackfile {
-			return nil
-		}
-
-		packfiles = append(packfiles, info.Name())
-		return nil
+		})
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	for _, filename := range packfiles {
-		// the index file of the packfile has the same name but with
-		// the idx extension
-
-		packFilePath := filepath.Join(p, filename)
-		pf, err := packfile.NewFromFile(b.fs, packFilePath)
-		if err != nil {
-			pf.Close() //nolint:errcheck // it failed anyway
-			return nil, xerrors.Errorf("could not open packfile: %w", err)
-		}
-		do, err := pf.GetObject(oid)
+	// TODO(melvin): parse MIDX files to speed up the process
+	// MIDX file: https://git-scm.com/docs/multi-pack-index
+	// https://github.com/Nivl/git-go/issues/13
+	for _, pack := range b.packfiles {
+		o, err := pack.GetObject(oid)
 		if err == nil {
-			return do, pf.Close()
+			return o, nil
 		}
 		if errors.Is(err, ginternals.ErrObjectNotFound) {
-			if err = pf.Close(); err != nil {
-				return nil, err
-			}
 			continue
 		}
-		pf.Close() //nolint:errcheck // it failed anyway
 		return nil, err
 	}
 	return nil, ginternals.ErrObjectNotFound

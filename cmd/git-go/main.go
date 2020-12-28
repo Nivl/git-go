@@ -43,6 +43,7 @@ func newRootCmd() *cobra.Command {
 	return cmd
 }
 
+// TODO(melvin): Move to it's own cmd package with tests
 func newInitCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
@@ -61,6 +62,9 @@ func initCmd() error {
 	if err != nil {
 		return err
 	}
-	_, err = git.InitRepository(pwd)
-	return err
+	r, err := git.InitRepository(pwd)
+	if err != nil {
+		return err
+	}
+	return r.Close()
 }

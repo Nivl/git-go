@@ -234,6 +234,9 @@ func TestCommitToObject(t *testing.T) {
 		t.Cleanup(cleanup)
 		r, err := git.OpenRepository(repoPath)
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 
 		// Find a commit
 		commitOID, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
@@ -272,6 +275,9 @@ func TestCommitToObject(t *testing.T) {
 		t.Cleanup(cleanup)
 		r, err := git.OpenRepository(repoPath)
 		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 
 		// Find a commit
 		commitOID, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")

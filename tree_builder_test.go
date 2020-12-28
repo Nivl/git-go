@@ -56,6 +56,9 @@ func TestTreeBuilderInsert(t *testing.T) {
 				r, err := OpenRepository(repoPath)
 				require.NoError(t, err, "failed loading a repo")
 				require.NotNil(t, r, "repository should not be nil")
+				t.Cleanup(func() {
+					require.NoError(t, r.Close(), "failed closing repo")
+				})
 
 				oid, err := ginternals.NewOidFromStr(tc.sha)
 				require.NoError(t, err)
@@ -82,6 +85,9 @@ func TestTreeBuilderInsert(t *testing.T) {
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")
 		require.NotNil(t, r, "repository should not be nil")
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 
 		tb := r.NewTreeBuilder()
 
@@ -109,6 +115,9 @@ func TestTreeBuilderInsert(t *testing.T) {
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")
 		require.NotNil(t, r, "repository should not be nil")
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 
 		tb := r.NewTreeBuilder()
 
@@ -139,6 +148,9 @@ func TestTreeBuilderInsert(t *testing.T) {
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")
 		require.NotNil(t, r, "repository should not be nil")
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 
 		tb := r.NewTreeBuilder()
 
@@ -162,6 +174,9 @@ func TestTreeBuilderRemove(t *testing.T) {
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")
 		require.NotNil(t, r, "repository should not be nil")
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 
 		tb := r.NewTreeBuilder()
 
@@ -196,6 +211,9 @@ func TestTreeBuilderRemove(t *testing.T) {
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")
 		require.NotNil(t, r, "repository should not be nil")
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 
 		tb := r.NewTreeBuilder()
 
@@ -223,6 +241,9 @@ func TestTreeBuilderWrite(t *testing.T) {
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")
 		require.NotNil(t, r, "repository should not be nil")
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 
 		tb := r.NewTreeBuilder()
 		tree, err := tb.Write()
@@ -240,6 +261,9 @@ func TestTreeBuilderWrite(t *testing.T) {
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")
 		require.NotNil(t, r, "repository should not be nil")
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 
 		tb := r.NewTreeBuilder()
 
@@ -273,6 +297,9 @@ func TestTreeBuilderWrite(t *testing.T) {
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")
 		require.NotNil(t, r, "repository should not be nil")
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 
 		oid, err := ginternals.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
 		require.NoError(t, err)

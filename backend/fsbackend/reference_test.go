@@ -23,6 +23,9 @@ func TestReference(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
 		ref, err := b.Reference("refs/heads/doesnt_exists")
 		require.Error(t, err)
 		assert.True(t, xerrors.Is(ginternals.ErrRefNotFound, ginternals.ErrRefNotFound), "unexpected error returned")
@@ -36,6 +39,9 @@ func TestReference(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
 		ref, err := b.Reference(ginternals.HEAD)
 		require.NoError(t, err)
 		require.NotNil(t, ref)
@@ -54,6 +60,9 @@ func TestReference(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
 		ref, err := b.Reference(gitpath.LocalBranch(ginternals.Master))
 		require.NoError(t, err)
 		require.NotNil(t, ref)
@@ -76,8 +85,10 @@ func TestParsePackedRefs(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		b := New(dir)
-		err := b.Init()
-		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+		require.NoError(t, b.Init())
 
 		data, err := b.parsePackedRefs()
 		require.NoError(t, err)
@@ -92,10 +103,12 @@ func TestParsePackedRefs(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		b := New(dir)
-		err := b.Init()
-		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+		require.NoError(t, b.Init())
 		fPath := filepath.Join(b.root, gitpath.PackedRefsPath)
-		err = ioutil.WriteFile(fPath, []byte("not valid data"), 0o644)
+		err := ioutil.WriteFile(fPath, []byte("not valid data"), 0o644)
 		require.NoError(t, err)
 
 		_, err = b.parsePackedRefs()
@@ -110,10 +123,12 @@ func TestParsePackedRefs(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		b := New(dir)
-		err := b.Init()
-		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+		require.NoError(t, b.Init())
 		fPath := filepath.Join(b.root, gitpath.PackedRefsPath)
-		err = ioutil.WriteFile(fPath, []byte("^de111c003b5661db802f17ac69419dcb9f4f3137\n# this is a comment"), 0o644)
+		err := ioutil.WriteFile(fPath, []byte("^de111c003b5661db802f17ac69419dcb9f4f3137\n# this is a comment"), 0o644)
 		require.NoError(t, err)
 
 		_, err = b.parsePackedRefs()
@@ -127,6 +142,9 @@ func TestParsePackedRefs(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
 
 		data, err := b.parsePackedRefs()
 		require.NoError(t, err)
@@ -155,11 +173,13 @@ func TestWriteReference(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		b := New(dir)
-		err := b.Init()
-		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+		require.NoError(t, b.Init())
 
 		ref := ginternals.NewSymbolicReference("HEAD", "refs/heads/master")
-		err = b.WriteReference(ref)
+		err := b.WriteReference(ref)
 		require.NoError(t, err)
 
 		data, err := ioutil.ReadFile(filepath.Join(b.root, "HEAD"))
@@ -174,8 +194,10 @@ func TestWriteReference(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		b := New(dir)
-		err := b.Init()
-		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+		require.NoError(t, b.Init())
 
 		target, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
 		require.NoError(t, err)
@@ -195,11 +217,13 @@ func TestWriteReference(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		b := New(dir)
-		err := b.Init()
-		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+		require.NoError(t, b.Init())
 
 		ref := ginternals.NewSymbolicReference("H EAD", "refs/heads/master")
-		err = b.WriteReference(ref)
+		err := b.WriteReference(ref)
 		require.Error(t, err)
 		require.True(t, xerrors.Is(err, ginternals.ErrRefNameInvalid), "unexpected error")
 
@@ -214,6 +238,9 @@ func TestWriteReference(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
 
 		// assert current data on disk
 		data, err := ioutil.ReadFile(filepath.Join(b.root, "HEAD"))
@@ -236,6 +263,10 @@ func TestWriteReference(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+		require.NoError(t, b.Init())
 
 		// assert current data on disk
 		data, err := ioutil.ReadFile(filepath.Join(b.root, "HEAD"))
@@ -264,11 +295,13 @@ func TestWriteReferenceSafe(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		b := New(dir)
-		err := b.Init()
-		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+		require.NoError(t, b.Init())
 
 		ref := ginternals.NewSymbolicReference("HEAD", "refs/heads/master")
-		err = b.WriteReferenceSafe(ref)
+		err := b.WriteReferenceSafe(ref)
 		require.NoError(t, err)
 
 		// Let's make sure the data changed on disk
@@ -284,8 +317,10 @@ func TestWriteReferenceSafe(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		b := New(dir)
-		err := b.Init()
-		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+		require.NoError(t, b.Init())
 
 		target, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
 		require.NoError(t, err)
@@ -306,11 +341,13 @@ func TestWriteReferenceSafe(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		b := New(dir)
-		err := b.Init()
-		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+		require.NoError(t, b.Init())
 
 		ref := ginternals.NewSymbolicReference("H EAD", "refs/heads/master")
-		err = b.WriteReferenceSafe(ref)
+		err := b.WriteReferenceSafe(ref)
 		require.Error(t, err)
 		require.True(t, xerrors.Is(err, ginternals.ErrRefNameInvalid), "unexpected error")
 
@@ -326,6 +363,9 @@ func TestWriteReferenceSafe(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
 
 		// assert current data on disk
 		data, err := ioutil.ReadFile(filepath.Join(b.root, "HEAD"))
@@ -350,6 +390,9 @@ func TestWriteReferenceSafe(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
 
 		// assert current data on disk (there are none)
 		_, err := ioutil.ReadFile(filepath.Join(b.root, "refs", "heads", "master"))

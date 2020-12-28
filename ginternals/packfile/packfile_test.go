@@ -32,6 +32,7 @@ func TestNewFromFile(t *testing.T) {
 		t.Cleanup(func() {
 			require.NoError(t, pack.Close())
 		})
+		assert.Equal(t, "0163931160835b1de2f120e1aa7e52206debeb14", pack.ID().String())
 	})
 
 	t.Run("indexfile should fail", func(t *testing.T) {
@@ -161,28 +162,4 @@ func TestObjectCount(t *testing.T) {
 		// This needs to be rewritten once we have a way to create packfile
 		assert.Equal(t, uint32(364), pack.ObjectCount())
 	})
-}
-
-func TestID(t *testing.T) {
-	t.Parallel()
-
-	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-	t.Cleanup(cleanup)
-
-	// Load the packfile
-	packFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.pack"
-	packFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, packFileName)
-	pack, err := packfile.NewFromFile(afero.NewOsFs(), packFilePath)
-	require.NoError(t, err)
-	assert.NotNil(t, pack)
-	t.Cleanup(func() {
-		require.NoError(t, pack.Close())
-	})
-
-	// TODO(melvin): this will break each time we update
-	// the test repo.
-	// This needs to be rewritten once we have a way to create packfile
-	oid, err := pack.ID()
-	require.NoError(t, err)
-	assert.Equal(t, "0163931160835b1de2f120e1aa7e52206debeb14", oid.String())
 }

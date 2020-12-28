@@ -16,6 +16,9 @@ import (
 // Backend represents an object that can store and retrieve data
 // from and rto the odb
 type Backend interface {
+	// Close free the resources
+	Close() error
+
 	// Init initializes a repository
 	Init() error
 
