@@ -72,9 +72,6 @@ func TestOpen(t *testing.T) {
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")
 		require.NotNil(t, r, "repository should not be nil")
-		t.Cleanup(func() {
-			require.NoError(t, r.Close(), "failed closing repo")
-		})
 
 		// assert returned repository
 		assert.Equal(t, repoPath, r.repoRoot)
@@ -288,6 +285,9 @@ func TestRepositoryNewCommit(t *testing.T) {
 
 	r, err := OpenRepository(repoPath)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, r.Close(), "failed closing repo")
+	})
 
 	ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
 	require.NoError(t, err)
