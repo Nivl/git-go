@@ -14,6 +14,7 @@ import (
 
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/object"
+	"github.com/Nivl/git-go/internal/errutil"
 	"github.com/spf13/afero"
 	"golang.org/x/xerrors"
 )
@@ -276,12 +277,7 @@ func (pck *Pack) getRawObjectAt(oid ginternals.Oid, objectOffset uint64) (o *obj
 	if err != nil {
 		return nil, ginternals.NullOid, 0, xerrors.Errorf("could not get zlib reader: %w", err)
 	}
-	defer func() {
-		closeErr := zlibR.Close()
-		if err == nil {
-			err = closeErr
-		}
-	}()
+	defer errutil.Close(zlibR, &err)
 
 	objectData := bytes.Buffer{}
 	_, err = io.Copy(&objectData, zlibR)
