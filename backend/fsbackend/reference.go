@@ -22,7 +22,7 @@ func (b *Backend) Reference(name string) (*ginternals.Reference, error) {
 	finder := func(name string) ([]byte, error) {
 		data, err := ioutil.ReadFile(b.systemPath(name))
 		if err != nil {
-			if !os.IsNotExist(err) {
+			if !xerrors.Is(err, os.ErrNotExist) {
 				return nil, xerrors.Errorf("could not read reference content: %w", err)
 			}
 			// if the reference can't be found on disk, it might be
@@ -64,7 +64,7 @@ func (b *Backend) parsePackedRefs() (refs map[string]string, err error) {
 	f, err := b.fs.Open(filepath.Join(b.root, gitpath.PackedRefsPath))
 	if err != nil {
 		// if the file doesn't exist we just return an empty map
-		if os.IsNotExist(err) {
+		if xerrors.Is(err, os.ErrNotExist) {
 			return refs, nil
 		}
 		return nil, xerrors.Errorf("could not open %s: %w", gitpath.PackedRefsPath, err)
@@ -128,7 +128,7 @@ func (b *Backend) WriteReferenceSafe(ref *ginternals.Reference) error {
 	// First we check if the reference is on disk
 	p := b.systemPath(ref.Name())
 	_, err := b.fs.Stat(p)
-	if !os.IsNotExist(err) {
+	if !xerrors.Is(err, os.ErrNotExist) {
 		if err != nil {
 			return xerrors.Errorf("could not check if reference exists on disk: %w", err)
 		}
