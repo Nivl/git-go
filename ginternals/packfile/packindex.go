@@ -198,6 +198,7 @@ func (idx *PackIndex) parse() (err error) {
 
 	// We don't care about layer3 just yet so we skip it
 	// TODO(melvin): parse and use layer3
+	// https://golang.org/pkg/hash/crc32/
 	layer3Size := objectCount * layer3EntrySize
 	_, err = idx.r.Discard(layer3Size)
 	if err != nil {

@@ -3,7 +3,6 @@ package fsbackend
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,22 +10,29 @@ import (
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/internal/errutil"
 	"github.com/Nivl/git-go/internal/gitpath"
+	"github.com/spf13/afero"
 	"golang.org/x/xerrors"
 )
 
 // Reference returns a stored reference from its name
 // ErrRefNotFound is returned if the reference doesn't exists
+// This method can be called concurrently
 func (b *Backend) Reference(name string) (*ginternals.Reference, error) {
+	nameKey := []byte(name)
+	b.refMu.RLock(nameKey)
+	defer b.refMu.RUnlock(nameKey)
+
 	var packedRef map[string]string
 
 	finder := func(name string) ([]byte, error) {
-		data, err := ioutil.ReadFile(b.systemPath(name))
+		data, err := afero.ReadFile(b.fs, b.systemPath(name))
 		if err != nil {
 			if !xerrors.Is(err, os.ErrNotExist) {
 				return nil, xerrors.Errorf("could not read reference content: %w", err)
 			}
 			// if the reference can't be found on disk, it might be
 			// in the packed-ref file
+			// TODO(melvin): cache the packed refs
 			if packedRef == nil {
 				packedRef, err = b.parsePackedRefs()
 				if err != nil {
@@ -59,6 +65,7 @@ func (b *Backend) systemPath(name string) string {
 // parsePackedRefs parsed the packed-refs file and returns a map
 // refName => Oid
 // https://git-scm.com/docs/git-pack-refs
+// TODO(melvin): Load once and store in memory
 func (b *Backend) parsePackedRefs() (refs map[string]string, err error) {
 	refs = map[string]string{}
 	f, err := b.fs.Open(filepath.Join(b.root, gitpath.PackedRefsPath))
@@ -102,6 +109,10 @@ func (b *Backend) WriteReference(ref *ginternals.Reference) error {
 		return ginternals.ErrRefNameInvalid
 	}
 
+	nameKey := []byte(ref.Name())
+	b.refMu.RLock(nameKey)
+	defer b.refMu.RUnlock(nameKey)
+
 	target := ""
 	switch ref.Type() {
 	case ginternals.SymbolicReference:
@@ -111,7 +122,7 @@ func (b *Backend) WriteReference(ref *ginternals.Reference) error {
 	default:
 		return xerrors.Errorf("reference type %d: %w", ref.Type(), ginternals.ErrUnknownRefType)
 	}
-	err := ioutil.WriteFile(b.systemPath(ref.Name()), []byte(target), 0o644)
+	err := afero.WriteFile(b.fs, b.systemPath(ref.Name()), []byte(target), 0o644)
 	if err != nil {
 		return xerrors.Errorf("could not persist reference to disk: %w", err)
 	}

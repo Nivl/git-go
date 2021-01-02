@@ -19,7 +19,16 @@ import (
 )
 
 // Object returns the object that has given oid
+// This method can be called concurrently
 func (b *Backend) Object(oid ginternals.Oid) (*object.Object, error) {
+	key := oid[:]
+	b.objectMu.Lock(key)
+	defer b.objectMu.Unlock(key)
+
+	return b.objectUnsafe(oid)
+}
+
+func (b *Backend) objectUnsafe(oid ginternals.Oid) (*object.Object, error) {
 	if b.cache != nil {
 		if cachedO, found := b.cache.Get(oid); found {
 			if o, valid := cachedO.(*object.Object); valid {
@@ -182,8 +191,17 @@ func (b *Backend) objectFromPackfile(oid ginternals.Oid) (*object.Object, error)
 }
 
 // HasObject returns whether an object exists in the odb
+// This method can be called concurrently
 func (b *Backend) HasObject(oid ginternals.Oid) (bool, error) {
-	_, err := b.Object(oid)
+	key := oid[:]
+	b.objectMu.Lock(key)
+	defer b.objectMu.Unlock(key)
+
+	return b.hasObjectUnsafe(oid)
+}
+
+func (b *Backend) hasObjectUnsafe(oid ginternals.Oid) (bool, error) {
+	_, err := b.objectUnsafe(oid)
 	if err == nil {
 		return true, nil
 	}
@@ -194,14 +212,19 @@ func (b *Backend) HasObject(oid ginternals.Oid) (bool, error) {
 }
 
 // WriteObject adds an object to the odb
+// This method can be called concurrently
 func (b *Backend) WriteObject(o *object.Object) (ginternals.Oid, error) {
 	data, err := o.Compress()
 	if err != nil {
 		return ginternals.NullOid, xerrors.Errorf("could not compress object: %w", err)
 	}
 
+	oid := o.ID()
+	b.objectMu.Lock(oid[:])
+	defer b.objectMu.Unlock(oid[:])
+
 	// Make sure the object doesn't already exist anywhere
-	found, err := b.HasObject(o.ID())
+	found, err := b.hasObjectUnsafe(o.ID())
 	if err != nil {
 		return ginternals.NullOid, xerrors.Errorf("could not check if object (%s) already exists: %w", o.ID().String(), err)
 	}
@@ -220,7 +243,7 @@ func (b *Backend) WriteObject(o *object.Object) (ginternals.Oid, error) {
 	}
 
 	// We use 444 because git object are read-only
-	if err = ioutil.WriteFile(p, data, 0o444); err != nil {
+	if err = afero.WriteFile(b.fs, p, data, 0o444); err != nil {
 		return ginternals.NullOid, xerrors.Errorf("could not persist object %s at path %s: %w", sha, p, err)
 	}
 

@@ -10,8 +10,9 @@ import (
 	"github.com/Nivl/git-go/backend"
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/packfile"
+	"github.com/Nivl/git-go/internal/cache"
 	"github.com/Nivl/git-go/internal/gitpath"
-	"github.com/golang/groupcache/lru"
+	"github.com/Nivl/git-go/internal/syncutil"
 	"github.com/spf13/afero"
 	"golang.org/x/xerrors"
 )
@@ -27,11 +28,13 @@ type Backend struct {
 	fs   afero.Fs
 	root string
 
-	// TODO(melvin): not goroutine-safe
-	cache *lru.Cache
+	objectMu *syncutil.NamedMutex
+	cache    *cache.LRU
 
 	packfileParsing sync.Once
 	packfiles       map[ginternals.Oid]*packfile.Pack
+
+	refMu *syncutil.NamedMutex
 }
 
 // New returns a new Backend object
@@ -39,12 +42,15 @@ func New(dotGitPath string) *Backend {
 	return &Backend{
 		fs:        afero.NewOsFs(),
 		root:      dotGitPath,
-		cache:     lru.New(1000),
+		cache:     cache.NewLRU(1000),
+		objectMu:  syncutil.NewNamedMutex(101),
+		refMu:     syncutil.NewNamedMutex(101),
 		packfiles: map[ginternals.Oid]*packfile.Pack{},
 	}
 }
 
 // Close frees the resources used by the Backend
+// This method cannot be called concurrently with other methods
 func (b *Backend) Close() (err error) {
 	for oid, pack := range b.packfiles {
 		if e := pack.Close(); e != nil {
@@ -53,10 +59,12 @@ func (b *Backend) Close() (err error) {
 			err = xerrors.Errorf("could not close packfile %s: %w", oid.String(), err)
 		}
 	}
+	b.packfiles = map[ginternals.Oid]*packfile.Pack{}
 	return err
 }
 
 // Init initializes a repository
+// This method cannot be called concurrently with other methods
 func (b *Backend) Init() error {
 	// Create the directories
 	dirs := []string{
