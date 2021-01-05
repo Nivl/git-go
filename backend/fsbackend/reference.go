@@ -72,7 +72,7 @@ func (b *Backend) loadRefs() (err error) {
 			// "oid ref-name"
 			parts := strings.Split(line, " ")
 			if len(parts) != 2 {
-				return xerrors.Errorf("could not parse %s, unexpected data line %d: %w", i, gitpath.PackedRefsPath, ginternals.ErrPackedRefInvalid)
+				return xerrors.Errorf("could not parse %s, unexpected data line %d: %w", gitpath.PackedRefsPath, i, ginternals.ErrPackedRefInvalid)
 			}
 			b.refs[parts[1]] = []byte(parts[0])
 		}
@@ -182,6 +182,6 @@ func (b *Backend) writeReference(ref *ginternals.Reference) error {
 	if err != nil {
 		return xerrors.Errorf("could not persist reference to disk: %w", err)
 	}
-	b.refs[refPath] = data
+	b.refs[ref.Name()] = data
 	return nil
 }
