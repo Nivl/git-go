@@ -31,22 +31,46 @@ type Backend struct {
 	objectMu *syncutil.NamedMutex
 	cache    *cache.LRU
 
-	packfileParsing sync.Once
-	packfiles       map[ginternals.Oid]*packfile.Pack
+	packfiles map[ginternals.Oid]*packfile.Pack
 
-	refMu *syncutil.NamedMutex
+	refMu sync.RWMutex
+	refs  map[string][]byte
 }
 
 // New returns a new Backend object
-func New(dotGitPath string) *Backend {
-	return &Backend{
+func New(dotGitPath string) (*Backend, error) {
+	b := &Backend{
 		fs:        afero.NewOsFs(),
 		root:      dotGitPath,
 		cache:     cache.NewLRU(1000),
 		objectMu:  syncutil.NewNamedMutex(101),
-		refMu:     syncutil.NewNamedMutex(101),
 		packfiles: map[ginternals.Oid]*packfile.Pack{},
+		refs:      map[string][]byte{},
 	}
+
+	// we load a few things in memory
+	var loadRefsErr error
+	var loadPackErr error
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		loadRefsErr = b.loadRefs()
+	}()
+	go func() {
+		defer wg.Done()
+		loadPackErr = b.loadPacks()
+	}()
+	wg.Wait()
+
+	if loadRefsErr != nil {
+		return nil, xerrors.Errorf("could not load references: %w", loadRefsErr)
+	}
+	if loadPackErr != nil {
+		return nil, xerrors.Errorf("could not load packs: %w", loadPackErr)
+	}
+
+	return b, nil
 }
 
 // Close frees the resources used by the Backend
@@ -102,6 +126,11 @@ func (b *Backend) Init() error {
 	err := b.setDefaultCfg()
 	if err != nil {
 		return xerrors.Errorf("could not set the default config: %w", err)
+	}
+
+	ref := ginternals.NewSymbolicReference(ginternals.Head, gitpath.LocalBranch(ginternals.Master))
+	if err := b.WriteReferenceSafe(ref); err != nil {
+		return xerrors.Errorf("could not write HEAD: %w", err)
 	}
 
 	return nil

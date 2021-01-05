@@ -133,47 +133,45 @@ func (b *Backend) looseObject(oid ginternals.Oid) (o *object.Object, err error) 
 	return object.NewWithID(oid, oType, oContent), nil
 }
 
+// loadPacks loads the packfiles in memory
+func (b *Backend) loadPacks() error {
+	p := filepath.Join(b.root, gitpath.ObjectsPackPath)
+	return afero.Walk(b.fs, p, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			// in case of error we just skip it and move on.
+			// this will happen if the repo is empty and the ./objects/pack
+			// folder doesn't exists
+			return nil
+		}
+
+		if info.Name() == "pack" {
+			return nil
+		}
+
+		// There should be no directories, but just in case,
+		// we make sure we don't go in them
+		if info.IsDir() {
+			return filepath.SkipDir
+		}
+
+		// We're only interested in packfiles
+		if filepath.Ext(info.Name()) != packfile.ExtPackfile {
+			return nil
+		}
+
+		packFilePath := filepath.Join(p, info.Name())
+		pack, err := packfile.NewFromFile(b.fs, packFilePath)
+		if err != nil {
+			return xerrors.Errorf("could not parse packfile at %s: %w", packFilePath, err)
+		}
+		b.packfiles[pack.ID()] = pack
+
+		return nil
+	})
+}
+
 // objectFromPackfile looks for an object in the packfiles
 func (b *Backend) objectFromPackfile(oid ginternals.Oid) (*object.Object, error) {
-	p := filepath.Join(b.root, gitpath.ObjectsPackPath)
-
-	var err error
-	b.packfileParsing.Do(func() {
-		err = afero.Walk(b.fs, p, func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				// in case of error we just skip it and move on.
-				return nil
-			}
-
-			if info.Name() == "pack" {
-				return nil
-			}
-
-			// There should be no directories, but just in case,
-			// we make sure we don't go in them
-			if info.IsDir() {
-				return filepath.SkipDir
-			}
-
-			// We're only interested in packfiles
-			if filepath.Ext(info.Name()) != packfile.ExtPackfile {
-				return nil
-			}
-
-			packFilePath := filepath.Join(p, info.Name())
-			pack, err := packfile.NewFromFile(b.fs, packFilePath)
-			if err != nil {
-				return xerrors.Errorf("could not parse packfile at %s: %w", packFilePath, err)
-			}
-			b.packfiles[pack.ID()] = pack
-
-			return nil
-		})
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	// TODO(melvin): parse MIDX files to speed up the process
 	// MIDX file: https://git-scm.com/docs/multi-pack-index
 	// https://github.com/Nivl/git-go/issues/13

@@ -27,7 +27,8 @@ func TestObject(t *testing.T) {
 		oid, err := ginternals.NewOidFromStr("b07e28976ac8972715598f390964d53cf4dbc1bd")
 		require.NoError(t, err)
 
-		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
@@ -50,7 +51,8 @@ func TestObject(t *testing.T) {
 		oid, err := ginternals.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
 		require.NoError(t, err)
 
-		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
@@ -72,7 +74,8 @@ func TestObject(t *testing.T) {
 		oid, err := ginternals.NewOidFromStr("2dcdadc2a420225783794fbffd51e2e137a69646")
 		require.NoError(t, err)
 
-		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
@@ -93,7 +96,8 @@ func TestHasObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
@@ -112,7 +116,8 @@ func TestHasObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
@@ -131,7 +136,8 @@ func TestHasObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
@@ -161,7 +167,8 @@ func TestHasObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
@@ -191,7 +198,8 @@ func TestWriteObject(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		dotGitPath := filepath.Join(repoPath, gitpath.DotGitPath)
-		b := New(dotGitPath)
+		b, err := New(dotGitPath)
+		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
@@ -222,7 +230,8 @@ func TestWriteObject(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		dotGitPath := filepath.Join(repoPath, gitpath.DotGitPath)
-		b := New(dotGitPath)
+		b, err := New(dotGitPath)
+		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
