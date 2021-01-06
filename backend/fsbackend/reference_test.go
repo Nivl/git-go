@@ -312,7 +312,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 		require.NoError(t, err)
 
 		// Let's make sure the data changed on disk
-		data, err := ioutil.ReadFile(filepath.Join(b.root, "refs/heads/my_feature"))
+		data, err := ioutil.ReadFile(filepath.Join(b.root, "refs", "heads", "my_feature"))
 		require.NoError(t, err)
 		assert.Equal(t, "ref: refs/heads/master\n", string(data))
 	})
@@ -337,7 +337,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 		require.NoError(t, err)
 
 		// Let's make sure the data changed on disk
-		data, err := ioutil.ReadFile(filepath.Join(b.root, "refs/heads/my_feature"))
+		data, err := ioutil.ReadFile(filepath.Join(b.root, "refs", "heads", "my_feature"))
 		require.NoError(t, err)
 		assert.Equal(t, target.String()+"\n", string(data))
 	})
