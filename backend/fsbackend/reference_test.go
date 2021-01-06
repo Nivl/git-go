@@ -307,12 +307,12 @@ func TestWriteReferenceSafe(t *testing.T) {
 		})
 		require.NoError(t, b.Init())
 
-		ref := ginternals.NewSymbolicReference("HEAD", "refs/heads/master")
+		ref := ginternals.NewSymbolicReference("refs/heads/my_feature", "refs/heads/master")
 		err = b.WriteReferenceSafe(ref)
 		require.NoError(t, err)
 
 		// Let's make sure the data changed on disk
-		data, err := ioutil.ReadFile(filepath.Join(b.root, "HEAD"))
+		data, err := ioutil.ReadFile(filepath.Join(b.root, "refs/heads/my_feature"))
 		require.NoError(t, err)
 		assert.Equal(t, "ref: refs/heads/master\n", string(data))
 	})
@@ -332,12 +332,12 @@ func TestWriteReferenceSafe(t *testing.T) {
 
 		target, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
 		require.NoError(t, err)
-		ref := ginternals.NewReference("HEAD", target)
+		ref := ginternals.NewReference("refs/heads/my_feature", target)
 		err = b.WriteReferenceSafe(ref)
 		require.NoError(t, err)
 
 		// Let's make sure the data changed on disk
-		data, err := ioutil.ReadFile(filepath.Join(b.root, "HEAD"))
+		data, err := ioutil.ReadFile(filepath.Join(b.root, "refs/heads/my_feature"))
 		require.NoError(t, err)
 		assert.Equal(t, target.String()+"\n", string(data))
 	})
