@@ -34,13 +34,10 @@ func (b *Backend) Reference(name string) (*ginternals.Reference, error) {
 // systemPath returns a path from a ref name
 // Ex.: On windows refs/heads/master would return refs\heads\master
 func (b *Backend) systemPath(name string) string {
-	switch os.PathSeparator {
-	case '/':
-		return filepath.Join(b.root, name)
-	default:
+	if os.PathSeparator != '/' {
 		name = filepath.FromSlash(name)
-		return filepath.Join(b.root, name)
 	}
+	return filepath.Join(b.root, name)
 }
 
 // loadRefs loads the references in memory
@@ -74,7 +71,8 @@ func (b *Backend) loadRefs() (err error) {
 			if len(parts) != 2 {
 				return xerrors.Errorf("could not parse %s, unexpected data line %d: %w", gitpath.PackedRefsPath, i, ginternals.ErrPackedRefInvalid)
 			}
-			b.refs[parts[1]] = []byte(parts[0])
+			// the name of the ref is its UNIX path
+			b.refs[filepath.ToSlash(parts[1])] = []byte(parts[0])
 		}
 
 		if sc.Err() != nil {
