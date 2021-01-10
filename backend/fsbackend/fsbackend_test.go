@@ -24,7 +24,8 @@ func TestInit(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		b := fsbackend.New(filepath.Join(dir, gitpath.DotGitPath))
+		b, err := fsbackend.New(filepath.Join(dir, gitpath.DotGitPath))
+		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
@@ -38,7 +39,8 @@ func TestInit(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		b := fsbackend.New(dir)
+		b, err := fsbackend.New(dir)
+		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
@@ -60,7 +62,8 @@ func TestInit(t *testing.T) {
 		err = ioutil.WriteFile(filepath.Join(dir, gitpath.DescriptionPath), []byte{}, 0o644)
 		require.NoError(t, err)
 
-		b := fsbackend.New(dir)
+		b, err := fsbackend.New(dir)
+		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
@@ -83,7 +86,8 @@ func TestInit(t *testing.T) {
 		err := os.MkdirAll(filepath.Join(dir, gitpath.ObjectsPath), 0o550)
 		require.NoError(t, err)
 
-		b := fsbackend.New(dir)
+		b, err := fsbackend.New(dir)
+		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
@@ -104,7 +108,8 @@ func TestInit(t *testing.T) {
 		err := ioutil.WriteFile(filepath.Join(dir, gitpath.DescriptionPath), []byte{}, 0o444)
 		require.NoError(t, err)
 
-		b := fsbackend.New(dir)
+		b, err := fsbackend.New(dir)
+		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})

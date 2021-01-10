@@ -10,7 +10,20 @@ import (
 
 // Common ref names
 const (
-	HEAD = "HEAD"
+	// Head is a reference to the current branch, or to a commit if
+	// we're detached
+	Head = "HEAD"
+	// FetchHead is a reference to the most recently fetched branch
+	FetchHead = "FETCH_HEAD"
+	// OrigHead is a backup reference of HEAD set during destructive commands
+	// such as rebase, merge, etc. and can be used to revert an operation
+	OrigHead = "ORIG_HEAD"
+	// MergeHead is a reference to the commit that is being merged
+	// into the current branch
+	MergeHead = "MERGE_HEAD"
+	// CherryPickHead is a reference to the commit that is being
+	// cherry-picked
+	CherryPickHead = "CHERRY_PICK_HEAD"
 	// Master correspond to the default branch name if none was
 	// specified
 	Master = "master"

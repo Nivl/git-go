@@ -64,18 +64,21 @@ func InitRepository(repoPath string) (*Repository, error) {
 // the .git directory in the given path, which is where almost everything
 // that Git stores and manipulates is located.
 // https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain#ch10-git-internals
-func InitRepositoryWithOptions(repoPath string, opts InitOptions) (*Repository, error) {
+func InitRepositoryWithOptions(repoPath string, opts InitOptions) (r *Repository, err error) {
 	dotGitPath := repoPath
 	if !opts.IsBare {
 		dotGitPath = filepath.Join(repoPath, gitpath.DotGitPath)
 	}
-	r := &Repository{
+	r = &Repository{
 		repoRoot:   repoPath,
 		dotGitPath: dotGitPath,
 	}
 
 	if opts.GitBackend == nil {
-		r.dotGit = fsbackend.New(r.dotGitPath)
+		r.dotGit, err = fsbackend.New(r.dotGitPath)
+		if err != nil {
+			return nil, xerrors.Errorf("could not create backend: %w", err)
+		}
 		r.shouldCleanBackend = true
 	}
 
@@ -86,19 +89,14 @@ func InitRepositoryWithOptions(repoPath string, opts InitOptions) (*Repository, 
 		}
 	}
 
-	if err := r.dotGit.Init(); err != nil {
-		return nil, err
-	}
-
-	ref := ginternals.NewSymbolicReference(ginternals.HEAD, gitpath.LocalBranch(ginternals.Master))
-	if err := r.dotGit.WriteReference(ref); err != nil {
+	if err = r.dotGit.Init(); err != nil {
 		if xerrors.Is(err, ginternals.ErrRefExists) {
 			return nil, ErrRepositoryExists
 		}
 		return nil, err
 	}
 
-	return r, nil
+	return r, err
 }
 
 // OpenOptions contains all the optional data used to open a
@@ -125,18 +123,21 @@ func OpenRepository(repoPath string) (*Repository, error) {
 
 // OpenRepositoryWithOptions loads an existing git repository by reading
 // its config file, and returns a Repository instance
-func OpenRepositoryWithOptions(repoPath string, opts OpenOptions) (*Repository, error) {
+func OpenRepositoryWithOptions(repoPath string, opts OpenOptions) (r *Repository, err error) {
 	dotGitPath := repoPath
 	if !opts.IsBare {
 		dotGitPath = filepath.Join(repoPath, gitpath.DotGitPath)
 	}
-	r := &Repository{
+	r = &Repository{
 		repoRoot:   repoPath,
 		dotGitPath: dotGitPath,
 	}
 
 	if opts.GitBackend == nil {
-		r.dotGit = fsbackend.New(r.dotGitPath)
+		r.dotGit, err = fsbackend.New(r.dotGitPath)
+		if err != nil {
+			return nil, xerrors.Errorf("could not create backend: %w", err)
+		}
 		r.shouldCleanBackend = true
 	}
 
@@ -150,7 +151,7 @@ func OpenRepositoryWithOptions(repoPath string, opts OpenOptions) (*Repository, 
 	// since we can't check if the directory exists on disk to
 	// validate if the repo exists, we're instead going to see if HEAD
 	// exists (since it should always be there)
-	_, err := r.dotGit.Reference(ginternals.HEAD)
+	_, err = r.dotGit.Reference(ginternals.Head)
 	if err != nil {
 		return nil, ErrRepositoryNotExist
 	}

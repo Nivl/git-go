@@ -72,6 +72,9 @@ func TestOpen(t *testing.T) {
 		r, err := OpenRepository(repoPath)
 		require.NoError(t, err, "failed loading a repo")
 		require.NotNil(t, r, "repository should not be nil")
+		t.Cleanup(func() {
+			require.NoError(t, r.Close())
+		})
 
 		// assert returned repository
 		assert.Equal(t, repoPath, r.repoRoot)
