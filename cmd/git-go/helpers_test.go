@@ -49,6 +49,7 @@ func TestLoadRepository(t *testing.T) {
 
 			require.NoError(t, err)
 			require.NotNil(t, repo)
+			require.NoError(t, repo.Close())
 		})
 	}
 }
