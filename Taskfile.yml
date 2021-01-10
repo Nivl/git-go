@@ -3,14 +3,15 @@ version: "2"
 tasks:
   build:
     cmds:
-      - go build -i -v -o ./bin/git github.com/Nivl/git-go/cmd/git-go
+      - CGO_ENABLED=0 go build -i -v -o ./bin/git github.com/Nivl/git-go/cmd/git-go
 
   install:
     cmds:
-      - go install github.com/Nivl/go-git/cmd/git-go
+      - CGO_ENABLED=0 go install github.com/Nivl/go-git/cmd/git-go
 
   test:
     cmds:
+      # -race requires cgo
       - go test -race -mod=readonly ./...
 
   deps-upgrade:
