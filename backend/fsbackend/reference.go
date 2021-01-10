@@ -107,7 +107,8 @@ func (b *Backend) loadRefs() (err error) {
 		if e != nil {
 			return e // the error message is already pretty descriptive
 		}
-		b.refs[relpath] = data
+		// the name of the ref is its UNIX path
+		b.refs[filepath.ToSlash(relpath)] = data
 		return nil
 	})
 	if err != nil {
