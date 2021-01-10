@@ -3,7 +3,7 @@ module github.com/Nivl/git-go
 go 1.15
 
 require (
-	github.com/gogf/gf v1.15.0
+	github.com/gogf/gf v1.15.1
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
 	github.com/spf13/afero v1.5.1
 	github.com/spf13/cobra v1.1.1
