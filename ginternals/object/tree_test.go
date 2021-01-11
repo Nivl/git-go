@@ -27,12 +27,13 @@ func TestTree(t *testing.T) {
 		content, err := ioutil.ReadFile(filepath.Join(testhelper.TestdataPath(t), testFile))
 		require.NoError(t, err)
 
-		o := object.NewWithID(treeID, object.TypeTree, content)
+		o := object.New(object.TypeTree, content)
 		tree, err := o.AsTree()
 		require.NoError(t, err)
 
 		newO := tree.ToObject()
 		require.Equal(t, o.ID(), newO.ID())
+		require.Equal(t, treeID, newO.ID())
 		require.Equal(t, o.Bytes(), newO.Bytes())
 	})
 

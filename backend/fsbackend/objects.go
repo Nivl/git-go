@@ -69,6 +69,7 @@ func (b *Backend) looseObjectPath(sha string) string {
 // The format of an object is an ascii encoded type, an ascii encoded
 // space, then an ascii encoded length of the object, then a null
 // character, then the body of the object
+// TODO(melvin)"" Move to ginternals (NewFromLoose or something)
 func (b *Backend) looseObject(oid ginternals.Oid) (o *object.Object, err error) {
 	strOid := oid.String()
 
@@ -130,7 +131,7 @@ func (b *Backend) looseObject(oid ginternals.Oid) (o *object.Object, err error) 
 		return nil, xerrors.Errorf("object marked as size %d, but has %d at path %s: %w", oSize, len(oContent), p, err)
 	}
 
-	return object.NewWithID(oid, oType, oContent), nil
+	return object.New(oType, oContent), nil
 }
 
 // loadPacks loads the packfiles in memory

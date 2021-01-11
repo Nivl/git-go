@@ -116,8 +116,8 @@ func (t *Tree) ToObject() *Object {
 		buf.Write(e.ID.Bytes())
 	}
 
-	if t.id != ginternals.NullOid {
-		return NewWithID(t.id, TypeTree, buf.Bytes())
+	if !t.id.IsZero() {
+		return New(TypeTree, buf.Bytes())
 	}
 	return New(TypeTree, buf.Bytes())
 }

@@ -538,7 +538,7 @@ func TestRepositoryNewTag(t *testing.T) {
 			Message: "incvalid",
 		})
 		require.Error(t, err)
-		require.True(t, errors.Is(err, object.ErrObjectInvalid))
+		require.True(t, errors.Is(err, object.ErrObjectInvalid), "got: %s", err.Error())
 	})
 }
 
@@ -605,6 +605,6 @@ func TestRepositoryNewLightweightTag(t *testing.T) {
 		// Create the tag
 		_, err = r.NewLightweightTag("v0.0.1-test", blob.ID())
 		require.Error(t, err)
-		require.True(t, errors.Is(err, object.ErrObjectInvalid))
+		require.True(t, errors.Is(err, object.ErrObjectInvalid), "got: %s", err.Error())
 	})
 }

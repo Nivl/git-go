@@ -33,10 +33,6 @@ type Tag struct {
 
 // NewTag creates a new Tag object
 func NewTag(p *TagParams) (*Tag, error) {
-	if p.Target.ID().IsZero() {
-		return nil, ErrObjectInvalid
-	}
-
 	return &Tag{
 		target:  p.Target.ID(),
 		typ:     p.Target.Type(),

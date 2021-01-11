@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"sync"
 
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/internal/errutil"
@@ -114,29 +115,25 @@ type Object struct {
 	id      ginternals.Oid
 	typ     Type
 	content []byte
+
+	idProcessing sync.Once
 }
 
 // New creates a new git object of the given type
-// The Object ID won't be calculated until Compress() is called
 func New(typ Type, content []byte) *Object {
-	return &Object{
-		id:      ginternals.NullOid,
+	o := &Object{
 		typ:     typ,
 		content: content,
 	}
-}
-
-// NewWithID creates a new git object of the given type with the given ID
-func NewWithID(id ginternals.Oid, typ Type, content []byte) *Object {
-	return &Object{
-		id:      id,
-		typ:     typ,
-		content: content,
-	}
+	o.id, _ = o.build()
+	return o
 }
 
 // ID returns the ID of the object.
 func (o *Object) ID() ginternals.Oid {
+	o.idProcessing.Do(func() {
+		o.id, _ = o.build()
+	})
 	return o.id
 }
 
@@ -155,13 +152,7 @@ func (o *Object) Bytes() []byte {
 	return o.content
 }
 
-// Compress return the object zlib compressed, alongside its oid.
-// The format of the compressed data is:
-// [type] [size][NULL][content]
-// The type in ascii, followed by a space, followed by the size in ascii,
-// followed by a null character (0), followed by the object data
-// maybe we can move some code around
-func (o *Object) Compress() (data []byte, err error) {
+func (o *Object) build() (oid ginternals.Oid, data []byte) {
 	// Quick reminder that the Write* methods on bytes.Buffer never fails,
 	// the error returned is always nil
 	w := new(bytes.Buffer)
@@ -178,15 +169,21 @@ func (o *Object) Compress() (data []byte, err error) {
 	w.Write(o.Bytes())
 
 	// get the SHA of the file
-	fileContent := w.Bytes()
-	newID := ginternals.NewOidFromContent(fileContent)
+	data = w.Bytes()
+	oid = ginternals.NewOidFromContent(data)
+	return oid, data
+}
 
-	// We check if the ID of the object has changed
-	if !o.id.IsZero() && o.id != newID {
-		return nil, xerrors.Errorf("shasum missmatch, expected %s, got %s: %w", o.id.String(), newID.String(), ErrObjectInvalid)
-	}
+// Compress return the object zlib compressed, alongside its oid.
+// The format of the compressed data is:
+// [type] [size][NULL][content]
+// The type in ascii, followed by a space, followed by the size in ascii,
+// followed by a null character (0), followed by the object data
+// maybe we can move some code around
+func (o *Object) Compress() (data []byte, err error) {
+	// get the SHA of the file
+	_, fileContent := o.build()
 
-	o.id = newID
 	compressedContent := new(bytes.Buffer)
 	zw := zlib.NewWriter(compressedContent)
 	defer errutil.Close(zw, &err)
@@ -250,7 +247,7 @@ func (o *Object) AsTree() (*Tree, error) {
 		}
 	}
 
-	return NewTreeWithID(o.id, entries), nil
+	return NewTreeWithID(o.ID(), entries), nil
 }
 
 // AsCommit parses the object as Commit
@@ -278,7 +275,7 @@ func (o *Object) AsCommit() (*Commit, error) {
 		return nil, xerrors.Errorf("type %s is not a commit", o.typ)
 	}
 	ci := &Commit{
-		id:        o.id,
+		id:        o.ID(),
 		rawObject: o,
 	}
 	offset := 0
@@ -359,7 +356,7 @@ func (o *Object) AsTag() (*Tag, error) {
 		return nil, xerrors.Errorf("type %s is not a tag", o.typ)
 	}
 	tag := &Tag{
-		id:        o.id,
+		id:        o.ID(),
 		rawObject: o,
 	}
 	offset := 0

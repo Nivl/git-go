@@ -14,6 +14,7 @@ import (
 
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/object"
+	"github.com/Nivl/git-go/internal/cache"
 	"github.com/Nivl/git-go/internal/errutil"
 	"github.com/spf13/afero"
 	"golang.org/x/xerrors"
@@ -88,6 +89,15 @@ type Pack struct {
 	// Mutex used to protect the exported methods from being called
 	// concurrently
 	mu sync.Mutex
+
+	// baseObjectCache is a cache for all the base objects.
+	// We only cache the base objects for 2 reasons:
+	// - Base objects are fetched more often than "regular" objects since
+	//   they are used as bases.
+	// - The backend should be the one caching the objects the user is
+	//   requesting. Here, we're mostly focused on improving the parsing
+	//   performances rather than just caching anything
+	baseObjectCache *cache.LRU
 }
 
 // NewFromFile returns a pack object from the given file
@@ -104,7 +114,8 @@ func NewFromFile(fs afero.Fs, filePath string) (pack *Pack, err error) {
 	}()
 
 	p := &Pack{
-		r: f,
+		r:               f,
+		baseObjectCache: cache.NewLRU(1000),
 	}
 
 	// Let's validate the header
@@ -154,7 +165,7 @@ func NewFromFile(fs afero.Fs, filePath string) (pack *Pack, err error) {
 
 // getRawObjectAt return the raw object located at the given offset,
 // including its base info if the object is a delta
-func (pck *Pack) getRawObjectAt(oid ginternals.Oid, objectOffset uint64) (o *object.Object, deltaBaseSHA ginternals.Oid, deltaBaseOffset uint64, err error) {
+func (pck *Pack) getRawObjectAt(objectOffset uint64) (o *object.Object, deltaBaseSHA ginternals.Oid, deltaBaseOffset uint64, err error) {
 	_, err = pck.r.Seek(int64(objectOffset), io.SeekStart)
 	if err != nil {
 		return nil, ginternals.NullOid, 0, xerrors.Errorf("could not seek from 0 to object offset %d: %w", objectOffset, err)
@@ -288,12 +299,20 @@ func (pck *Pack) getRawObjectAt(oid ginternals.Oid, objectOffset uint64) (o *obj
 	if objectData.Len() != int(objectSize) {
 		return nil, ginternals.NullOid, 0, xerrors.Errorf("object size not valid. expecting %d, got %d", objectSize, objectData.Len())
 	}
-	return object.NewWithID(oid, objectType, objectData.Bytes()), baseObjectOid, baseObjectOffset, nil
+
+	return object.New(objectType, objectData.Bytes()), baseObjectOid, baseObjectOffset, nil
 }
 
 // getObjectAt return the object located at the given offset
-func (pck *Pack) getObjectAt(oid ginternals.Oid, objectOffset uint64) (*object.Object, error) {
-	o, baseOid, baseOffset, err := pck.getRawObjectAt(oid, objectOffset)
+func (pck *Pack) getObjectAt(objectOffset uint64) (*object.Object, error) {
+	// First we look in the cache in case we're looking for a base
+	if cachedO, found := pck.baseObjectCache.Get(objectOffset); found {
+		if o, valid := cachedO.(*object.Object); valid {
+			return o, nil
+		}
+	}
+
+	o, baseOid, baseOffset, err := pck.getRawObjectAt(objectOffset)
 	if err != nil {
 		return nil, err
 	}
@@ -305,18 +324,20 @@ func (pck *Pack) getObjectAt(oid ginternals.Oid, objectOffset uint64) (*object.O
 
 	// we retrieve the base object
 	var base *object.Object
-	if baseOid != ginternals.NullOid {
-		base, err = pck.GetObject(baseOid)
+	if !baseOid.IsZero() {
+		base, err = pck.getObject(baseOid)
 		if err != nil {
 			return nil, xerrors.Errorf("could not get base object %s: %w", baseOid.String(), err)
 		}
 	} else {
-		// we pass NullOid because we don't know the SHA of the base
-		base, err = pck.getObjectAt(ginternals.NullOid, baseOffset)
+		base, err = pck.getObjectAt(baseOffset)
 		if err != nil {
 			return nil, xerrors.Errorf("could not get base object at offset %d: %w", baseOffset, err)
 		}
 	}
+
+	// We cache the base
+	pck.baseObjectCache.Add(objectOffset, base)
 
 	// The format of a delta object is:
 	// - A header with:
@@ -422,8 +443,7 @@ func (pck *Pack) getObjectAt(oid ginternals.Oid, objectOffset uint64) (*object.O
 			i += int(instr)
 		}
 	}
-
-	return object.NewWithID(oid, base.Type(), out.Bytes()), nil
+	return object.New(base.Type(), out.Bytes()), nil
 }
 
 // GetObject returns the object that has the given SHA
@@ -431,6 +451,10 @@ func (pck *Pack) GetObject(oid ginternals.Oid) (*object.Object, error) {
 	pck.mu.Lock()
 	defer pck.mu.Unlock()
 
+	return pck.getObject(oid)
+}
+
+func (pck *Pack) getObject(oid ginternals.Oid) (*object.Object, error) {
 	objectOffset, err := pck.idx.GetObjectOffset(oid)
 	if err != nil {
 		if !errors.Is(err, ginternals.ErrObjectNotFound) {
@@ -438,7 +462,7 @@ func (pck *Pack) GetObject(oid ginternals.Oid) (*object.Object, error) {
 		}
 		return nil, err
 	}
-	return pck.getObjectAt(oid, objectOffset)
+	return pck.getObjectAt(objectOffset)
 }
 
 // ObjectCount returns the number of objects in the packfile

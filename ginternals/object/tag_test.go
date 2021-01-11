@@ -1,7 +1,6 @@
 package object_test
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/Nivl/git-go/ginternals/object"
@@ -48,21 +47,6 @@ func TestNewTag(t *testing.T) {
 		assert.Equal(t, "v10.5.0", tag.Name())
 		assert.Equal(t, "gpgsig", tag.GPGSig())
 		assert.Equal(t, "tagger", tag.Tagger().Name)
-	})
-
-	t.Run("non-persisted object should fail", func(t *testing.T) {
-		t.Parallel()
-
-		blob := object.New(object.TypeBlob, []byte(""))
-		_, err := object.NewTag(&object.TagParams{
-			Target:    blob,
-			Message:   "message",
-			OptGPGSig: "gpgsig",
-			Name:      "v10.5.0",
-			Tagger:    object.NewSignature("tagger", "tagger@domain.tld"),
-		})
-		require.Error(t, err)
-		require.True(t, errors.Is(err, object.ErrObjectInvalid), "invalid error")
 	})
 }
 
