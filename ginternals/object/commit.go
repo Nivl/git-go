@@ -128,6 +128,7 @@ type Commit struct {
 }
 
 // NewCommit creates a new Commit object
+// Any provided Oids won't be check
 func NewCommit(treeID ginternals.Oid, author Signature, opts *CommitOptions) *Commit {
 	c := &Commit{
 		treeID:    treeID,
@@ -141,10 +142,93 @@ func NewCommit(treeID ginternals.Oid, author Signature, opts *CommitOptions) *Co
 	if c.committer.IsZero() {
 		c.committer = author
 	}
-
 	c.rawObject = c.ToObject()
 
 	return c
+}
+
+// NewCommitFromObject creates a commit from a raw object
+//
+// A commit has following format:
+//
+// tree {sha}
+// parent {sha}
+// author {author_name} <{author_email}> {author_date_seconds} {author_date_timezone}
+// committer {committer_name} <{committer_email}> {committer_date_seconds} {committer_date_timezone}
+// gpgsig -----BEGIN PGP SIGNATURE-----
+// {gpg key over multiple lines}
+//  -----END PGP SIGNATURE-----
+// {a blank line}
+// {commit message}
+//
+// Note:
+// - A commit can have 0, 1, or many parents lines
+//   The very first commit of a repo has no parents
+//   A regular commit as 1 parent
+//   A merge commit has 2 or more parents
+// - The gpgsig is optional
+func NewCommitFromObject(o *Object) (*Commit, error) {
+	if o.typ != TypeCommit {
+		return nil, xerrors.Errorf("type %s is not a commit", o.typ)
+	}
+	ci := &Commit{
+		rawObject: o,
+	}
+	offset := 0
+	objData := o.Bytes()
+	for {
+		line := readutil.ReadTo(objData[offset:], '\n')
+		offset += len(line) + 1 // +1 to count the \n
+
+		// If we didn't find anything then something is wrong
+		if len(line) == 0 && offset == 1 {
+			return nil, xerrors.Errorf("could not find commit first line: %w", ErrCommitInvalid)
+		}
+
+		// if we got an empty line, it means everything from now to the end
+		// will be the commit message
+		if len(line) == 0 {
+			ci.message = string(objData[offset:])
+			break
+		}
+
+		// Otherwise we're getting a key/value pair, separated by a space
+		kv := bytes.SplitN(line, []byte{' '}, 2)
+		switch string(kv[0]) {
+		case "tree":
+			oid, err := ginternals.NewOidFromChars(kv[1])
+			if err != nil {
+				return nil, xerrors.Errorf("could not parse tree id %#v: %w", kv[1], err)
+			}
+			ci.treeID = oid
+		case "parent":
+			oid, err := ginternals.NewOidFromChars(kv[1])
+			if err != nil {
+				return nil, xerrors.Errorf("could not parse parent id %#v: %w", kv[1], err)
+			}
+			ci.parentIDs = append(ci.parentIDs, oid)
+		case "author":
+			sig, err := NewSignatureFromBytes(kv[1])
+			if err != nil {
+				return nil, xerrors.Errorf("could not parse signature [%s]: %w", string(kv[1]), err)
+			}
+			ci.author = sig
+		case "committer":
+			sig, err := NewSignatureFromBytes(kv[1])
+			if err != nil {
+				return nil, xerrors.Errorf("could not parse signature [%s]: %w", string(kv[1]), err)
+			}
+			ci.committer = sig
+		case "gpgsig":
+			begin := string(kv[1]) + "\n"
+			end := "-----END PGP SIGNATURE-----"
+			i := bytes.Index(objData[offset:], []byte(end))
+			ci.gpgSig = begin + string(objData[offset:offset+i]) + end
+			offset += len(end) + i + 1 // +1 to count the \n
+		}
+	}
+
+	return ci, nil
 }
 
 // ID returns the SHA of the commit object
