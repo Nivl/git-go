@@ -32,14 +32,13 @@ func TestNewTag(t *testing.T) {
 		commit, err := r.GetCommit(commitOid)
 		require.NoError(t, err)
 
-		tag, err := object.NewTag(&object.TagParams{
+		tag := object.NewTag(&object.TagParams{
 			Target:    commit.ToObject(),
 			Message:   "message",
 			OptGPGSig: "gpgsig",
 			Name:      "v10.5.0",
 			Tagger:    object.NewSignature("tagger", "tagger@domain.tld"),
 		})
-		require.NoError(t, err)
 		assert.True(t, tag.ID().IsZero(), "")
 		assert.Equal(t, commitOid, tag.Target())
 		assert.Equal(t, object.TypeCommit, tag.Type())
@@ -93,14 +92,13 @@ func TestTagToObject(t *testing.T) {
 		commit, err := r.GetCommit(commitOid)
 		require.NoError(t, err)
 
-		tag, err := object.NewTag(&object.TagParams{
+		tag := object.NewTag(&object.TagParams{
 			Target:    commit.ToObject(),
 			Message:   "message",
 			Name:      "v10.5.0",
 			OptGPGSig: "-----BEGIN PGP SIGNATURE-----\n\ndata\n-----END PGP SIGNATURE-----",
 			Tagger:    object.NewSignature("tagger", "tagger@domain.tld"),
 		})
-		require.NoError(t, err)
 
 		o := tag.ToObject()
 		tag2, err := o.AsTag()

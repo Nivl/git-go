@@ -290,11 +290,7 @@ func (r *Repository) NewTag(p *object.TagParams) (*object.Tag, error) {
 	}
 
 	// We create the tag and persist it to the object database
-	c, err := object.NewTag(p)
-	if err != nil {
-		return nil, xerrors.Errorf("could not create the object: %w", err)
-	}
-	o := c.ToObject()
+	o := object.NewTag(p).ToObject()
 	if _, err := r.dotGit.WriteObject(o); err != nil {
 		return nil, xerrors.Errorf("could not write the object to the odb: %w", err)
 	}
