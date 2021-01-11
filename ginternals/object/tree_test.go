@@ -40,15 +40,11 @@ func TestTree(t *testing.T) {
 	t.Run("Entries should be immutable", func(t *testing.T) {
 		t.Parallel()
 
-		treeSHA := "e5b9e846e1b468bc9597ff95d71dfacda8bd54e3"
-		treeID, err := ginternals.NewOidFromStr(treeSHA)
-		require.NoError(t, err)
-
 		blobSHA := "0343d67ca3d80a531d0d163f0078a81c95c9085a"
 		blobID, err := ginternals.NewOidFromStr(blobSHA)
 		require.NoError(t, err)
 
-		tree := object.NewTreeWithID(treeID, []object.TreeEntry{
+		tree := object.NewTree([]object.TreeEntry{
 			{
 				Mode: object.ModeFile,
 				ID:   blobID,

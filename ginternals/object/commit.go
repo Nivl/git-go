@@ -124,7 +124,6 @@ type Commit struct {
 	message string
 
 	parentIDs []ginternals.Oid
-	id        ginternals.Oid
 	treeID    ginternals.Oid
 }
 
@@ -143,12 +142,14 @@ func NewCommit(treeID ginternals.Oid, author Signature, opts *CommitOptions) *Co
 		c.committer = author
 	}
 
+	c.rawObject = c.ToObject()
+
 	return c
 }
 
 // ID returns the SHA of the commit object
 func (c *Commit) ID() ginternals.Oid {
-	return c.id
+	return c.rawObject.ID()
 }
 
 // Author returns the Signature of the person that made the changes

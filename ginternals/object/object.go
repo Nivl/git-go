@@ -208,46 +208,7 @@ func (o *Object) AsBlob() *Blob {
 // Note:
 // - a Tree may have multiple entries
 func (o *Object) AsTree() (*Tree, error) {
-	entries := []TreeEntry{}
-
-	objData := o.Bytes()
-	offset := 0
-	for i := 1; ; i++ {
-		entry := TreeEntry{}
-		data := readutil.ReadTo(objData[offset:], ' ')
-		if len(data) == 0 {
-			return nil, xerrors.Errorf("could not retrieve the mode of entry %d: %w", i, ErrTreeInvalid)
-		}
-		offset += len(data) + 1 // +1 for the space
-		mode, err := strconv.ParseInt(string(data), 8, 32)
-		if err != nil {
-			return nil, xerrors.Errorf("could not parse mode of entry %d: %w", i, err)
-		}
-		entry.Mode = TreeObjectMode(mode)
-
-		data = readutil.ReadTo(objData[offset:], 0)
-		if len(data) == 0 {
-			return nil, xerrors.Errorf("could not retrieve the path of entry %d: %w", i, ErrTreeInvalid)
-		}
-		offset += len(data) + 1 // +1 for the \0
-		entry.Path = string(data)
-
-		if offset+20 > len(objData) {
-			return nil, xerrors.Errorf("not enough space to retrieve the ID of entry %d: %w", i, ErrTreeInvalid)
-		}
-		entry.ID, err = ginternals.NewOidFromHex(objData[offset : offset+20])
-		if err != nil {
-			return nil, xerrors.Errorf("invalid SHA for entry %d (%s): %w", i, err.Error(), ErrTreeInvalid)
-		}
-		offset += 20
-
-		entries = append(entries, entry)
-		if len(objData) == offset {
-			break
-		}
-	}
-
-	return NewTreeWithID(o.ID(), entries), nil
+	return newTreeFromObject(o)
 }
 
 // AsCommit parses the object as Commit
@@ -275,7 +236,6 @@ func (o *Object) AsCommit() (*Commit, error) {
 		return nil, xerrors.Errorf("type %s is not a commit", o.typ)
 	}
 	ci := &Commit{
-		id:        o.ID(),
 		rawObject: o,
 	}
 	offset := 0
