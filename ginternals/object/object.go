@@ -200,13 +200,6 @@ func (o *Object) AsBlob() *Blob {
 }
 
 // AsTree parses the object as Tree
-//
-// A tree has following format:
-//
-// {octal_mode} {path_name}\0{encoded_sha}
-//
-// Note:
-// - a Tree may have multiple entries
 func (o *Object) AsTree() (*Tree, error) {
 	return newTreeFromObject(o)
 }
