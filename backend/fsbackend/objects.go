@@ -69,7 +69,7 @@ func (b *Backend) looseObjectPath(sha string) string {
 // The format of an object is an ascii encoded type, an ascii encoded
 // space, then an ascii encoded length of the object, then a null
 // character, then the body of the object
-// TODO(melvin)"" Move to ginternals (NewFromLoose or something)
+// TODO(melvin): Move to ginternals (NewFromLoose or something)
 func (b *Backend) looseObject(oid ginternals.Oid) (o *object.Object, err error) {
 	strOid := oid.String()
 

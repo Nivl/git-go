@@ -56,11 +56,17 @@ func NewSignatureFromBytes(b []byte) (Signature, error) {
 	// "User Name " (with the extra space)
 	data := readutil.ReadTo(b, '<')
 	if len(data) == 0 {
-		return sig, xerrors.Errorf("couldn't retrieve the name: %w", ErrSignatureInvalid)
+		if len(b) == 0 {
+			return sig, xerrors.Errorf("couldn't retrieve the name: %w", ErrSignatureInvalid)
+		}
+		return sig, xerrors.Errorf("signature stopped after the name: %w", ErrSignatureInvalid)
 	}
 	sig.Name = strings.TrimSpace(string(data))
 	offset := len(data) + 1 // +1 to skip the "<"
 	if offset >= len(b) {
+		if offset == len(b) {
+			return sig, xerrors.Errorf("couldn't retrieve the email: %w", ErrSignatureInvalid)
+		}
 		return sig, xerrors.Errorf("signature stopped after the name: %w", ErrSignatureInvalid)
 	}
 
@@ -79,6 +85,9 @@ func NewSignatureFromBytes(b []byte) (Signature, error) {
 	// Next is the timestamp and the timezone
 	timestamp := readutil.ReadTo(b[offset:], ' ')
 	if len(data) == 0 {
+		// this should never be triggers since it's getting caught by the
+		// previous check. Still leaving it to prevent introducing a bug
+		// in the future.
 		return sig, xerrors.Errorf("couldn't retrieve the timestamp: %w", ErrSignatureInvalid)
 	}
 	offset += len(timestamp) + 1 // +1 to skip the " "
@@ -210,13 +219,13 @@ func NewCommitFromObject(o *Object) (*Commit, error) {
 		case "author":
 			sig, err := NewSignatureFromBytes(kv[1])
 			if err != nil {
-				return nil, xerrors.Errorf("could not parse signature [%s]: %w", string(kv[1]), err)
+				return nil, xerrors.Errorf("could not parse author signature [%s]: %w", string(kv[1]), err)
 			}
 			ci.author = sig
 		case "committer":
 			sig, err := NewSignatureFromBytes(kv[1])
 			if err != nil {
-				return nil, xerrors.Errorf("could not parse signature [%s]: %w", string(kv[1]), err)
+				return nil, xerrors.Errorf("could not parse committer signature [%s]: %w", string(kv[1]), err)
 			}
 			ci.committer = sig
 		case "gpgsig":
