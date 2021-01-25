@@ -79,7 +79,7 @@ func (tb *TreeBuilder) Remove(path string) {
 func (tb *TreeBuilder) Write() (*object.Tree, error) {
 	// We need to order all our entries alphabetically
 	// We're going to extract the paths of the map
-	// they just loop over the keys instead of the entries
+	// and just loop over the keys instead of the entries
 	paths := make([]string, 0, len(tb.entries))
 	for p := range tb.entries {
 		paths = append(paths, p)
@@ -96,5 +96,5 @@ func (tb *TreeBuilder) Write() (*object.Tree, error) {
 	if _, err := tb.Backend.WriteObject(o); err != nil {
 		return nil, xerrors.Errorf("could not write the object to the odb: %w", err)
 	}
-	return object.NewTreeWithID(o.ID(), t.Entries()), nil
+	return o.AsTree()
 }

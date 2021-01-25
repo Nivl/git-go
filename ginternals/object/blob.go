@@ -14,11 +14,6 @@ func NewBlob(o *Object) *Blob {
 	}
 }
 
-// IsPersisted returns whether the object has been written to the odb
-func (b *Blob) IsPersisted() bool {
-	return b.rawObject.id != ginternals.NullOid
-}
-
 // ID returns the blob's ID
 func (b *Blob) ID() ginternals.Oid {
 	return b.rawObject.id

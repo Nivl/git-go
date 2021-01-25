@@ -5,6 +5,8 @@ import (
 	"strconv"
 
 	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/internal/readutil"
+	"golang.org/x/xerrors"
 )
 
 // TreeObjectMode represents the mode of an object inside a tree
@@ -53,7 +55,7 @@ func (m TreeObjectMode) ObjectType() Type {
 
 // Tree represents a git tree object
 type Tree struct {
-	id ginternals.Oid
+	rawObject *Object
 	// we don't use pointers to make sure entries are immutable
 	entries []TreeEntry
 }
@@ -67,17 +69,74 @@ type TreeEntry struct {
 
 // NewTree returns a new tree with the given entries
 func NewTree(entries []TreeEntry) *Tree {
-	return &Tree{
+	t := &Tree{
 		entries: entries,
 	}
+	t.rawObject = t.ToObject()
+	return t
 }
 
-// NewTreeWithID returns a new tree
-func NewTreeWithID(id ginternals.Oid, entries []TreeEntry) *Tree {
-	return &Tree{
-		id:      id,
-		entries: entries,
+// NewTreeFromObject returns a new tree from an object
+//
+// A tree has following format:
+//
+// {octal_mode} {path_name}\0{encoded_sha}
+//
+// Note:
+// - a Tree may have multiple entries
+func NewTreeFromObject(o *Object) (*Tree, error) {
+	if o.Type() != TypeTree {
+		return nil, xerrors.Errorf("type %s is not a tree: %w", o.typ, ErrObjectInvalid)
 	}
+
+	entries := []TreeEntry{}
+
+	objData := o.Bytes()
+	if len(objData) > 0 {
+		offset := 0
+		// the variable i is only use for logs and error messages, not for
+		// actual processing
+		for i := 1; ; i++ {
+			entry := TreeEntry{}
+			data := readutil.ReadTo(objData[offset:], ' ')
+			if len(data) == 0 {
+				return nil, xerrors.Errorf("could not retrieve the mode of entry %d: %w", i, ErrTreeInvalid)
+			}
+			offset += len(data) + 1 // +1 for the space
+			mode, err := strconv.ParseInt(string(data), 8, 32)
+			if err != nil {
+				return nil, xerrors.Errorf("could not parse mode of entry %d: %s: %w", i, err.Error(), ErrTreeInvalid)
+			}
+			entry.Mode = TreeObjectMode(mode)
+
+			data = readutil.ReadTo(objData[offset:], 0)
+			if len(data) == 0 {
+				return nil, xerrors.Errorf("could not retrieve the path of entry %d: %w", i, ErrTreeInvalid)
+			}
+			offset += len(data) + 1 // +1 for the \0
+			entry.Path = string(data)
+
+			if offset+20 > len(objData) {
+				return nil, xerrors.Errorf("not enough space to retrieve the ID of entry %d: %w", i, ErrTreeInvalid)
+			}
+			entry.ID, err = ginternals.NewOidFromHex(objData[offset : offset+20])
+			if err != nil {
+				// should never fail since any value is valid as long as it
+				// is 20 chars
+				return nil, xerrors.Errorf("invalid SHA for entry %d (%s): %w", i, err.Error(), ErrTreeInvalid)
+			}
+			offset += 20
+
+			entries = append(entries, entry)
+			if len(objData) == offset {
+				break
+			}
+		}
+	}
+	return &Tree{
+		rawObject: o,
+		entries:   entries,
+	}, nil
 }
 
 // Entries returns a copy of tree entries
@@ -91,7 +150,7 @@ func (t *Tree) Entries() []TreeEntry {
 // ginternals.NullOid is returned if the object doesn't have
 // an ID yet
 func (t *Tree) ID() ginternals.Oid {
-	return t.id
+	return t.rawObject.ID()
 }
 
 // ToObject returns an Object representing the tree
@@ -116,8 +175,5 @@ func (t *Tree) ToObject() *Object {
 		buf.Write(e.ID.Bytes())
 	}
 
-	if t.id != ginternals.NullOid {
-		return NewWithID(t.id, TypeTree, buf.Bytes())
-	}
 	return New(TypeTree, buf.Bytes())
 }

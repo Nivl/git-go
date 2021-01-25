@@ -271,9 +271,17 @@ func (r *Repository) NewDetachedCommit(tree *object.Tree, author object.Signatur
 
 // NewTag creates, stores, and returns a new annoted tag
 func (r *Repository) NewTag(p *object.TagParams) (*object.Tag, error) {
+	found, err := r.dotGit.HasObject(p.Target.ID())
+	if err != nil {
+		return nil, xerrors.Errorf("could not check if target exists: %w", err)
+	}
+	if !found {
+		return nil, xerrors.Errorf("target doesn't exists: %w", object.ErrObjectInvalid)
+	}
+
 	// We first make sure the tag doesn't already exist
 	refname := gitpath.LocalTag(p.Name)
-	_, err := r.dotGit.Reference(refname)
+	_, err = r.dotGit.Reference(refname)
 	if err == nil {
 		return nil, ErrTagExists
 	}
@@ -282,11 +290,7 @@ func (r *Repository) NewTag(p *object.TagParams) (*object.Tag, error) {
 	}
 
 	// We create the tag and persist it to the object database
-	c, err := object.NewTag(p)
-	if err != nil {
-		return nil, xerrors.Errorf("could not create the object: %w", err)
-	}
-	o := c.ToObject()
+	o := object.NewTag(p).ToObject()
 	if _, err := r.dotGit.WriteObject(o); err != nil {
 		return nil, xerrors.Errorf("could not write the object to the odb: %w", err)
 	}
@@ -302,12 +306,17 @@ func (r *Repository) NewTag(p *object.TagParams) (*object.Tag, error) {
 
 // NewLightweightTag creates, stores, and returns a lightweight tag
 func (r *Repository) NewLightweightTag(tag string, targetID ginternals.Oid) (*ginternals.Reference, error) {
-	if targetID.IsZero() {
-		return nil, object.ErrObjectInvalid
+	// let's make sure the object exists
+	found, err := r.dotGit.HasObject(targetID)
+	if err != nil {
+		return nil, xerrors.Errorf("could not retrieve targeted object: %w", err)
+	}
+	if !found {
+		return nil, xerrors.Errorf("target : %w", object.ErrObjectInvalid)
 	}
 
 	refname := gitpath.LocalTag(tag)
-	_, err := r.dotGit.Reference(refname)
+	_, err = r.dotGit.Reference(refname)
 	if err == nil {
 		return nil, ErrTagExists
 	}
