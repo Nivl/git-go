@@ -1,0 +1,13 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  update-goproxy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-go@v2
+      - name: download latest version
+        run: go get -d github.com/Nivl/git-go
