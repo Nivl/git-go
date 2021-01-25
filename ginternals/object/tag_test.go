@@ -1,6 +1,7 @@
 package object_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/Nivl/git-go/ginternals/object"
@@ -109,5 +110,98 @@ func TestTagToObject(t *testing.T) {
 		assert.Equal(t, tag.Name(), tag2.Name())
 		assert.Equal(t, tag.GPGSig(), tag2.GPGSig())
 		assert.Equal(t, tag.Target(), tag2.Target())
+	})
+}
+
+func TestNewTagFromObject(t *testing.T) {
+	t.Parallel()
+
+	t.Run("should work on a valid tag", func(t *testing.T) {
+		t.Parallel()
+
+		// Find a tag
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		t.Cleanup(cleanup)
+
+		r, err := git.OpenRepository(repoPath)
+		require.NoError(t, err, "failed loading a repo")
+		require.NotNil(t, r, "repository should not be nil")
+		t.Cleanup(func() {
+			require.NoError(t, r.Close())
+		})
+
+		tagRef, err := r.GetTag("annotated")
+		require.NoError(t, err)
+
+		o, err := r.GetObject(tagRef.Target())
+		require.NoError(t, err, "failed fetching a tag")
+
+		_, err = object.NewTagFromObject(o)
+		require.NoError(t, err)
+	})
+
+	t.Run("should fail if the object is not a tag", func(t *testing.T) {
+		t.Parallel()
+
+		o := object.New(object.TypeTree, []byte{})
+		_, err := object.NewTagFromObject(o)
+		require.Error(t, err)
+		assert.ErrorIs(t, err, object.ErrObjectInvalid)
+		assert.Contains(t, err.Error(), "is not a tag")
+	})
+
+	t.Run("parsing failures", func(t *testing.T) {
+		t.Parallel()
+
+		testCases := []struct {
+			desc               string
+			data               string
+			expectedErrorMatch string
+			expectedError      error
+		}{
+			{
+				desc:          "should fail if the tag has invalid content",
+				data:          "invalid data",
+				expectedError: object.ErrTagInvalid,
+			},
+			{
+				desc:               "should fail if the tag has incomplete content",
+				data:               "invalid data\n",
+				expectedError:      object.ErrTagInvalid,
+				expectedErrorMatch: "tag has no tagger",
+			},
+			{
+				desc:               "should fail if the object id is invalid",
+				data:               "object adad\n",
+				expectedErrorMatch: "could not parse target id",
+			},
+			{
+				desc:               "should fail if the object id is invalid",
+				data:               "type nope\n",
+				expectedErrorMatch: "invalid object type",
+			},
+			{
+				desc:               "should fail if the object id is invalid",
+				data:               "tagger nope\n",
+				expectedErrorMatch: "could not parse tagger",
+			},
+		}
+		for i, tc := range testCases {
+			tc := tc
+			i := i
+			t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
+				t.Parallel()
+
+				o := object.New(object.TypeTag, []byte(tc.data))
+				_, err := object.NewTagFromObject(o)
+				require.Error(t, err)
+				if tc.expectedError != nil {
+					assert.ErrorIs(t, err, tc.expectedError)
+				}
+				if tc.expectedErrorMatch != "" {
+					assert.Contains(t, err.Error(), tc.expectedErrorMatch)
+				}
+			})
+		}
 	})
 }

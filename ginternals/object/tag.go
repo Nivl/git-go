@@ -63,7 +63,7 @@ func NewTag(p *TagParams) *Tag {
 // - The gpgsig is optional
 func NewTagFromObject(o *Object) (*Tag, error) {
 	if o.typ != TypeTag {
-		return nil, xerrors.Errorf("type %s is not a tag", o.typ)
+		return nil, xerrors.Errorf("type %s is not a tag: %w", o.typ, ErrObjectInvalid)
 	}
 	tag := &Tag{
 		id:        o.ID(),
@@ -71,6 +71,7 @@ func NewTagFromObject(o *Object) (*Tag, error) {
 	}
 	offset := 0
 	objData := o.Bytes()
+	var err error
 	for {
 		line := readutil.ReadTo(objData[offset:], '\n')
 		offset += len(line) + 1 // +1 to count the \n
@@ -83,7 +84,9 @@ func NewTagFromObject(o *Object) (*Tag, error) {
 		// if we got an empty line, it means everything from now to the end
 		// will be the tag message
 		if len(line) == 0 {
-			tag.message = string(objData[offset:])
+			if offset < len(objData) {
+				tag.message = string(objData[offset:])
+			}
 			break
 		}
 
@@ -91,23 +94,20 @@ func NewTagFromObject(o *Object) (*Tag, error) {
 		kv := bytes.SplitN(line, []byte{' '}, 2)
 		switch string(kv[0]) {
 		case "object":
-			oid, err := ginternals.NewOidFromChars(kv[1])
+			tag.target, err = ginternals.NewOidFromChars(kv[1])
 			if err != nil {
 				return nil, xerrors.Errorf("could not parse target id %#v: %w", kv[1], err)
 			}
-			tag.target = oid
 		case "type":
-			typ, err := NewTypeFromString(string(kv[1]))
+			tag.typ, err = NewTypeFromString(string(kv[1]))
 			if err != nil {
-				return nil, xerrors.Errorf("object type %s: %w", string(kv[1]), err)
+				return nil, xerrors.Errorf("invalid object type %s: %w", string(kv[1]), err)
 			}
-			tag.typ = typ
 		case "tagger":
-			sig, err := NewSignatureFromBytes(kv[1])
+			tag.tagger, err = NewSignatureFromBytes(kv[1])
 			if err != nil {
-				return nil, xerrors.Errorf("could not parse signature [%s]: %w", string(kv[1]), err)
+				return nil, xerrors.Errorf("could not parse tagger [%s]: %w", string(kv[1]), err)
 			}
-			tag.tagger = sig
 		case "tag":
 			tag.tag = string(kv[1])
 		case "gpgsig":
@@ -117,6 +117,17 @@ func NewTagFromObject(o *Object) (*Tag, error) {
 			tag.gpgSig = begin + string(objData[offset:offset+i]) + end
 			offset += len(end) + i + 1 // +1 to count the \n
 		}
+	}
+
+	// validate the tag
+	if tag.tagger.IsZero() {
+		return nil, xerrors.Errorf("tag has no tagger: %w", ErrTagInvalid)
+	}
+	if tag.target.IsZero() {
+		return nil, xerrors.Errorf("tag has no target: %w", ErrTagInvalid)
+	}
+	if !tag.typ.IsValid() {
+		return nil, xerrors.Errorf("tag has no type: %w", ErrTagInvalid)
 	}
 
 	return tag, nil

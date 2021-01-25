@@ -197,19 +197,21 @@ func NewCommitFromObject(o *Object) (*Commit, error) {
 		// if we got an empty line, it means everything from now to the end
 		// will be the commit message
 		if len(line) == 0 {
-			ci.message = string(objData[offset:])
+			if offset < len(objData) {
+				ci.message = string(objData[offset:])
+			}
 			break
 		}
 
 		// Otherwise we're getting a key/value pair, separated by a space
 		kv := bytes.SplitN(line, []byte{' '}, 2)
+		var err error
 		switch string(kv[0]) {
 		case "tree":
-			oid, err := ginternals.NewOidFromChars(kv[1])
+			ci.treeID, err = ginternals.NewOidFromChars(kv[1])
 			if err != nil {
 				return nil, xerrors.Errorf("could not parse tree id %#v: %w", kv[1], err)
 			}
-			ci.treeID = oid
 		case "parent":
 			oid, err := ginternals.NewOidFromChars(kv[1])
 			if err != nil {
@@ -217,17 +219,15 @@ func NewCommitFromObject(o *Object) (*Commit, error) {
 			}
 			ci.parentIDs = append(ci.parentIDs, oid)
 		case "author":
-			sig, err := NewSignatureFromBytes(kv[1])
+			ci.author, err = NewSignatureFromBytes(kv[1])
 			if err != nil {
 				return nil, xerrors.Errorf("could not parse author signature [%s]: %w", string(kv[1]), err)
 			}
-			ci.author = sig
 		case "committer":
-			sig, err := NewSignatureFromBytes(kv[1])
+			ci.committer, err = NewSignatureFromBytes(kv[1])
 			if err != nil {
 				return nil, xerrors.Errorf("could not parse committer signature [%s]: %w", string(kv[1]), err)
 			}
-			ci.committer = sig
 		case "gpgsig":
 			begin := string(kv[1]) + "\n"
 			end := "-----END PGP SIGNATURE-----"
@@ -235,6 +235,14 @@ func NewCommitFromObject(o *Object) (*Commit, error) {
 			ci.gpgSig = begin + string(objData[offset:offset+i]) + end
 			offset += len(end) + i + 1 // +1 to count the \n
 		}
+	}
+
+	// validate the commit
+	if ci.author.IsZero() {
+		return nil, xerrors.Errorf("commit has no author: %w", ErrCommitInvalid)
+	}
+	if ci.treeID.IsZero() {
+		return nil, xerrors.Errorf("commit has no tree: %w", ErrCommitInvalid)
 	}
 
 	return ci, nil

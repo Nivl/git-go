@@ -420,6 +420,11 @@ func TestNewCommitFromObject(t *testing.T) {
 				expectedError: object.ErrCommitInvalid,
 			},
 			{
+				desc:          "should fail if the commit has incomplete content",
+				data:          "invalid data\n",
+				expectedError: object.ErrCommitInvalid,
+			},
+			{
 				desc:               "should fail if the tree id is invalid",
 				data:               "tree adad\n",
 				expectedErrorMatch: "could not parse tree id",
