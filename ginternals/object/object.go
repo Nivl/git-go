@@ -200,7 +200,7 @@ func (o *Object) AsBlob() *Blob {
 
 // AsTree parses the object as Tree
 func (o *Object) AsTree() (*Tree, error) {
-	return newTreeFromObject(o)
+	return NewTreeFromObject(o)
 }
 
 // AsCommit parses the object as Commit

@@ -76,7 +76,7 @@ func NewTree(entries []TreeEntry) *Tree {
 	return t
 }
 
-// newTreeWithID returns a new tree from an object
+// NewTreeFromObject returns a new tree from an object
 //
 // A tree has following format:
 //
@@ -84,7 +84,11 @@ func NewTree(entries []TreeEntry) *Tree {
 //
 // Note:
 // - a Tree may have multiple entries
-func newTreeFromObject(o *Object) (*Tree, error) {
+func NewTreeFromObject(o *Object) (*Tree, error) {
+	if o.Type() != TypeTree {
+		return nil, xerrors.Errorf("type %s is not a tree: %w", o.typ, ErrObjectInvalid)
+	}
+
 	entries := []TreeEntry{}
 
 	objData := o.Bytes()
@@ -101,7 +105,7 @@ func newTreeFromObject(o *Object) (*Tree, error) {
 			offset += len(data) + 1 // +1 for the space
 			mode, err := strconv.ParseInt(string(data), 8, 32)
 			if err != nil {
-				return nil, xerrors.Errorf("could not parse mode of entry %d: %w", i, err)
+				return nil, xerrors.Errorf("could not parse mode of entry %d: %s: %w", i, err.Error(), ErrTreeInvalid)
 			}
 			entry.Mode = TreeObjectMode(mode)
 
@@ -117,6 +121,8 @@ func newTreeFromObject(o *Object) (*Tree, error) {
 			}
 			entry.ID, err = ginternals.NewOidFromHex(objData[offset : offset+20])
 			if err != nil {
+				// should never fail since any value is valid as long as it
+				// is 20 chars
 				return nil, xerrors.Errorf("invalid SHA for entry %d (%s): %w", i, err.Error(), ErrTreeInvalid)
 			}
 			offset += 20

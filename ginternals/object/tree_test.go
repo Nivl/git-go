@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/Nivl/git-go"
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/Nivl/git-go/internal/testhelper"
@@ -143,6 +144,106 @@ func TestTreeObjectMode(t *testing.T) {
 
 				out := tc.mode.IsValid()
 				assert.Equal(t, tc.isValid, out)
+			})
+		}
+	})
+}
+
+func TestNewTreeFromObject(t *testing.T) {
+	t.Parallel()
+
+	t.Run("should work on a valid tree", func(t *testing.T) {
+		t.Parallel()
+
+		// Find a tree
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		t.Cleanup(cleanup)
+
+		r, err := git.OpenRepository(repoPath)
+		require.NoError(t, err, "failed loading a repo")
+		require.NotNil(t, r, "repository should not be nil")
+		t.Cleanup(func() {
+			require.NoError(t, r.Close())
+		})
+
+		treeID, err := ginternals.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
+		require.NoError(t, err)
+
+		o, err := r.GetObject(treeID)
+		require.NoError(t, err, "failed getting the tree")
+
+		_, err = object.NewTreeFromObject(o)
+		require.NoError(t, err)
+	})
+
+	t.Run("should fail if the object is not a tree", func(t *testing.T) {
+		t.Parallel()
+
+		o := object.New(object.TypeCommit, []byte{})
+		_, err := object.NewTreeFromObject(o)
+		require.Error(t, err)
+		assert.ErrorIs(t, err, object.ErrObjectInvalid)
+		assert.Contains(t, err.Error(), "is not a tree")
+	})
+
+	t.Run("should work on an empty tree", func(t *testing.T) {
+		t.Parallel()
+
+		o := object.New(object.TypeTree, []byte{})
+		tree, err := object.NewTreeFromObject(o)
+		require.NoError(t, err)
+		assert.Len(t, tree.Entries(), 0)
+	})
+
+	t.Run("parsing failures", func(t *testing.T) {
+		t.Parallel()
+
+		testCases := []struct {
+			desc               string
+			data               string
+			expectedErrorMatch string
+			expectedError      error
+		}{
+			{
+				desc:               "should fail if the tree has invalid content",
+				data:               "mode",
+				expectedError:      object.ErrTreeInvalid,
+				expectedErrorMatch: "could not retrieve the mode",
+			},
+			{
+				desc:               "should fail if the tree has an invalid mode",
+				data:               "mode ",
+				expectedError:      object.ErrTreeInvalid,
+				expectedErrorMatch: "could not parse mode",
+			},
+			{
+				desc:               "should fail if the tree ends after the mode",
+				data:               "644 ",
+				expectedError:      object.ErrTreeInvalid,
+				expectedErrorMatch: "could not retrieve the path of entry",
+			},
+			{
+				desc:               "should fail if the tree has an invalid ID",
+				data:               "644 file.go\x00invalid",
+				expectedError:      object.ErrTreeInvalid,
+				expectedErrorMatch: "not enough space to retrieve the ID of entry",
+			},
+		}
+		for i, tc := range testCases {
+			tc := tc
+			i := i
+			t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
+				t.Parallel()
+
+				o := object.New(object.TypeTree, []byte(tc.data))
+				_, err := object.NewTreeFromObject(o)
+				require.Error(t, err)
+				if tc.expectedError != nil {
+					assert.ErrorIs(t, err, tc.expectedError)
+				}
+				if tc.expectedErrorMatch != "" {
+					assert.Contains(t, err.Error(), tc.expectedErrorMatch)
+				}
 			})
 		}
 	})

@@ -401,6 +401,7 @@ func TestNewCommitFromObject(t *testing.T) {
 		o := object.New(object.TypeBlob, []byte{})
 		_, err := object.NewCommitFromObject(o)
 		require.Error(t, err)
+		assert.ErrorIs(t, err, object.ErrObjectInvalid)
 		assert.Contains(t, err.Error(), "is not a commit")
 	})
 
@@ -449,7 +450,7 @@ func TestNewCommitFromObject(t *testing.T) {
 				_, err := object.NewCommitFromObject(o)
 				require.Error(t, err)
 				if tc.expectedError != nil {
-					assert.Error(t, err)
+					assert.ErrorIs(t, err, tc.expectedError)
 				}
 				if tc.expectedErrorMatch != "" {
 					assert.Contains(t, err.Error(), tc.expectedErrorMatch)

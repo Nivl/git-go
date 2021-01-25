@@ -178,7 +178,7 @@ func NewCommit(treeID ginternals.Oid, author Signature, opts *CommitOptions) *Co
 // - The gpgsig is optional
 func NewCommitFromObject(o *Object) (*Commit, error) {
 	if o.typ != TypeCommit {
-		return nil, xerrors.Errorf("type %s is not a commit", o.typ)
+		return nil, xerrors.Errorf("type %s is not a commit: %w", o.typ, ErrObjectInvalid)
 	}
 	ci := &Commit{
 		rawObject: o,
