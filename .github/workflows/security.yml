@@ -1,4 +1,4 @@
-name: CodeQL Security
+name: Security
 
 on:
   push:
@@ -37,7 +37,7 @@ jobs:
         uses: Nivl/voorhees-github-action@v1
 
   analyze:
-    name: Analyze
+    name: CodeQL Analyze
     runs-on: ubuntu-latest
 
     strategy:
