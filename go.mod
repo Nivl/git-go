@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/gogf/gf v1.15.1
-	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
+	github.com/hashicorp/golang-lru v0.5.4
 	github.com/spf13/afero v1.5.1
 	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.7.0

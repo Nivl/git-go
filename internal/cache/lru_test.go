@@ -5,6 +5,7 @@ import (
 
 	"github.com/Nivl/git-go/internal/cache"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLRU(t *testing.T) {
@@ -13,7 +14,8 @@ func TestLRU(t *testing.T) {
 	t.Run("Add and get data", func(t *testing.T) {
 		t.Parallel()
 
-		c := cache.NewLRU(1)
+		c, err := cache.NewLRU(1)
+		require.NoError(t, err)
 
 		assert.Equal(t, 0, c.Len(), "expected an empty cache")
 

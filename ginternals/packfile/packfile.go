@@ -113,9 +113,13 @@ func NewFromFile(fs afero.Fs, filePath string) (pack *Pack, err error) {
 		}
 	}()
 
+	c, err := cache.NewLRU(1000)
+	if err != nil {
+		return nil, xerrors.Errorf("could not create LRU cache: %w", err)
+	}
 	p := &Pack{
 		r:               f,
-		baseObjectCache: cache.NewLRU(1000),
+		baseObjectCache: c,
 	}
 
 	// Let's validate the header
