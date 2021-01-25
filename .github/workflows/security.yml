@@ -1,10 +1,4 @@
-# For most projects, this workflow file will not need changing; you simply need
-# to commit it to your repository.
-#
-# You may wish to alter this file to override the set of languages analyzed,
-# or to provide custom queries or build logic.
-#
-name: "CodeQL"
+name: Security
 
 on:
   push:
@@ -16,8 +10,34 @@ on:
     - cron: "17 8 * * 2"
 
 jobs:
+  go-vulnerabilities-scan:
+    name: "Golang Vulnerabilities Scan"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+
+      - name: Generate go.list
+        run: go list -json -m all > go.list
+
+      - name: Run Nancy
+        uses: sonatype-nexus-community/nancy-github-action@main
+
+  unmaintained-deps-check:
+    name: "Unmaintained deps check"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+
+      - name: Generate go.list
+        run: go list -json -m all > go.list
+
+      - name: Run Voorhees
+        uses: Nivl/voorhees-github-action@v1
+
   analyze:
-    name: Analyze
+    name: CodeQL Analyze
     runs-on: ubuntu-latest
 
     strategy:

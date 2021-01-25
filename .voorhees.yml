@@ -1,0 +1,7 @@
+version: 1
+default:
+  limit: 6 months
+rules:
+  # No release since Jan 2020 but still has some activity on Master
+  # mainteners are actively commenting on issues and PRs
+  github.com/hashicorp/golang-lru: 18 months

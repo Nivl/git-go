@@ -3,11 +3,8 @@ package cache
 import (
 	"sync"
 
-	lru "github.com/golang/groupcache/lru"
+	lru "github.com/hashicorp/golang-lru"
 )
-
-// LRUKey may be any value that is comparable. See http://golang.org/ref/spec#Comparison_operators
-type LRUKey = lru.Key
 
 // LRU represents a LRU cache
 type LRU struct {
@@ -16,16 +13,18 @@ type LRU struct {
 }
 
 // NewLRU creates a new LRU Cache.
-// If maxEntries is zero, the cache has no limit and it's assumed
-// that eviction is done by the caller.
-func NewLRU(maxEntries int) *LRU {
-	return &LRU{
-		cache: lru.New(maxEntries),
+func NewLRU(maxEntries int) (*LRU, error) {
+	cache, err := lru.New(maxEntries)
+	if err != nil {
+		return nil, err
 	}
+	return &LRU{
+		cache: cache,
+	}, nil
 }
 
 // Get looks up a key's value from the cache.
-func (c *LRU) Get(key LRUKey) (value interface{}, ok bool) {
+func (c *LRU) Get(key interface{}) (value interface{}, ok bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -33,7 +32,7 @@ func (c *LRU) Get(key LRUKey) (value interface{}, ok bool) {
 }
 
 // Add adds a value to the cache.
-func (c *LRU) Add(key LRUKey, value interface{}) {
+func (c *LRU) Add(key, value interface{}) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -45,7 +44,7 @@ func (c *LRU) Clear() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.cache.Clear()
+	c.cache.Purge()
 }
 
 // Len returns the number of items in the cache.

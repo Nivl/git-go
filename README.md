@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/gh/Nivl/git-go/branch/main/graph/badge.svg?token=I0YC2EHRHB)](https://codecov.io/gh/Nivl/git-go)
+
 # git-go
 
 Basic git implementation in pure Go

@@ -39,10 +39,14 @@ type Backend struct {
 
 // New returns a new Backend object
 func New(dotGitPath string) (*Backend, error) {
+	c, err := cache.NewLRU(1000)
+	if err != nil {
+		return nil, xerrors.Errorf("could not create LRU cache: %w", err)
+	}
 	b := &Backend{
 		fs:        afero.NewOsFs(),
 		root:      dotGitPath,
-		cache:     cache.NewLRU(1000),
+		cache:     c,
 		objectMu:  syncutil.NewNamedMutex(101),
 		packfiles: map[ginternals.Oid]*packfile.Pack{},
 		refs:      map[string][]byte{},
