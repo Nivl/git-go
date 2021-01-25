@@ -32,7 +32,7 @@ func (c *LRU) Get(key interface{}) (value interface{}, ok bool) {
 }
 
 // Add adds a value to the cache.
-func (c *LRU) Add(key interface{}, value interface{}) {
+func (c *LRU) Add(key, value interface{}) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
