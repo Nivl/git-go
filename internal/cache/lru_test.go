@@ -37,4 +37,11 @@ func TestLRU(t *testing.T) {
 		c.Clear()
 		assert.Equal(t, 0, c.Len(), "expected the cache t have been emptied")
 	})
+
+	t.Run("Should fail on invalid limit", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := cache.NewLRU(0)
+		require.Error(t, err)
+	})
 }
