@@ -2,6 +2,7 @@ package git
 
 import (
 	"errors"
+	"os"
 	"path/filepath"
 
 	"github.com/Nivl/git-go/backend"
@@ -65,6 +66,14 @@ func InitRepository(repoPath string) (*Repository, error) {
 // that Git stores and manipulates is located.
 // https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain#ch10-git-internals
 func InitRepositoryWithOptions(repoPath string, opts InitOptions) (r *Repository, err error) {
+	info, err := os.Stat(repoPath)
+	if err != nil {
+		return nil, xerrors.Errorf("invalid path: %w", err)
+	}
+	if !info.IsDir() {
+		return nil, xerrors.Errorf("invalid path: not a directory")
+	}
+
 	dotGitPath := repoPath
 	if !opts.IsBare {
 		dotGitPath = filepath.Join(repoPath, gitpath.DotGitPath)

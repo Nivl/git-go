@@ -2,7 +2,6 @@ package testhelper
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -22,17 +21,14 @@ const (
 
 // UnTar will untar a git repository in a new temporary folder.
 func UnTar(t *testing.T, repoName RepoName) (repoPath string, cleanup func()) {
-	out, cleanup := TempDir(t)
-	defer cleanup()
+	repoPath, cleanup = TempDir(t)
 
 	_, err := exe.Run("tar",
 		"-xzf", fmt.Sprintf("%s/%s.tar.gz", TestdataPath(t), repoName),
-		"-C", out,
+		"-C", repoPath,
 	)
 	require.NoError(t, err)
-	return out, func() {
-		require.NoError(t, os.RemoveAll(out))
-	}
+	return repoPath, cleanup
 }
 
 // TestdataPath returns the absolute path to the testdata directory

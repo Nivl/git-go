@@ -58,10 +58,10 @@ func TestCatFileParams(t *testing.T) {
 		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
 			t.Parallel()
 
-			cmd := newRootCmd()
+			cmd, err := newRootCmd()
+			require.NoError(t, err)
 			cmd.SetArgs(tc.args)
 
-			var err error
 			require.NotPanics(t, func() {
 				err = cmd.Execute()
 			})
@@ -173,12 +173,12 @@ func TestCatFile(t *testing.T) {
 			t.Parallel()
 
 			outBuf := bytes.NewBufferString("")
-			cmd := newRootCmd()
+			cmd, err := newRootCmd()
+			require.NoError(t, err)
 			cmd.SetOut(outBuf)
 			args := append([]string{"-C", repoPath}, tc.args...)
 			cmd.SetArgs(args)
 
-			var err error
 			require.NotPanics(t, func() {
 				err = cmd.Execute()
 			})

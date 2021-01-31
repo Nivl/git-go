@@ -24,14 +24,14 @@ func TestHashObjectCmd(t *testing.T) {
 			t.Cleanup(cleanup)
 
 			outBuf := bytes.NewBufferString("")
-			cmd := newRootCmd()
+			cmd, err := newRootCmd()
+			require.NoError(t, err)
 			cmd.SetArgs([]string{
 				"hash-object",
 				filepath.Join(repoPath, "README.md"),
 			})
 			cmd.SetOut(outBuf)
 
-			var err error
 			require.NotPanics(t, func() {
 				err = cmd.Execute()
 			})
@@ -46,7 +46,8 @@ func TestHashObjectCmd(t *testing.T) {
 			t.Parallel()
 
 			outBuf := bytes.NewBufferString("")
-			cmd := newRootCmd()
+			cmd, err := newRootCmd()
+			require.NoError(t, err)
 			cmd.SetArgs([]string{
 				"hash-object",
 				"-t", "blob",
@@ -54,7 +55,6 @@ func TestHashObjectCmd(t *testing.T) {
 			})
 			cmd.SetOut(outBuf)
 
-			var err error
 			require.NotPanics(t, func() {
 				err = cmd.Execute()
 			})
@@ -73,7 +73,8 @@ func TestHashObjectCmd(t *testing.T) {
 			t.Parallel()
 
 			outBuf := bytes.NewBufferString("")
-			cmd := newRootCmd()
+			cmd, err := newRootCmd()
+			require.NoError(t, err)
 			cmd.SetArgs([]string{
 				"hash-object",
 				"-t", "tree",
@@ -81,7 +82,6 @@ func TestHashObjectCmd(t *testing.T) {
 			})
 			cmd.SetOut(outBuf)
 
-			var err error
 			require.NotPanics(t, func() {
 				err = cmd.Execute()
 			})
@@ -96,7 +96,8 @@ func TestHashObjectCmd(t *testing.T) {
 			t.Parallel()
 
 			outBuf := bytes.NewBufferString("")
-			cmd := newRootCmd()
+			cmd, err := newRootCmd()
+			require.NoError(t, err)
 			cmd.SetArgs([]string{
 				"hash-object",
 				"-t", "tree",
@@ -104,7 +105,6 @@ func TestHashObjectCmd(t *testing.T) {
 			})
 			cmd.SetOut(outBuf)
 
-			var err error
 			require.NotPanics(t, func() {
 				err = cmd.Execute()
 			})
@@ -124,7 +124,8 @@ func TestHashObjectCmd(t *testing.T) {
 			t.Parallel()
 
 			outBuf := bytes.NewBufferString("")
-			cmd := newRootCmd()
+			cmd, err := newRootCmd()
+			require.NoError(t, err)
 			cmd.SetArgs([]string{
 				"hash-object",
 				"-t", "commit",
@@ -132,7 +133,6 @@ func TestHashObjectCmd(t *testing.T) {
 			})
 			cmd.SetOut(outBuf)
 
-			var err error
 			require.NotPanics(t, func() {
 				err = cmd.Execute()
 			})
@@ -147,7 +147,8 @@ func TestHashObjectCmd(t *testing.T) {
 			t.Parallel()
 
 			outBuf := bytes.NewBufferString("")
-			cmd := newRootCmd()
+			cmd, err := newRootCmd()
+			require.NoError(t, err)
 			cmd.SetArgs([]string{
 				"hash-object",
 				"-t", "commit",
@@ -155,7 +156,6 @@ func TestHashObjectCmd(t *testing.T) {
 			})
 			cmd.SetOut(outBuf)
 
-			var err error
 			require.NotPanics(t, func() {
 				err = cmd.Execute()
 			})

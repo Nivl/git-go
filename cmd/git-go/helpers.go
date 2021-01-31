@@ -6,14 +6,12 @@ import (
 )
 
 func loadRepository(cfg *config) (*git.Repository, error) {
-	repoPath := cfg.C
-	if repoPath == "" {
-		root, err := pathutil.RepoRoot()
-		if err != nil {
-			return nil, err
-		}
-		repoPath = root
+	repoPath := cfg.C.String()
+	root, err := pathutil.RepoRootFromPath(repoPath)
+	if err != nil {
+		return nil, err
 	}
+	repoPath = root
 
 	// run the command
 	return git.OpenRepository(repoPath)

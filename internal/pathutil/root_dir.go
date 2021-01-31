@@ -17,14 +17,27 @@ func RepoRoot() (string, error) {
 	if err != nil {
 		return "", xerrors.Errorf("could not get current working directory: %w", err)
 	}
+	return RepoRootFromPath(wd)
+}
 
-	for wd != string(os.PathSeparator) {
-		_, err := os.Stat(filepath.Join(wd, ".git"))
-		if err == nil {
-			return wd, nil
+// RepoRootFromPath returns the absolute path to the root of a repo containing
+// the provided directory
+func RepoRootFromPath(p string) (string, error) {
+	prev := ""
+	for p != prev {
+		// Regular repo
+		info, err := os.Stat(filepath.Join(p, ".git"))
+		if err == nil && info.IsDir() {
+			return p, nil
 		}
-		wd = filepath.Dir(wd)
-	}
+		// Bare repo
+		info, err = os.Stat(filepath.Join(p, "HEAD"))
+		if err == nil && !info.IsDir() && info.Size() > 0 {
+			return p, nil
+		}
 
+		prev = p
+		p = filepath.Dir(p)
+	}
 	return "", ErrNoRepo
 }

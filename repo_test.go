@@ -58,6 +58,36 @@ func TestInit(t *testing.T) {
 		assert.Nil(t, r.wt)
 		assert.True(t, r.IsBare(), "repos should be bare")
 	})
+
+	t.Run("should fail with a path that doesn't exist", func(t *testing.T) {
+		t.Parallel()
+
+		// Setup
+		d, cleanup := testhelper.TempDir(t)
+		t.Cleanup(cleanup)
+
+		// Run logic
+		_, err := InitRepositoryWithOptions(filepath.Join(d, "doesnt-exist"), InitOptions{
+			IsBare: true,
+		})
+		require.Error(t, err)
+		require.ErrorIs(t, err, os.ErrNotExist)
+	})
+
+	t.Run("should fail with a path that points to a file", func(t *testing.T) {
+		t.Parallel()
+
+		// Setup
+		f, cleanup := testhelper.TempFile(t)
+		t.Cleanup(cleanup)
+
+		// Run logic
+		_, err := InitRepositoryWithOptions(f.Name(), InitOptions{
+			IsBare: true,
+		})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "not a directory")
+	})
 }
 
 func TestOpen(t *testing.T) {
