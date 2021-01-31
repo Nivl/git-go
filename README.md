@@ -1,4 +1,4 @@
-[![codecov](https://codecov.io/gh/Nivl/git-go/branch/main/graph/badge.svg?token=I0YC2EHRHB)](https://codecov.io/gh/Nivl/git-go)
+[![codecov](https://codecov.io/gh/Nivl/git-go/branch/main/graph/badge.svg?token=I0YC2EHRHB)](https://codecov.io/gh/Nivl/git-go) [![Go Reference](https://pkg.go.dev/badge/github.com/Nivl/git-go@main.svg)](https://pkg.go.dev/github.com/Nivl/git-go@main)
 
 # git-go
 
