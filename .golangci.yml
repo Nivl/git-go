@@ -79,6 +79,9 @@ linters:
     - errorlint
 
 linters-settings:
+  maligned:
+    suggest-new: true
+
   govet:
     check-shadowing: true
 

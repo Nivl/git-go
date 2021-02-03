@@ -48,7 +48,6 @@ func (tb *TreeBuilder) Insert(path string, oid ginternals.Oid, mode object.TreeO
 	}
 
 	// TODO(melvin):
-	// 1. validate that the mode matches the object's type
 	// 2. gitlink?
 	if o.Type() != object.TypeBlob && o.Type() != object.TypeTree {
 		return xerrors.Errorf("unexpected object %s: %w", o.Type().String(), object.ErrObjectInvalid)

@@ -56,7 +56,7 @@ jobs:
       - uses: actions/setup-go@v2
 
       - name: Test
-        run: go test -race -coverprofile coverage.txt ./...
+        run: go test -race -timeout 3m -coverprofile coverage.txt ./...
 
       - uses: codecov/codecov-action@v1
         with:

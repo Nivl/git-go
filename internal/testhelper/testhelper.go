@@ -16,10 +16,19 @@ func TempDir(t *testing.T) (out string, cleanup func()) {
 	require.NoError(t, err)
 
 	cleanup = func() {
-		// for debug purpose we keep everything if the test failed
-		if err != nil {
-			require.NoError(t, os.RemoveAll(out))
-		}
+		require.NoError(t, os.RemoveAll(out))
+	}
+	return out, cleanup
+}
+
+// TempFile creates a temp file and returns a cleanup method
+func TempFile(t *testing.T) (out *os.File, cleanup func()) {
+	out, err := ioutil.TempFile("", strings.ReplaceAll(t.Name(), "/", "_")+"_")
+	require.NoError(t, err)
+
+	cleanup = func() {
+		require.NoError(t, out.Close())
+		require.NoError(t, os.RemoveAll(out.Name()))
 	}
 	return out, cleanup
 }

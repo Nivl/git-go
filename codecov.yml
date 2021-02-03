@@ -1,0 +1,3 @@
+ignore:
+  - "internal/test*"
+  - "cmd/git-go/main.go"

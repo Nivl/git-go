@@ -3,5 +3,14 @@ default:
   limit: 6 months
 rules:
   # No release since Jan 2020 but still has some activity on Master
-  # mainteners are actively commenting on issues and PRs
+  # mainteners are actively commenting on issues and PRs.
   github.com/hashicorp/golang-lru: 18 months
+
+  # No release since Q3 2019 but still has some activity on Master.
+  # Mainteners are NOT actively commenting on issues and PRs. Forks
+  # are being made.
+  github.com/spf13/pflag: 18 months
+
+  # No release since the last August 2020, nothing wrong. We probably
+  # don't need the package though.
+  golang.org/x/xerrors: 12 months
