@@ -620,7 +620,7 @@ var OidWalkStop = errors.New("stop walking") //nolint // the linter expects all 
 func (pck *Pack) Walk(f OidWalkFunc) error {
 	for v := range pck.idx.hashOffset {
 		if err := f(v); err != nil {
-			if err == OidWalkStop {
+			if err == OidWalkStop { //nolint:errorlint,goerr113 // it's a fake error so no need to use Error.Is()
 				return nil
 			}
 			return err
