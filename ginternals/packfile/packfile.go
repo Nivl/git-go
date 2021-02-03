@@ -608,3 +608,23 @@ func (pck *Pack) unsetMSB(b byte) byte {
 	// & 0111_1111 : 0XXX_XXXX
 	return b & 0b_0111_1111
 }
+
+// OidWalkFunc represents a function that will be apply on all oid
+// found by Walk()
+type OidWalkFunc = func(oid ginternals.Oid) error
+
+// OidWalkStop is a fake error used to tell Walk() to stop
+var OidWalkStop = errors.New("stop walking") //nolint // the linter expects all errors to start with Err, but since here we're faking an error we don't want that
+
+// Walk walks over all the OIDs of the index
+func (pck *Pack) Walk(f OidWalkFunc) error {
+	for v := range pck.idx.hashOffset {
+		if err := f(v); err != nil {
+			if err == OidWalkStop {
+				return nil
+			}
+			return err
+		}
+	}
+	return nil
+}
