@@ -1,6 +1,7 @@
 package packfile_test
 
 import (
+	"errors"
 	"path/filepath"
 	"testing"
 
@@ -161,5 +162,65 @@ func TestObjectCount(t *testing.T) {
 		// the test repo.
 		// This needs to be rewritten once we have a way to create packfile
 		assert.Equal(t, uint32(364), pack.ObjectCount())
+	})
+}
+
+func TestWalkOids(t *testing.T) {
+	t.Parallel()
+
+	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+	t.Cleanup(cleanup)
+	// Load the packfile
+	packFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.pack"
+	packFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, packFileName)
+	pack, err := packfile.NewFromFile(afero.NewOsFs(), packFilePath)
+	require.NoError(t, err)
+	assert.NotNil(t, pack)
+	t.Cleanup(func() {
+		require.NoError(t, pack.Close())
+	})
+
+	t.Run("Should return all the objects", func(t *testing.T) {
+		t.Parallel()
+
+		totalObject := 0
+		err := pack.WalkOids(func(oid ginternals.Oid) error {
+			totalObject++
+			return nil
+		})
+		assert.NoError(t, err)
+		assert.GreaterOrEqual(t, totalObject, 100)
+	})
+
+	t.Run("Should stop the walk", func(t *testing.T) {
+		t.Parallel()
+
+		totalObject := 0
+		err := pack.WalkOids(func(oid ginternals.Oid) error {
+			if totalObject == 4 {
+				return packfile.OidWalkStop
+			}
+			totalObject++
+			return nil
+		})
+		assert.NoError(t, err)
+		assert.Equal(t, 4, totalObject)
+	})
+
+	t.Run("Should propage an error", func(t *testing.T) {
+		t.Parallel()
+
+		someErr := errors.New("some error")
+		totalObject := 0
+		err := pack.WalkOids(func(oid ginternals.Oid) error {
+			if totalObject == 4 {
+				return someErr
+			}
+			totalObject++
+			return nil
+		})
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, someErr)
+		assert.Equal(t, 4, totalObject)
 	})
 }

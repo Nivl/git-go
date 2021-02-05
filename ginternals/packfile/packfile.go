@@ -616,8 +616,12 @@ type OidWalkFunc = func(oid ginternals.Oid) error
 // OidWalkStop is a fake error used to tell Walk() to stop
 var OidWalkStop = errors.New("stop walking") //nolint // the linter expects all errors to start with Err, but since here we're faking an error we don't want that
 
-// Walk walks over all the OIDs of the index
-func (pck *Pack) Walk(f OidWalkFunc) error {
+// WalkOids walks over all the OIDs of the packfile
+func (pck *Pack) WalkOids(f OidWalkFunc) error {
+	if err := pck.idx.parse(); err != nil {
+		return xerrors.Errorf("could not get oids: %w", err)
+	}
+
 	for v := range pck.idx.hashOffset {
 		if err := f(v); err != nil {
 			if err == OidWalkStop { //nolint:errorlint,goerr113 // it's a fake error so no need to use Error.Is()
