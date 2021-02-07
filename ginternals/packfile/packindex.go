@@ -112,13 +112,8 @@ func NewIndex(r readutil.BufferedReader) (idx *PackIndex, err error) {
 // GetObjectOffset returns the offset of Oid in the packfile
 // If the object is not found ginternals.ErrObjectNotFound is returned
 func (idx *PackIndex) GetObjectOffset(oid ginternals.Oid) (uint64, error) {
-	idx.mu.Lock()
-	defer idx.mu.Unlock()
-
-	if !idx.parsed {
-		if err := idx.parse(); err != nil {
-			return 0, xerrors.Errorf("could not parse the index file: %w", err)
-		}
+	if err := idx.parse(); err != nil {
+		return 0, xerrors.Errorf("could not parse the index file: %w", err)
 	}
 	offset, exists := idx.hashOffset[oid]
 	if !exists {
@@ -129,6 +124,9 @@ func (idx *PackIndex) GetObjectOffset(oid ginternals.Oid) (uint64, error) {
 
 // parse extracts all the data from the index and puts them in memory.
 func (idx *PackIndex) parse() (err error) {
+	idx.mu.Lock()
+	defer idx.mu.Unlock()
+
 	// No reason to call this method more than once
 	if idx.parsed {
 		return nil

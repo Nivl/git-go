@@ -1,6 +1,7 @@
 package fsbackend
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/object"
+	"github.com/Nivl/git-go/ginternals/packfile"
 	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/stretchr/testify/assert"
@@ -261,5 +263,62 @@ func TestWriteObject(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, originalInfo.ModTime(), info.ModTime())
+	})
+}
+
+func TestWalkObjectIDs(t *testing.T) {
+	t.Parallel()
+
+	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+	t.Cleanup(cleanup)
+	dotGitPath := filepath.Join(repoPath, gitpath.DotGitPath)
+	b, err := New(dotGitPath)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, b.Close())
+	})
+
+	t.Run("Should return all the objects", func(t *testing.T) {
+		t.Parallel()
+
+		totalObject := 0
+		err := b.WalkObjectIDs(func(oid ginternals.Oid) error {
+			totalObject++
+			return nil
+		})
+		assert.NoError(t, err)
+		assert.GreaterOrEqual(t, totalObject, 100)
+	})
+
+	t.Run("Should stop the walk", func(t *testing.T) {
+		t.Parallel()
+
+		totalObject := 0
+		err := b.WalkObjectIDs(func(oid ginternals.Oid) error {
+			if totalObject == 4 {
+				return packfile.OidWalkStop
+			}
+			totalObject++
+			return nil
+		})
+		assert.NoError(t, err)
+		assert.Equal(t, 4, totalObject)
+	})
+
+	t.Run("Should propage an error", func(t *testing.T) {
+		t.Parallel()
+
+		someErr := errors.New("some error")
+		totalObject := 0
+		err := b.WalkObjectIDs(func(oid ginternals.Oid) error {
+			if totalObject == 4 {
+				return someErr
+			}
+			totalObject++
+			return nil
+		})
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, someErr)
+		assert.Equal(t, 4, totalObject)
 	})
 }

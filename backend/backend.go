@@ -5,6 +5,7 @@ package backend
 import (
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/object"
+	"github.com/Nivl/git-go/ginternals/packfile"
 )
 
 // This line generates a mock of the interfaces using gomock
@@ -37,4 +38,6 @@ type Backend interface {
 	HasObject(ginternals.Oid) (bool, error)
 	// WriteObject adds an object to the odb
 	WriteObject(*object.Object) (ginternals.Oid, error)
+	// WalkObjectIDs runs the provided method on all the objects ids
+	WalkObjectIDs(f packfile.OidWalkFunc) error
 }
