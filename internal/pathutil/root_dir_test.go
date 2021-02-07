@@ -66,3 +66,14 @@ func TestRepoRootFromPath(t *testing.T) {
 		assert.ErrorIs(t, err, pathutil.ErrNoRepo)
 	})
 }
+
+func TestRepoRoot(t *testing.T) {
+	t.Parallel()
+
+	t.Run("happy path", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := pathutil.RepoRoot()
+		require.NoError(t, err)
+	})
+}
