@@ -89,6 +89,13 @@ func InitRepositoryWithOptions(repoPath string, opts InitOptions) (r *Repository
 			return nil, xerrors.Errorf("could not create backend: %w", err)
 		}
 		r.shouldCleanBackend = true
+		// we pass the repo by copy because in case of error the pointer
+		// will be chaged to nil
+		defer func(r *Repository) {
+			if err != nil {
+				r.dotGit.Close() //nolint:errcheck // it already failed
+			}
+		}(r)
 	}
 
 	if !opts.IsBare {
@@ -148,6 +155,13 @@ func OpenRepositoryWithOptions(repoPath string, opts OpenOptions) (r *Repository
 			return nil, xerrors.Errorf("could not create backend: %w", err)
 		}
 		r.shouldCleanBackend = true
+		// we pass the repo by copy because in case of error the pointer
+		// will be chaged to nil
+		defer func(r *Repository) {
+			if err != nil {
+				r.dotGit.Close() //nolint:errcheck // it already failed
+			}
+		}(r)
 	}
 
 	if !opts.IsBare {
