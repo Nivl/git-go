@@ -2,3 +2,9 @@ ignore:
   - "internal/test*"
   - "cmd/git-go/main.go"
   - "internal/testhelper"
+
+coverage:
+  status:
+    patch:
+      default:
+        threshold: 70%
