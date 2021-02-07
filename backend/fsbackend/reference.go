@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Nivl/git-go/backend"
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/internal/errutil"
 	"github.com/Nivl/git-go/internal/gitpath"
@@ -18,15 +19,12 @@ import (
 // ErrRefNotFound is returned if the reference doesn't exists
 // This method can be called concurrently
 func (b *Backend) Reference(name string) (*ginternals.Reference, error) {
-	b.refMu.RLock()
-	defer b.refMu.RUnlock()
-
 	finder := func(name string) ([]byte, error) {
-		data, ok := b.refs[name]
+		data, ok := b.refs.Load(name)
 		if !ok {
 			return nil, xerrors.Errorf(`ref "%s": %w`, name, ginternals.ErrRefNotFound)
 		}
-		return data, nil
+		return data.([]byte), nil
 	}
 	return ginternals.ResolveReference(name, finder)
 }
@@ -42,9 +40,6 @@ func (b *Backend) systemPath(name string) string {
 
 // loadRefs loads the references in memory
 func (b *Backend) loadRefs() (err error) {
-	b.refMu.Lock()
-	defer b.refMu.Unlock()
-
 	// We first parse the packed-refs file which may or may not exists
 	// and may or may not contain outdated information
 	// (outdated information will be overwritten once we parse the
@@ -72,7 +67,7 @@ func (b *Backend) loadRefs() (err error) {
 				return xerrors.Errorf("could not parse %s, unexpected data line %d: %w", gitpath.PackedRefsPath, i, ginternals.ErrPackedRefInvalid)
 			}
 			// the name of the ref is its UNIX path
-			b.refs[filepath.ToSlash(parts[1])] = []byte(parts[0])
+			b.refs.Store(filepath.ToSlash(parts[1]), []byte(parts[0]))
 		}
 
 		if sc.Err() != nil {
@@ -108,7 +103,7 @@ func (b *Backend) loadRefs() (err error) {
 			return e // the error message is already pretty descriptive
 		}
 		// the name of the ref is its UNIX path
-		b.refs[filepath.ToSlash(relpath)] = data
+		b.refs.Store(filepath.ToSlash(relpath), data)
 		return nil
 	})
 	if err != nil {
@@ -118,7 +113,8 @@ func (b *Backend) loadRefs() (err error) {
 	// Now we look for the special HEADs references:
 	headPaths := []string{
 		ginternals.Head,
-		ginternals.FetchHead,
+		// TODO(melvin): Removed until we support the format
+		// ginternals.FetchHead,
 		ginternals.OrigHead,
 		ginternals.MergeHead,
 		ginternals.CherryPickHead,
@@ -131,7 +127,7 @@ func (b *Backend) loadRefs() (err error) {
 			}
 			return xerrors.Errorf("could not read reference at %s: %w", path, err)
 		}
-		b.refs[path] = data
+		b.refs.Store(path, data)
 	}
 
 	return nil
@@ -140,18 +136,13 @@ func (b *Backend) loadRefs() (err error) {
 // WriteReference writes the given reference on disk. If the
 // reference already exists it will be overwritten
 func (b *Backend) WriteReference(ref *ginternals.Reference) error {
-	b.refMu.Lock()
-	defer b.refMu.Unlock()
 	return b.writeReference(ref)
 }
 
 // WriteReferenceSafe writes the given reference on disk.
 // ErrRefExists is returned if the reference already exists
 func (b *Backend) WriteReferenceSafe(ref *ginternals.Reference) error {
-	b.refMu.Lock()
-	defer b.refMu.Unlock()
-
-	if _, ok := b.refs[ref.Name()]; ok {
+	if _, ok := b.refs.Load(ref.Name()); ok {
 		return ginternals.ErrRefExists
 	}
 
@@ -181,6 +172,29 @@ func (b *Backend) writeReference(ref *ginternals.Reference) error {
 	if err != nil {
 		return xerrors.Errorf("could not persist reference to disk: %w", err)
 	}
-	b.refs[ref.Name()] = data
+	b.refs.Store(ref.Name(), data)
 	return nil
+}
+
+// WalkReferences runs the provided method on all the references
+func (b *Backend) WalkReferences(f backend.RefWalkFunc) error {
+	var topError error
+	b.refs.Range(func(key, value interface{}) bool {
+		name := key.(string)
+		ref, err := b.Reference(name)
+		if err != nil {
+			topError = xerrors.Errorf("could not resolve reference %s: %w", name, err)
+			return false
+		}
+
+		if err = f(ref); err != nil {
+			if err != backend.WalkStop { //nolint:errorlint,goerr113 // it's a fake error so no need to use Error.Is()
+				topError = err
+			}
+			return false
+		}
+		return true
+	})
+
+	return topError
 }

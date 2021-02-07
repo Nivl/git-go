@@ -33,8 +33,9 @@ type Backend struct {
 
 	packfiles map[ginternals.Oid]*packfile.Pack
 
-	refMu sync.RWMutex
-	refs  map[string][]byte
+	// refMu sync.RWMutex
+	refs *sync.Map
+	// refs  map[string][]byte
 }
 
 // New returns a new Backend object
@@ -49,7 +50,7 @@ func New(dotGitPath string) (*Backend, error) {
 		cache:     c,
 		objectMu:  syncutil.NewNamedMutex(101),
 		packfiles: map[ginternals.Oid]*packfile.Pack{},
-		refs:      map[string][]byte{},
+		refs:      &sync.Map{},
 	}
 
 	// we load a few things in memory
