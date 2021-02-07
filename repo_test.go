@@ -88,6 +88,19 @@ func TestInit(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "not a directory")
 	})
+
+	t.Run("should fail with a repo that already exists", func(t *testing.T) {
+		t.Parallel()
+
+		// Setup
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		t.Cleanup(cleanup)
+
+		// Run logic
+		_, err := InitRepository(repoPath)
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrRepositoryExists)
+	})
 }
 
 func TestOpen(t *testing.T) {
