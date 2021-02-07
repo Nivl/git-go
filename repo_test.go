@@ -143,11 +143,32 @@ func TestOpen(t *testing.T) {
 		})
 
 		// assert returned repository
-		// assert returned repository
 		require.Equal(t, repoPath, r.repoRoot)
 		require.Equal(t, repoPath, r.dotGitPath)
 		assert.Nil(t, r.wt)
 		assert.True(t, r.IsBare(), "repos should be bare")
+	})
+
+	t.Run("should fail if repo doesn't exist", func(t *testing.T) {
+		t.Parallel()
+
+		d, cleanup := testhelper.TempDir(t)
+		t.Cleanup(cleanup)
+
+		_, err := OpenRepository(d)
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrRepositoryNotExist)
+	})
+
+	t.Run("should fail if directory doesn't exist", func(t *testing.T) {
+		t.Parallel()
+
+		d, cleanup := testhelper.TempDir(t)
+		t.Cleanup(cleanup)
+
+		_, err := OpenRepository(filepath.Join(d, "404"))
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrRepositoryNotExist)
 	})
 }
 
