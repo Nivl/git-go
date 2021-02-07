@@ -8,6 +8,9 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Validate codecov.yml
-        uses: wei/curl@master
-        with:
-          args: --data-binary @codecov.yml https://codecov.io/validate
+        id: response
+        run: curl --data-binary @codecov.yml https://codecov.io/validate
+
+      - name: Set Failure Code
+        if: startsWith(steps.response , "Valid!") == false
+        run: exit 1

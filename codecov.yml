@@ -14,9 +14,11 @@ coverage:
     project:
       default: false
       library:
-        paths: "!cmd/"
+        paths:
+          - "!cmd/"
       cli:
-        paths: "cmd/"
+        paths:
+          - "cmd/"
 
     patch:
       default:
