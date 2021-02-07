@@ -3,6 +3,8 @@
 package backend
 
 import (
+	"errors"
+
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/Nivl/git-go/ginternals/packfile"
@@ -31,6 +33,8 @@ type Backend interface {
 	// WriteReferenceSafe writes the given reference in the db
 	// ErrRefExists is returned if the reference already exists
 	WriteReferenceSafe(ref *ginternals.Reference) error
+	// WalkReferences runs the provided method on all the references
+	WalkReferences(f RefWalkFunc) error
 
 	// Object returns the object that has given oid
 	Object(ginternals.Oid) (*object.Object, error)
@@ -41,3 +45,10 @@ type Backend interface {
 	// WalkObjectIDs runs the provided method on all the objects ids
 	WalkObjectIDs(f packfile.OidWalkFunc) error
 }
+
+// RefWalkFunc represents a function that will be applied on all references
+// found by Walk()
+type RefWalkFunc = func(ref *ginternals.Reference) error
+
+// WalkStop is a fake error used to tell Walk() to stop
+var WalkStop = errors.New("stop walking") //nolint // the linter expects all errors to start with Err, but since here we're faking an error we don't want that

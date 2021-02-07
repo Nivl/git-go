@@ -13,8 +13,6 @@ const (
 	// Head is a reference to the current branch, or to a commit if
 	// we're detached
 	Head = "HEAD"
-	// FetchHead is a reference to the most recently fetched branch
-	FetchHead = "FETCH_HEAD"
 	// OrigHead is a backup reference of HEAD set during destructive commands
 	// such as rebase, merge, etc. and can be used to revert an operation
 	OrigHead = "ORIG_HEAD"
@@ -27,6 +25,14 @@ const (
 	// Master correspond to the default branch name if none was
 	// specified
 	Master = "master"
+
+	// FetchHead is a reference to the most recently fetched branch
+	// TODO(melvin): Removed because the format is not currently
+	// supported. It's a list of commit IDs with the branch name,
+	// the origin, and other extra information. Example:
+	//     bbb720a96e4c29b9950a4c577c98470a4d5dd089		branch 'master' of github.com:Nivl/git-go
+	//     5f35f2dc6cec7356da02ca26192ce2bc3f271e79	not-for-merge	branch 'ml/feat/clone' of github.com:Nivl/git-go
+	// FetchHead = "FETCH_HEAD"
 )
 
 var (

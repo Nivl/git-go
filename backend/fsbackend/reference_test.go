@@ -1,10 +1,12 @@
 package fsbackend
 
 import (
+	"errors"
 	"io/ioutil"
 	"path/filepath"
 	"testing"
 
+	"github.com/Nivl/git-go/backend"
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/testhelper"
@@ -101,8 +103,13 @@ func TestParsePackedRefs(t *testing.T) {
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
+		count := 0
+		b.refs.Range(func(key, value interface{}) bool {
+			count++
+			return true
+		})
 		// By default it should only have HEAD
-		assert.Len(t, b.refs, 1)
+		assert.Equal(t, 1, count, "invalid amount of refs")
 	})
 
 	t.Run("Should fail if file contains invalid data", func(t *testing.T) {
@@ -147,10 +154,8 @@ func TestParsePackedRefs(t *testing.T) {
 		})
 
 		require.NoError(t, err)
-		require.Len(t, b.refs, 14)
 		expected := map[string][]byte{
-			"HEAD": []byte("ref: refs/heads/ml/packfile/tests\n"),
-			"FETCH_HEAD": []byte("bbb720a96e4c29b9950a4c577c98470a4d5dd089		branch 'master' of github.com:Nivl/git-go\n5f35f2dc6cec7356da02ca26192ce2bc3f271e79	not-for-merge	branch 'ml/feat/clone' of github.com:Nivl/git-go\n"),
+			"HEAD":                                  []byte("ref: refs/heads/ml/packfile/tests\n"),
 			"ORIG_HEAD":                             []byte("bbb720a96e4c29b9950a4c577c98470a4d5dd089\n"),
 			"refs/heads/master":                     []byte("bbb720a96e4c29b9950a4c577c98470a4d5dd089"),
 			"refs/heads/ml/cleanup-062020":          []byte("b328320060eb503cf337c7cff281712ef236963a"),
@@ -164,7 +169,18 @@ func TestParsePackedRefs(t *testing.T) {
 			"refs/tags/annotated":                   []byte("80316e01dbfdf5c2a8a20de66c747ecd4c4bd442\n"),
 			"refs/tags/lightweight":                 []byte("bbb720a96e4c29b9950a4c577c98470a4d5dd089\n"),
 		}
-		assert.Equal(t, expected, b.refs)
+
+		count := 0
+		b.refs.Range(func(key, value interface{}) bool {
+			count++
+
+			name := key.(string)
+			expectation, ok := expected[name]
+			assert.True(t, ok, "%s is missing in map", name)
+			assert.Equal(t, string(expectation), string(value.([]byte)), "invalid value for key %s", name)
+			return true
+		})
+		require.Equal(t, len(expected), count, "invalid amount of refs")
 	})
 }
 
@@ -413,5 +429,79 @@ func TestWriteReferenceSafe(t *testing.T) {
 		// Let's make sure the data have not been persisted
 		_, err = ioutil.ReadFile(filepath.Join(b.root, "refs", "heads", "master"))
 		require.Error(t, err)
+	})
+}
+
+func TestWalkReferences(t *testing.T) {
+	t.Parallel()
+
+	t.Run("should pass writing a new symbolic reference", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		t.Cleanup(cleanup)
+
+		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+
+		var count int
+		err = b.WalkReferences(func(ref *ginternals.Reference) error {
+			count++
+			return nil
+		})
+		require.NoError(t, err)
+		assert.GreaterOrEqual(t, count, 10)
+	})
+
+	t.Run("should stop with WalkStop", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		t.Cleanup(cleanup)
+
+		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+
+		var count int
+		err = b.WalkReferences(func(ref *ginternals.Reference) error {
+			if count == 4 {
+				return backend.WalkStop
+			}
+			count++
+			return nil
+		})
+		require.NoError(t, err)
+		assert.Equal(t, 4, count)
+	})
+
+	t.Run("should bubble up the provided error", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		t.Cleanup(cleanup)
+
+		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+
+		someError := errors.New("some error")
+		var count int
+		err = b.WalkReferences(func(ref *ginternals.Reference) error {
+			if count == 4 {
+				return someError
+			}
+			count++
+			return nil
+		})
+		require.Error(t, err)
+		assert.ErrorIs(t, err, someError)
 	})
 }
