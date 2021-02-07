@@ -32,9 +32,7 @@ func (b *Backend) Reference(name string) (*ginternals.Reference, error) {
 // systemPath returns a path from a ref name
 // Ex.: On windows refs/heads/master would return refs\heads\master
 func (b *Backend) systemPath(name string) string {
-	if os.PathSeparator != '/' {
-		name = filepath.FromSlash(name)
-	}
+	name = filepath.FromSlash(name)
 	return filepath.Join(b.root, name)
 }
 
@@ -145,7 +143,6 @@ func (b *Backend) WriteReferenceSafe(ref *ginternals.Reference) error {
 	if _, ok := b.refs.Load(ref.Name()); ok {
 		return ginternals.ErrRefExists
 	}
-
 	return b.writeReference(ref)
 }
 
