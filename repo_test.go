@@ -347,39 +347,72 @@ func TestRepositoryGetTree(t *testing.T) {
 func TestRepositoryNewCommit(t *testing.T) {
 	t.Parallel()
 
-	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
-	t.Cleanup(cleanup)
+	t.Run("happy path", func(t *testing.T) {
+		t.Parallel()
 
-	r, err := OpenRepository(repoPath)
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		require.NoError(t, r.Close(), "failed closing repo")
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		t.Cleanup(cleanup)
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
+
+		ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
+		require.NoError(t, err)
+
+		headCommit, err := r.GetCommit(ref.Target())
+		require.NoError(t, err)
+
+		headTree, err := r.GetTree(headCommit.TreeID())
+		require.NoError(t, err)
+
+		sig := object.NewSignature("author", "author@domain.tld")
+		c, err := r.NewCommit(gitpath.LocalBranch(ginternals.Master), headTree, sig, &object.CommitOptions{
+			ParentsID: []ginternals.Oid{headCommit.ID()},
+			Message:   "new commit that doesn't do anything",
+		})
+		require.NoError(t, err)
+
+		// The commit should be findable
+		_, err = r.GetCommit(c.ID())
+		require.NoError(t, err)
+
+		// We update the ref since it should have changed
+		ref, err = r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
+		require.NoError(t, err)
+		assert.Equal(t, c.ID(), ref.Target())
 	})
 
-	ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
-	require.NoError(t, err)
+	t.Run("should fail if a parent is not a commit", func(t *testing.T) {
+		t.Parallel()
 
-	headCommit, err := r.GetCommit(ref.Target())
-	require.NoError(t, err)
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		t.Cleanup(cleanup)
 
-	headTree, err := r.GetTree(headCommit.TreeID())
-	require.NoError(t, err)
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
 
-	sig := object.NewSignature("author", "author@domain.tld")
-	c, err := r.NewCommit(gitpath.LocalBranch(ginternals.Master), headTree, sig, &object.CommitOptions{
-		ParentsID: []ginternals.Oid{headCommit.ID()},
-		Message:   "new commit that doesn't do anything",
+		ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
+		require.NoError(t, err)
+
+		headCommit, err := r.GetCommit(ref.Target())
+		require.NoError(t, err)
+
+		headTree, err := r.GetTree(headCommit.TreeID())
+		require.NoError(t, err)
+
+		sig := object.NewSignature("author", "author@domain.tld")
+		_, err = r.NewCommit(gitpath.LocalBranch(ginternals.Master), headTree, sig, &object.CommitOptions{
+			ParentsID: []ginternals.Oid{headTree.ID()},
+		})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "invalid type for parent")
 	})
-	require.NoError(t, err)
-
-	// The commit should be findable
-	_, err = r.GetCommit(c.ID())
-	require.NoError(t, err)
-
-	// We update the ref since it should have changed
-	ref, err = r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
-	require.NoError(t, err)
-	assert.Equal(t, c.ID(), ref.Target())
 }
 
 func TestRepositoryNewDetachedCommit(t *testing.T) {
