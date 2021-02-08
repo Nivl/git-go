@@ -16,9 +16,6 @@ jobs:
           response="${response//$'\r'/'%0D'}"
           echo "::set-output name=response::${response}"
 
-      - name: Debug
-        run: echo ${{ startsWith(steps.codecov.outputs.response , "Valid!") }}
-
-      # - name: Set Failure Code
-      #   if: startsWith(steps.response , "Valid!")
-      #   run: exit 1
+      - name: Set Failure Code
+        if: "!startsWith(steps.codecov.outputs.response , 'Valid!')"
+        run: exit 1
