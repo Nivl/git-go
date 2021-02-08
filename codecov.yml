@@ -17,7 +17,8 @@ coverage:
         paths:
           - "!cmd/"
       cli:
-        paths: "cmd/"
+        paths:
+          - "cmd/"
 
     patch:
       default:
