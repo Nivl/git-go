@@ -17,10 +17,7 @@ jobs:
           echo "::set-output name=response::${response}"
 
       - name: Debug
-        run: echo ${{ steps.codecov.outputs.response }}
-
-      # - name: Debug
-      #   run: echo ${{ startsWith(steps.response , "Valid!") }}
+        run: echo ${{ startsWith(steps.codecov.outputs.response , "Valid!") }}
 
       # - name: Set Failure Code
       #   if: startsWith(steps.response , "Valid!")
