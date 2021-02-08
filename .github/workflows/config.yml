@@ -8,11 +8,11 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Validate codecov.yml
-        id: response
-        run: curl --data-binary @codecov.yml https://codecov.io/validate
+        id: codecov
+        run: echo "::set-output name=response::$(curl --data-binary @codecov.yml https://codecov.io/validate)"
 
       - name: Debug
-        run: echo ${{ steps.response.outputs }}
+        run: echo ${{ steps.codecov.outputs.response.value }}
 
       # - name: Debug
       #   run: echo ${{ startsWith(steps.response , "Valid!") }}
