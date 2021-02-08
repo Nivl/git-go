@@ -9,7 +9,12 @@ jobs:
 
       - name: Validate codecov.yml
         id: codecov
-        run: echo "::set-output name=response::'$(curl --data-binary @codecov.yml https://codecov.io/validate)'"
+        run: |
+          response=$(curl --data-binary @codecov.yml https://codecov.io/validate)
+          response="${response//'%'/'%25'}"
+          response="${response//$'\n'/%0A}"
+          response="${response//$'\r'/'%0D'}"
+          echo "::set-output name=response::${response}"
 
       - name: Debug
         run: echo ${{ steps.codecov.outputs.response }}
