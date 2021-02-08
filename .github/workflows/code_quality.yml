@@ -1,17 +1,6 @@
-name: Go
+name: Code Quality
 on: [push]
 jobs:
-  go-vulnerabilities-scan:
-    name: "Golang Vulnerabilities Scan"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
-      - name: Generate go.list
-        run: go list -json -m all > go.list
-      - name: Run Nancy
-        uses: sonatype-nexus-community/nancy-github-action@main
-
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -20,7 +9,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
-          version: v1.34
+          version: v1.36
 
   build:
     name: Build
