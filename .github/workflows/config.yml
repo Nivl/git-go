@@ -12,7 +12,7 @@ jobs:
         run: echo "::set-output name=response::$(curl --data-binary @codecov.yml https://codecov.io/validate)"
 
       - name: Debug
-        run: echo ${{ steps.codecov.outputs.response.value }}
+        run: echo ${{ steps.codecov.outputs.response }}
 
       # - name: Debug
       #   run: echo ${{ startsWith(steps.response , "Valid!") }}
