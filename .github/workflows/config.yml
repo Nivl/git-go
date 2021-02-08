@@ -1,0 +1,23 @@
+name: Config Validation
+on: [push]
+jobs:
+  codecov:
+    name: "Codecov.yml"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Validate codecov.yml
+        id: codecov
+        run: |
+          response=$(curl --data-binary @codecov.yml https://codecov.io/validate)
+          response="${response//'%'/'%25'}"
+          response="${response//$'\n'/%0A}"
+          response="${response//$'\r'/'%0D'}"
+          echo "::set-output name=response::${response}"
+
+      - name: Set Failure Code
+        if: "!startsWith(steps.codecov.outputs.response , 'Valid!')"
+        run: |
+          echo "${{ steps.codecov.outputs.response }}"
+          exit 1

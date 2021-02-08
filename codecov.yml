@@ -3,8 +3,25 @@ ignore:
   - "cmd/git-go/main.go"
   - "internal/testhelper"
 
+codecov:
+  notify:
+    after_n_builds: 3
+
 coverage:
+  range: "50...90"
+
   status:
+    project:
+      default: false
+      library:
+        paths:
+          - "!cmd/"
+      cli:
+        paths:
+          - "cmd/"
+
     patch:
-      default:
+      library:
+        threshold: 70%
+      cli:
         threshold: 70%
