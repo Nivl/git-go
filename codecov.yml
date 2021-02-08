@@ -21,5 +21,7 @@ coverage:
           - "cmd/"
 
     patch:
-      default:
+      library:
+        threshold: 70%
+      cli:
         threshold: 70%
