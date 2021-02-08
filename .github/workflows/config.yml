@@ -18,4 +18,6 @@ jobs:
 
       - name: Set Failure Code
         if: "!startsWith(steps.codecov.outputs.response , 'Valid!')"
-        run: exit 1
+        run: |
+          echo "${{ steps.codecov.outputs.response }}"
+          exit 1
