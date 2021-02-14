@@ -42,8 +42,8 @@ type Backend interface {
 	HasObject(ginternals.Oid) (bool, error)
 	// WriteObject adds an object to the odb
 	WriteObject(*object.Object) (ginternals.Oid, error)
-	// WalkObjectIDs runs the provided method on all the objects ids
-	WalkObjectIDs(f packfile.OidWalkFunc) error
+	// WalkPackedObjectIDs runs the provided method on all the objects ids
+	WalkPackedObjectIDs(f packfile.OidWalkFunc) error
 }
 
 // RefWalkFunc represents a function that will be applied on all references
