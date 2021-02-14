@@ -266,7 +266,7 @@ func TestWriteObject(t *testing.T) {
 	})
 }
 
-func TestWalkObjectIDs(t *testing.T) {
+func TestWalkPackedObjectIDs(t *testing.T) {
 	t.Parallel()
 
 	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
@@ -282,7 +282,7 @@ func TestWalkObjectIDs(t *testing.T) {
 		t.Parallel()
 
 		totalObject := 0
-		err := b.WalkObjectIDs(func(oid ginternals.Oid) error {
+		err := b.WalkPackedObjectIDs(func(oid ginternals.Oid) error {
 			totalObject++
 			return nil
 		})
@@ -294,7 +294,7 @@ func TestWalkObjectIDs(t *testing.T) {
 		t.Parallel()
 
 		totalObject := 0
-		err := b.WalkObjectIDs(func(oid ginternals.Oid) error {
+		err := b.WalkPackedObjectIDs(func(oid ginternals.Oid) error {
 			if totalObject == 4 {
 				return packfile.OidWalkStop
 			}
@@ -310,7 +310,7 @@ func TestWalkObjectIDs(t *testing.T) {
 
 		someErr := errors.New("some error")
 		totalObject := 0
-		err := b.WalkObjectIDs(func(oid ginternals.Oid) error {
+		err := b.WalkPackedObjectIDs(func(oid ginternals.Oid) error {
 			if totalObject == 4 {
 				return someErr
 			}

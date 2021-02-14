@@ -253,9 +253,9 @@ func (b *Backend) WriteObject(o *object.Object) (ginternals.Oid, error) {
 	return o.ID(), nil
 }
 
-// WalkObjectIDs runs the provided method on all the oids of all the
+// WalkPackedObjectIDs runs the provided method on all the oids of all the
 // packfiles
-func (b *Backend) WalkObjectIDs(f packfile.OidWalkFunc) error {
+func (b *Backend) WalkPackedObjectIDs(f packfile.OidWalkFunc) error {
 	for _, pack := range b.packfiles {
 		if err := pack.WalkOids(f); err != nil {
 			return err
