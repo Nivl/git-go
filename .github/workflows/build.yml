@@ -1,16 +1,6 @@
-name: Code Quality
+name: Build
 on: [push]
 jobs:
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
-        with:
-          version: v1.36
-
   build:
     name: Build
     runs-on: ${{ matrix.os }}
@@ -18,11 +8,6 @@ jobs:
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
     steps:
-      - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.7.0
-        with:
-          access_token: ${{ github.token }}
-
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
 
@@ -36,11 +21,6 @@ jobs:
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
     steps:
-      - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.7.0
-        with:
-          access_token: ${{ github.token }}
-
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
 
