@@ -58,10 +58,10 @@ blob
 #### Other useful commands to look at an object
 
 ```
-❯ git show sha # works with everything
+❯ git show sha    # works with everything
 ❯ git ls-tree sha # for trees only
-❯ git log sha # for commits only
-❯ git fcsk # To verify and validate all objects
+❯ git log sha     # for commits only
+❯ git fcsk        # To verify and validate all objects
 ```
 
 ## Packfile
@@ -80,9 +80,9 @@ blob
   - You add a trailing new line at the end of main.go, git add the changes then commit.
   - You now have 2 blobs objects that are similar at 99%, and this one byte you added to main.go is costing you a lot of disk space.
   - Once put in the packfile, the second object will only contain deltas instead of the full content, reducing its size to only a few bytes.
-- Packfiles come in pair with an index file (.idx). The index contains offsets into that packfile so you can quickly seek to a specific object (more about the format of the index).
-- Git will automatically move objects inside a packfile from times to times (when you push or pull for example).
-- You can manually move all packable dangling objects inside a packfile by running git gc. It’s totally safe to manually run, no side effects should happen.
+- Packfiles come in pairs with an index file (.idx). The index contains offsets into that packfile so you can quickly seek to a specific object.
+- Git will automatically move objects inside a packfile from time to time (when you push or pull for example).
+- You can manually move all packable loose objects inside a packfile by running `git gc`. It’s totally safe to manually run it, no side effects should happen.
 
 ### Investigating/Debugging Packfiles
 
