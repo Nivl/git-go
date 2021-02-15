@@ -2,6 +2,7 @@ package fsbackend
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -321,4 +322,106 @@ func TestWalkPackedObjectIDs(t *testing.T) {
 		assert.ErrorIs(t, err, someErr)
 		assert.Equal(t, 4, totalObject)
 	})
+}
+
+func TestLoosePackedObjectIDs(t *testing.T) {
+	t.Parallel()
+
+	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+	t.Cleanup(cleanup)
+	dotGitPath := filepath.Join(repoPath, gitpath.DotGitPath)
+	b, err := New(dotGitPath)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, b.Close())
+	})
+
+	t.Run("Should return all the objects", func(t *testing.T) {
+		t.Parallel()
+
+		totalObject := 0
+		err := b.WalkLooseObjectIDs(func(oid ginternals.Oid) error {
+			totalObject++
+			return nil
+		})
+		assert.NoError(t, err)
+		assert.GreaterOrEqual(t, totalObject, 2)
+	})
+
+	t.Run("Should stop the walk", func(t *testing.T) {
+		t.Parallel()
+
+		totalObject := 0
+		err := b.WalkLooseObjectIDs(func(oid ginternals.Oid) error {
+			totalObject++
+			return packfile.OidWalkStop
+		})
+		assert.NoError(t, err)
+		assert.Equal(t, 1, totalObject)
+	})
+
+	t.Run("Should propage an error", func(t *testing.T) {
+		t.Parallel()
+
+		someErr := errors.New("some error")
+		err := b.WalkLooseObjectIDs(func(oid ginternals.Oid) error {
+			return someErr
+		})
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, someErr)
+	})
+}
+
+func TestIsLooseObjectDir(t *testing.T) {
+	t.Parallel()
+
+	dir, cleanup := testhelper.TempDir(t)
+	t.Cleanup(cleanup)
+
+	b, err := New(filepath.Join(dir, gitpath.DotGitPath))
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, b.Close())
+	})
+
+	t.Run("Any directory from 00 to ff should be valid", func(t *testing.T) {
+		t.Parallel()
+
+		for i := int64(0); i < 256; i++ {
+			hex := fmt.Sprintf("%02x", 255)
+			assert.True(t, b.isLooseObjectDir(hex), "%s (%d) should pass", hex, i)
+		}
+	})
+
+	shouldFail := true
+	testCases := []struct {
+		desc     string
+		name     string
+		expected bool
+	}{
+		{
+			desc:     "Should fail with a name too long",
+			name:     "fff",
+			expected: shouldFail,
+		},
+		{
+			desc:     "Should fail with a name too short",
+			name:     "f",
+			expected: shouldFail,
+		},
+		{
+			desc:     "Should fail with an invalid hex",
+			name:     "gg",
+			expected: shouldFail,
+		},
+	}
+	for i, tc := range testCases {
+		tc := tc
+		i := i
+		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, !b.isLooseObjectDir(tc.name), tc.expected)
+		})
+	}
 }

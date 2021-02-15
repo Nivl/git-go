@@ -71,12 +71,15 @@ func (b *Backend) looseObjectPath(sha string) string {
 // character, then the body of the object
 // TODO(melvin): Move to ginternals (NewFromLoose or something)
 func (b *Backend) looseObject(oid ginternals.Oid) (o *object.Object, err error) {
-	strOid := oid.String()
+	if _, exists := b.looseObjects.Load(oid); !exists {
+		return nil, os.ErrNotExist
+	}
 
+	strOid := oid.String()
 	p := b.looseObjectPath(strOid)
 	f, err := b.fs.Open(p)
 	if err != nil {
-		return nil, xerrors.Errorf("could not find object %s at path %s: %w", strOid, p, err)
+		return nil, xerrors.Errorf("could not get object %s at path %s: %w", strOid, p, err)
 	}
 	defer errutil.Close(f, &err)
 
@@ -247,6 +250,7 @@ func (b *Backend) WriteObject(o *object.Object) (ginternals.Oid, error) {
 	}
 
 	// add the object to the cache
+	b.looseObjects.Store(o.ID(), struct{}{})
 	if b.cache != nil {
 		b.cache.Add(o.ID(), o)
 	}
@@ -262,4 +266,76 @@ func (b *Backend) WalkPackedObjectIDs(f packfile.OidWalkFunc) error {
 		}
 	}
 	return nil
+}
+
+// loadLooseObject loads the loose object in memory
+func (b *Backend) loadLooseObject() error {
+	p := filepath.Join(b.root, gitpath.ObjectsPath)
+	return afero.Walk(b.fs, p, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			// in case of error we just skip it and move on.
+			// this will happen if the repo is empty and the ./objects
+			// folder doesn't exists
+			return nil
+		}
+		if path == p {
+			return nil
+		}
+
+		// We're interested in all the directory that are named "00"
+		// up to "ff"
+		if info.IsDir() {
+			if !b.isLooseObjectDir(info.Name()) {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		// We're only interested in the files inside a loose object
+		// directory
+		prefix := filepath.Base(filepath.Dir(path))
+		if !b.isLooseObjectDir(prefix) {
+			return filepath.SkipDir
+		}
+
+		if filepath.Ext(info.Name()) != "" {
+			return filepath.SkipDir
+		}
+
+		sha := prefix + info.Name()
+		oid, err := ginternals.NewOidFromStr(sha)
+		if err != nil {
+			return xerrors.Errorf("could not get oid from %s: %w", sha, err)
+		}
+		b.looseObjects.Store(oid, struct{}{})
+		return nil
+	})
+}
+
+// isLooseObjectDir checks if a directory name is anything between 00 and ff
+func (b *Backend) isLooseObjectDir(name string) bool {
+	if len(name) != 2 {
+		return false
+	}
+	dirNum, parseErr := strconv.ParseInt(name, 16, 64)
+	if parseErr != nil || dirNum < 0x00 || dirNum > 0xff {
+		return false
+	}
+	return true
+}
+
+// WalkLooseObjectIDs runs the provided method on all the oids of all the
+// packfiles
+func (b *Backend) WalkLooseObjectIDs(f packfile.OidWalkFunc) (err error) {
+	b.looseObjects.Range(func(key, value interface{}) bool {
+		err = f(key.(ginternals.Oid))
+		if err != nil {
+			if err == packfile.OidWalkStop { //nolint:errorlint,goerr113 // it's a fake error so no need to use Error.Is()
+				err = nil
+			}
+			return false
+		}
+		return true
+	})
+	return err
 }

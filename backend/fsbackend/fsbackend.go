@@ -28,14 +28,13 @@ type Backend struct {
 	fs   afero.Fs
 	root string
 
-	objectMu *syncutil.NamedMutex
-	cache    *cache.LRU
+	objectMu     *syncutil.NamedMutex
+	cache        *cache.LRU
+	looseObjects *sync.Map
 
 	packfiles map[ginternals.Oid]*packfile.Pack
 
-	// refMu sync.RWMutex
 	refs *sync.Map
-	// refs  map[string][]byte
 }
 
 // New returns a new Backend object
@@ -45,22 +44,28 @@ func New(dotGitPath string) (*Backend, error) {
 		return nil, xerrors.Errorf("could not create LRU cache: %w", err)
 	}
 	b := &Backend{
-		fs:        afero.NewOsFs(),
-		root:      dotGitPath,
-		cache:     c,
-		objectMu:  syncutil.NewNamedMutex(101),
-		packfiles: map[ginternals.Oid]*packfile.Pack{},
-		refs:      &sync.Map{},
+		fs:           afero.NewOsFs(),
+		root:         dotGitPath,
+		cache:        c,
+		objectMu:     syncutil.NewNamedMutex(101),
+		packfiles:    map[ginternals.Oid]*packfile.Pack{},
+		refs:         &sync.Map{},
+		looseObjects: &sync.Map{},
 	}
 
 	// we load a few things in memory
 	var loadRefsErr error
 	var loadPackErr error
+	var loadLooseObjectErr error
 	wg := sync.WaitGroup{}
-	wg.Add(2)
+	wg.Add(3)
 	go func() {
 		defer wg.Done()
 		loadRefsErr = b.loadRefs()
+	}()
+	go func() {
+		defer wg.Done()
+		loadLooseObjectErr = b.loadLooseObject()
 	}()
 	go func() {
 		defer wg.Done()
@@ -73,6 +78,9 @@ func New(dotGitPath string) (*Backend, error) {
 	}
 	if loadPackErr != nil {
 		return nil, xerrors.Errorf("could not load packs: %w", loadPackErr)
+	}
+	if loadLooseObjectErr != nil {
+		return nil, xerrors.Errorf("could not load loose objects: %w", loadLooseObjectErr)
 	}
 
 	return b, nil
