@@ -1,6 +1,16 @@
-name: Config Validation
+name: Linter
 on: [push]
 jobs:
+  lint:
+    name: Go Code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.36
+
   codecov:
     name: "Codecov.yml"
     runs-on: ubuntu-latest
