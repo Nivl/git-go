@@ -1,4 +1,7 @@
-[![codecov](https://codecov.io/gh/Nivl/git-go/branch/main/graph/badge.svg?token=I0YC2EHRHB)](https://codecov.io/gh/Nivl/git-go) [![Go Reference](https://pkg.go.dev/badge/github.com/Nivl/git-go@main.svg)](https://pkg.go.dev/github.com/Nivl/git-go@main)
+[![Go Reference](https://pkg.go.dev/badge/github.com/Nivl/git-go@main.svg)](https://pkg.go.dev/github.com/Nivl/git-go@main)
+[![codecov](https://codecov.io/gh/Nivl/git-go/branch/main/graph/badge.svg?token=I0YC2EHRHB)](https://codecov.io/gh/Nivl/git-go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Nivl/git-go)](https://goreportcard.com/report/github.com/Nivl/git-go)
+[![Build Workflow](https://github.com/Nivl/git-go/workflows/Build/badge.svg)](https://github.com/Nivl/git-go/actions?query=workflow%3ABuild)
 
 # git-go
 
