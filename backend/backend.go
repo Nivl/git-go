@@ -44,6 +44,8 @@ type Backend interface {
 	WriteObject(*object.Object) (ginternals.Oid, error)
 	// WalkPackedObjectIDs runs the provided method on all the objects ids
 	WalkPackedObjectIDs(f packfile.OidWalkFunc) error
+	// WalkLooseObjectIDs runs the provided method on all the loose ids
+	WalkLooseObjectIDs(f packfile.OidWalkFunc) error
 }
 
 // RefWalkFunc represents a function that will be applied on all references
