@@ -3,6 +3,7 @@ package fsbackend
 import (
 	"compress/zlib"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"strconv"

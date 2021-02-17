@@ -3,6 +3,7 @@ package exe
 
 import (
 	"errors"
+	"io"
 	"os/exec"
 	"strings"
 )
