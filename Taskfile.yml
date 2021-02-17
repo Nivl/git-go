@@ -3,7 +3,7 @@ version: "2"
 tasks:
   build:
     cmds:
-      - CGO_ENABLED=0 go build -i -v -o ./bin/git github.com/Nivl/git-go/cmd/git-go
+      - CGO_ENABLED=0 go build -v -o ./bin/git github.com/Nivl/git-go/cmd/git-go
 
   install:
     cmds:

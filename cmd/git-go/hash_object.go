@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/spf13/cobra"

@@ -3,6 +3,7 @@
 package fsbackend
 
 import (
+	"os"
 	"path/filepath"
 	"sync"
 
