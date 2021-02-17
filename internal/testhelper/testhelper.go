@@ -2,7 +2,6 @@
 package testhelper
 
 import (
-	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
@@ -12,7 +11,7 @@ import (
 
 // TempDir creates a temp dir and returns a cleanup method
 func TempDir(t *testing.T) (out string, cleanup func()) {
-	out, err := ioutil.TempDir("", strings.ReplaceAll(t.Name(), "/", "_")+"_")
+	out, err := os.MkdirTemp("", strings.ReplaceAll(t.Name(), "/", "_")+"_")
 	require.NoError(t, err)
 
 	cleanup = func() {
@@ -23,7 +22,7 @@ func TempDir(t *testing.T) (out string, cleanup func()) {
 
 // TempFile creates a temp file and returns a cleanup method
 func TempFile(t *testing.T) (out *os.File, cleanup func()) {
-	out, err := ioutil.TempFile("", strings.ReplaceAll(t.Name(), "/", "_")+"_")
+	out, err := os.CreateTemp("", strings.ReplaceAll(t.Name(), "/", "_")+"_")
 	require.NoError(t, err)
 
 	cleanup = func() {

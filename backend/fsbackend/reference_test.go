@@ -2,7 +2,6 @@ package fsbackend
 
 import (
 	"errors"
-	"io/ioutil"
 	"path/filepath"
 	"testing"
 
@@ -119,7 +118,7 @@ func TestParsePackedRefs(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		fPath := filepath.Join(dir, gitpath.PackedRefsPath)
-		err := ioutil.WriteFile(fPath, []byte("not valid data"), 0o644)
+		err := os.WriteFile(fPath, []byte("not valid data"), 0o644)
 		require.NoError(t, err)
 
 		_, err = New(dir)
@@ -134,7 +133,7 @@ func TestParsePackedRefs(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		fPath := filepath.Join(dir, gitpath.PackedRefsPath)
-		err := ioutil.WriteFile(fPath, []byte("^de111c003b5661db802f17ac69419dcb9f4f3137\n# this is a comment"), 0o644)
+		err := os.WriteFile(fPath, []byte("^de111c003b5661db802f17ac69419dcb9f4f3137\n# this is a comment"), 0o644)
 		require.NoError(t, err)
 
 		_, err = New(dir)
@@ -204,7 +203,7 @@ func TestWriteReference(t *testing.T) {
 		err = b.WriteReference(ref)
 		require.NoError(t, err)
 
-		data, err := ioutil.ReadFile(filepath.Join(b.root, "HEAD"))
+		data, err := os.ReadFile(filepath.Join(b.root, "HEAD"))
 		require.NoError(t, err)
 		assert.Equal(t, "ref: refs/heads/master\n", string(data))
 	})
@@ -228,7 +227,7 @@ func TestWriteReference(t *testing.T) {
 		err = b.WriteReference(ref)
 		require.NoError(t, err)
 
-		data, err := ioutil.ReadFile(filepath.Join(b.root, "HEAD"))
+		data, err := os.ReadFile(filepath.Join(b.root, "HEAD"))
 		require.NoError(t, err)
 		assert.Equal(t, target.String()+"\n", string(data))
 	})
@@ -265,7 +264,7 @@ func TestWriteReference(t *testing.T) {
 		})
 
 		// assert current data on disk
-		data, err := ioutil.ReadFile(filepath.Join(b.root, "HEAD"))
+		data, err := os.ReadFile(filepath.Join(b.root, "HEAD"))
 		require.NoError(t, err)
 		assert.Equal(t, "ref: refs/heads/ml/packfile/tests\n", string(data))
 
@@ -273,7 +272,7 @@ func TestWriteReference(t *testing.T) {
 		err = b.WriteReference(ref)
 		require.NoError(t, err)
 
-		data, err = ioutil.ReadFile(filepath.Join(b.root, "HEAD"))
+		data, err = os.ReadFile(filepath.Join(b.root, "HEAD"))
 		require.NoError(t, err)
 		assert.Equal(t, "ref: refs/heads/master\n", string(data))
 	})
@@ -291,7 +290,7 @@ func TestWriteReference(t *testing.T) {
 		})
 
 		// assert current data on disk
-		data, err := ioutil.ReadFile(filepath.Join(b.root, "HEAD"))
+		data, err := os.ReadFile(filepath.Join(b.root, "HEAD"))
 		require.NoError(t, err)
 		assert.Equal(t, "ref: refs/heads/ml/packfile/tests\n", string(data))
 
@@ -301,7 +300,7 @@ func TestWriteReference(t *testing.T) {
 		err = b.WriteReference(ref)
 		require.NoError(t, err)
 
-		data, err = ioutil.ReadFile(filepath.Join(b.root, "HEAD"))
+		data, err = os.ReadFile(filepath.Join(b.root, "HEAD"))
 		require.NoError(t, err)
 		assert.Equal(t, target.String()+"\n", string(data))
 	})
@@ -328,7 +327,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 		require.NoError(t, err)
 
 		// Let's make sure the data changed on disk
-		data, err := ioutil.ReadFile(filepath.Join(b.root, "refs", "heads", "my_feature"))
+		data, err := os.ReadFile(filepath.Join(b.root, "refs", "heads", "my_feature"))
 		require.NoError(t, err)
 		assert.Equal(t, "ref: refs/heads/master\n", string(data))
 	})
@@ -353,7 +352,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 		require.NoError(t, err)
 
 		// Let's make sure the data changed on disk
-		data, err := ioutil.ReadFile(filepath.Join(b.root, "refs", "heads", "my_feature"))
+		data, err := os.ReadFile(filepath.Join(b.root, "refs", "heads", "my_feature"))
 		require.NoError(t, err)
 		assert.Equal(t, target.String()+"\n", string(data))
 	})
@@ -390,7 +389,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 		})
 
 		// assert current data on disk
-		data, err := ioutil.ReadFile(filepath.Join(b.root, "HEAD"))
+		data, err := os.ReadFile(filepath.Join(b.root, "HEAD"))
 		require.NoError(t, err)
 		assert.Equal(t, "ref: refs/heads/ml/packfile/tests\n", string(data))
 
@@ -400,7 +399,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 		require.True(t, xerrors.Is(err, ginternals.ErrRefExists), "unexpected error")
 
 		// let's make sure the data have not changed
-		data, err = ioutil.ReadFile(filepath.Join(b.root, "HEAD"))
+		data, err = os.ReadFile(filepath.Join(b.root, "HEAD"))
 		require.NoError(t, err)
 		assert.Equal(t, "ref: refs/heads/ml/packfile/tests\n", string(data))
 	})
@@ -418,7 +417,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 		})
 
 		// assert current data on disk (there are none)
-		_, err = ioutil.ReadFile(filepath.Join(b.root, "refs", "heads", "master"))
+		_, err = os.ReadFile(filepath.Join(b.root, "refs", "heads", "master"))
 		require.Error(t, err)
 
 		ref := ginternals.NewSymbolicReference("refs/heads/master", "refs/heads/branch")
@@ -427,7 +426,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 		require.True(t, xerrors.Is(err, ginternals.ErrRefExists), "unexpected error")
 
 		// Let's make sure the data have not been persisted
-		_, err = ioutil.ReadFile(filepath.Join(b.root, "refs", "heads", "master"))
+		_, err = os.ReadFile(filepath.Join(b.root, "refs", "heads", "master"))
 		require.Error(t, err)
 	})
 }

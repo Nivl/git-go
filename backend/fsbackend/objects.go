@@ -3,7 +3,6 @@ package fsbackend
 import (
 	"compress/zlib"
 	"errors"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -92,7 +91,7 @@ func (b *Backend) looseObject(oid ginternals.Oid) (o *object.Object, err error) 
 
 	// We directly read the entire file since most of it is the content we
 	// need, this allows us to be able to easily store the object's content
-	buff, err := ioutil.ReadAll(zlibReader)
+	buff, err := io.ReadAll(zlibReader)
 	if err != nil {
 		return nil, xerrors.Errorf("could not read object %s at path %s: %w", strOid, p, err)
 	}

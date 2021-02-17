@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 
 	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/spf13/cobra"
@@ -27,7 +26,7 @@ func newHashObjectCmd() *cobra.Command {
 }
 
 func hashObjectCmd(out io.Writer, filePath, typ string) error {
-	content, err := ioutil.ReadFile(filePath)
+	content, err := os.ReadFile(filePath)
 	if err != nil {
 		return err
 	}

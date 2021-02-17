@@ -2,7 +2,6 @@ package object_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"path/filepath"
 	"testing"
 
@@ -25,7 +24,7 @@ func TestTree(t *testing.T) {
 		require.NoError(t, err)
 
 		testFile := fmt.Sprintf("tree_%s", treeSHA)
-		content, err := ioutil.ReadFile(filepath.Join(testhelper.TestdataPath(t), testFile))
+		content, err := os.ReadFile(filepath.Join(testhelper.TestdataPath(t), testFile))
 		require.NoError(t, err)
 
 		o := object.New(object.TypeTree, content)

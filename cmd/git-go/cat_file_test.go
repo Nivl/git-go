@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -184,13 +183,13 @@ func TestCatFile(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			out, err := ioutil.ReadAll(outBuf)
+			out, err := io.ReadAll(outBuf)
 			require.NoError(t, err)
 
 			expected := tc.expectedOutput
 			if strings.HasPrefix(tc.expectedOutput, "file://") {
 				filename := strings.TrimPrefix(tc.expectedOutput, "file://")
-				content, err := ioutil.ReadFile(filepath.Join(testhelper.TestdataPath(t), filename))
+				content, err := os.ReadFile(filepath.Join(testhelper.TestdataPath(t), filename))
 				require.NoError(t, err)
 				expected = string(content)
 			}
