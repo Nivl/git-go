@@ -1,6 +1,6 @@
 module github.com/Nivl/git-go
 
-go 1.15
+go 1.16
 
 require (
 	github.com/gogf/gf v1.15.3
