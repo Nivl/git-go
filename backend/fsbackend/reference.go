@@ -3,6 +3,7 @@ package fsbackend
 import (
 	"bufio"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -76,7 +77,7 @@ func (b *Backend) loadRefs() (err error) {
 	// Now we browse all the references on disk
 	// TODO(melvin): Do we really want to stop if we cannot parse one file?
 	refsPath := filepath.Join(b.root, gitpath.RefsPath)
-	err = afero.Walk(b.fs, refsPath, func(path string, info os.FileInfo, e error) error {
+	err = afero.Walk(b.fs, refsPath, func(path string, info fs.FileInfo, e error) error {
 		// if refsPath doesn't exists this will return nil and skip the error
 		// this is useful in case where the repo is empty and has no
 		// references yet
