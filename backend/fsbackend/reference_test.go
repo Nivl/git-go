@@ -2,6 +2,7 @@ package fsbackend
 
 import (
 	"errors"
+	"os"
 	"path/filepath"
 	"testing"
 

@@ -3,6 +3,7 @@ package object_test
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"path/filepath"
 	"testing"
 
