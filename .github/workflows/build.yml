@@ -9,7 +9,12 @@ jobs:
         os: [macos-latest, windows-latest, ubuntu-latest]
     steps:
       - uses: actions/checkout@v2
+
+      - name: Get Go version
+        run: echo "GO_VERSION=^$(grep 'go \d\.' go.mod | cut -d ' ' -f 2)" >> $GITHUB_ENV
       - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
 
       - name: Build
         run: go build -race ./...
@@ -22,9 +27,12 @@ jobs:
         os: [macos-latest, windows-latest, ubuntu-latest]
     steps:
       - uses: actions/checkout@v2
+
+      - name: Get Go version
+        run: echo "GO_VERSION=^$(grep 'go \d\.' go.mod | cut -d ' ' -f 2)" >> $GITHUB_ENV
       - uses: actions/setup-go@v2
         with:
-          go-version: "^1.16"
+          go-version: ${{ env.GO_VERSION }}
 
       - name: Test
         run: go test -race -timeout 3m -coverprofile coverage.txt ./...
