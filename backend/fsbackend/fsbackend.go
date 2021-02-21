@@ -3,7 +3,7 @@
 package fsbackend
 
 import (
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"sync"
 
@@ -131,7 +131,7 @@ func (b *Backend) Init() error {
 	}
 	for _, f := range files {
 		fullPath := filepath.Join(b.root, f.path)
-		if err := ioutil.WriteFile(fullPath, f.content, 0o644); err != nil {
+		if err := os.WriteFile(fullPath, f.content, 0o644); err != nil {
 			return xerrors.Errorf("could not create file %s: %w", f, err)
 		}
 	}

@@ -1,7 +1,6 @@
 package fsbackend_test
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -59,7 +58,7 @@ func TestInit(t *testing.T) {
 		require.NoError(t, err)
 
 		// create a file
-		err = ioutil.WriteFile(filepath.Join(dir, gitpath.DescriptionPath), []byte{}, 0o644)
+		err = os.WriteFile(filepath.Join(dir, gitpath.DescriptionPath), []byte{}, 0o644)
 		require.NoError(t, err)
 
 		b, err := fsbackend.New(dir)
@@ -105,7 +104,7 @@ func TestInit(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		// create a file
-		err := ioutil.WriteFile(filepath.Join(dir, gitpath.DescriptionPath), []byte{}, 0o444)
+		err := os.WriteFile(filepath.Join(dir, gitpath.DescriptionPath), []byte{}, 0o444)
 		require.NoError(t, err)
 
 		b, err := fsbackend.New(dir)

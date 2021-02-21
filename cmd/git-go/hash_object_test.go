@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"path/filepath"
 	"testing"
 
@@ -36,7 +36,7 @@ func TestHashObjectCmd(t *testing.T) {
 				err = cmd.Execute()
 			})
 			require.NoError(t, err)
-			out, err := ioutil.ReadAll(outBuf)
+			out, err := io.ReadAll(outBuf)
 			require.NoError(t, err)
 
 			assert.Equal(t, "642480605b8b0fd464ab5762e044269cf29a60a3\n", string(out))
@@ -59,7 +59,7 @@ func TestHashObjectCmd(t *testing.T) {
 				err = cmd.Execute()
 			})
 			require.NoError(t, err)
-			out, err := ioutil.ReadAll(outBuf)
+			out, err := io.ReadAll(outBuf)
 			require.NoError(t, err)
 
 			assert.Equal(t, "286db5050f814069644960e6cc7589c386053c6c\n", string(out))
@@ -86,7 +86,7 @@ func TestHashObjectCmd(t *testing.T) {
 				err = cmd.Execute()
 			})
 			require.NoError(t, err)
-			out, err := ioutil.ReadAll(outBuf)
+			out, err := io.ReadAll(outBuf)
 			require.NoError(t, err)
 
 			assert.Equal(t, "2651fee5e238156738bc05ed1b558fdc9dc56fde\n", string(out))
@@ -111,7 +111,7 @@ func TestHashObjectCmd(t *testing.T) {
 			require.Error(t, err)
 
 			// let's make sure we have mo content
-			out, err := ioutil.ReadAll(outBuf)
+			out, err := io.ReadAll(outBuf)
 			require.NoError(t, err)
 			assert.Empty(t, string(out))
 		})
@@ -137,7 +137,7 @@ func TestHashObjectCmd(t *testing.T) {
 				err = cmd.Execute()
 			})
 			require.NoError(t, err)
-			out, err := ioutil.ReadAll(outBuf)
+			out, err := io.ReadAll(outBuf)
 			require.NoError(t, err)
 
 			assert.Equal(t, "0499018e26f79d37ad056611b75730dcb12918fb\n", string(out))
@@ -162,7 +162,7 @@ func TestHashObjectCmd(t *testing.T) {
 			assert.Error(t, err)
 
 			// let's make sure we have mo content
-			out, err := ioutil.ReadAll(outBuf)
+			out, err := io.ReadAll(outBuf)
 			require.NoError(t, err)
 			assert.Empty(t, string(out))
 		})

@@ -1,7 +1,6 @@
 package pathutil_test
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -21,7 +20,7 @@ func TestRepoRootFromPath(t *testing.T) {
 		path, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		err := ioutil.WriteFile(filepath.Join(path, "HEAD"), []byte("ref: refs/heads/main"), 0o644)
+		err := os.WriteFile(filepath.Join(path, "HEAD"), []byte("ref: refs/heads/main"), 0o644)
 		require.NoError(t, err)
 
 		finalPath := filepath.Join(path, "a", "b", "c")

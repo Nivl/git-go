@@ -3,7 +3,8 @@ package fsbackend
 import (
 	"compress/zlib"
 	"errors"
-	"io/ioutil"
+	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -92,7 +93,7 @@ func (b *Backend) looseObject(oid ginternals.Oid) (o *object.Object, err error) 
 
 	// We directly read the entire file since most of it is the content we
 	// need, this allows us to be able to easily store the object's content
-	buff, err := ioutil.ReadAll(zlibReader)
+	buff, err := io.ReadAll(zlibReader)
 	if err != nil {
 		return nil, xerrors.Errorf("could not read object %s at path %s: %w", strOid, p, err)
 	}
@@ -140,7 +141,7 @@ func (b *Backend) looseObject(oid ginternals.Oid) (o *object.Object, err error) 
 // loadPacks loads the packfiles in memory
 func (b *Backend) loadPacks() error {
 	p := filepath.Join(b.root, gitpath.ObjectsPackPath)
-	return afero.Walk(b.fs, p, func(path string, info os.FileInfo, err error) error {
+	return afero.Walk(b.fs, p, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			// in case of error we just skip it and move on.
 			// this will happen if the repo is empty and the ./objects/pack
@@ -271,7 +272,7 @@ func (b *Backend) WalkPackedObjectIDs(f packfile.OidWalkFunc) error {
 // loadLooseObject loads the loose object in memory
 func (b *Backend) loadLooseObject() error {
 	p := filepath.Join(b.root, gitpath.ObjectsPath)
-	return afero.Walk(b.fs, p, func(path string, info os.FileInfo, err error) error {
+	return afero.Walk(b.fs, p, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			// in case of error we just skip it and move on.
 			// this will happen if the repo is empty and the ./objects

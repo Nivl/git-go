@@ -3,7 +3,7 @@ package exe
 
 import (
 	"errors"
-	"io/ioutil"
+	"io"
 	"os/exec"
 	"strings"
 )
@@ -38,12 +38,12 @@ func execCmd(cmd *exec.Cmd) (stdout, stderr string, err error) {
 	}
 
 	// we read all stderr to get the error message (if any)
-	stderrByte, err := ioutil.ReadAll(stderrReader)
+	stderrByte, err := io.ReadAll(stderrReader)
 	if err != nil {
 		return "", "", err
 	}
 	// we read all stdout to get the output of the script (if any)
-	stdoutByte, err := ioutil.ReadAll(stdoutReader)
+	stdoutByte, err := io.ReadAll(stdoutReader)
 	if err != nil {
 		return "", "", err
 	}
