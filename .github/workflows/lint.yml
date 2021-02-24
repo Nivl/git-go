@@ -15,7 +15,7 @@ jobs:
           go-version: ${{ steps.gover.outputs.value }}
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2.4.0
+        uses: golangci/golangci-lint-action@v2.5.0
         with:
           version: v1.37
 
