@@ -1,0 +1,36 @@
+version: 2.1
+
+orbs:
+  go: circleci/go@1.5.0
+  codecov: codecov/codecov@1.1.3
+
+workflows:
+  build:
+    jobs:
+      # - build:
+      #     matrix:
+      #       parameters:
+      #         platform: ["macos", "windows", "linux"]
+      #     steps:
+      #       - checkout
+      #       - go/load-cache
+      #       - go/mod-download
+      #       - go/save-cache
+
+      - test:
+          matrix:
+            parameters:
+              platform: ["macos", "windows", "linux"]
+          steps:
+            - checkout
+            - go/load-cache
+            - go/mod-download
+            - go/save-cache
+
+            - go/test:
+                covermode: atomic
+                race: true
+                parallel: 100
+
+            # - codecov/upload:
+            #   file: cover-source.out
