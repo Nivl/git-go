@@ -1,15 +1,30 @@
 version: 2.1
 
+executors:
+  linux:
+    docker:
+      - image: cimg/base:2020.01
+  macos:
+    macos:
+      xcode: 12.2.0
+  silicon:
+    macos:
+      xcode: 12.0.0-beta
+
 orbs:
+  win: circleci/windows@2.2.0
   go: circleci/go@1.5.0
   codecov: codecov/codecov@1.1.3
 
 jobs:
   test:
-    executor:
-      name: go/default
+    parameters:
+      os:
+        type: executor
+    executor: << parameters.os >>
     steps:
       - checkout
+      - go/install
       - go/load-cache
       - go/mod-download
       - go/save-cache
@@ -17,7 +32,7 @@ jobs:
       - go/test:
           covermode: atomic
           race: true
-          parallel: 100
+          parallel: "100"
 
 workflows:
   build:
@@ -25,17 +40,17 @@ workflows:
       - test:
           matrix:
             parameters:
-              platform: ["macos", "windows", "linux"]
-          steps:
-            - checkout
-            - go/load-cache
-            - go/mod-download
-            - go/save-cache
+              os: [macos, silicon, linux]
+# steps:
+#   - checkout
+#   - go/load-cache
+#   - go/mod-download
+#   - go/save-cache
 
-            - go/test:
-                covermode: atomic
-                race: true
-                parallel: 100
+#   - go/test:
+#       covermode: atomic
+#       race: true
+#       parallel: 100
 
-            # - codecov/upload:
-            #   file: cover-source.out
+# - codecov/upload:
+#   file: cover-source.out
