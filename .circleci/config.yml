@@ -19,7 +19,7 @@ jobs:
     steps:
       - checkout
       - go/install:
-          version: 1.16
+          version: "latest"
       - go/load-cache
       - go/mod-download
       - go/save-cache
