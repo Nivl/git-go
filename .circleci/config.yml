@@ -4,12 +4,6 @@ executors:
   linux:
     docker:
       - image: cimg/base:2020.01
-  macos:
-    macos:
-      xcode: 12.2.0
-  silicon:
-    macos:
-      xcode: 12.0.0-beta
 
 orbs:
   win: circleci/windows@2.2.0
@@ -24,7 +18,8 @@ jobs:
     executor: << parameters.os >>
     steps:
       - checkout
-      - go/install
+      - go/install:
+          version: 1.16
       - go/load-cache
       - go/mod-download
       - go/save-cache
@@ -40,7 +35,7 @@ workflows:
       - test:
           matrix:
             parameters:
-              os: [macos, silicon, linux]
+              os: [linux]
 # steps:
 #   - checkout
 #   - go/load-cache
