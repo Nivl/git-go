@@ -28,7 +28,7 @@ func newRootCmd() (*cobra.Command, error) {
 
 	cfg := &config{}
 	cfg.C = pathutil.NewDirPathFlagWithDefault(pwd)
-	cmd.PersistentFlags().VarP(cfg.C, "C", "C", "Run as if git was started in the provided path instead of the current working directory.")
+	cmd.PersistentFlags().VarS(cfg.C, "C", "C", "Run as if git was started in the provided path instead of the current working directory.")
 
 	// porcelain
 	cmd.AddCommand(newInitCmd(cfg))
