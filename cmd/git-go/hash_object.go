@@ -17,7 +17,7 @@ func newHashObjectCmd() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 	}
 
-	typ := cmd.Flags().StringP("type", "t", "blob", "Specify the type")
+	typ := cmd.Flags().StringS("type", "t", "blob", "Specify the type")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		return hashObjectCmd(cmd.OutOrStdout(), args[0], *typ)
