@@ -9,7 +9,13 @@ rules:
   # No release since Q3 2019 but still has some activity on Master.
   # Mainteners are NOT actively commenting on issues and PRs. Forks
   # are being made.
-  github.com/spf13/pflag: 18 months
+  #
+  # It's been replaced by cornfeedhobo/pflag but because of
+  # a bug in Go, we must keep spf13/pflag in go.mod.
+  #
+  # The bug should be fixed in Go 1.17
+  # Link: https://github.com/golang/go/issues/26904#issuecomment-785234200
+  github.com/spf13/pflag: 99 months
 
   # No release since the last August 2020, nothing wrong. We probably
   # don't need the package though.

@@ -24,13 +24,9 @@ func newCatFileCmd(cfg *config) *cobra.Command {
 		Args:  cobra.RangeArgs(1, 2),
 	}
 
-	// TODO(melvin): Only use short flags
-	// https://github.com/spf13/cobra/issues/679
-	// https://github.com/spf13/pflag/pull/171
-	// https://github.com/spf13/pflag/pull/256
-	typeOnly := cmd.Flags().BoolP("t", "t", false, "Instead of the content, show the object type identified by <object>.")
-	sizeOnly := cmd.Flags().BoolP("s", "s", false, "Instead of the content, show the object size identified by <object>.")
-	prettyPrint := cmd.Flags().BoolP("p", "p", false, "Pretty-print the contents of <object> based on its type.")
+	typeOnly := cmd.Flags().BoolS("type", "t", false, "Instead of the content, show the object type identified by <object>.")
+	sizeOnly := cmd.Flags().BoolS("size", "s", false, "Instead of the content, show the object size identified by <object>.")
+	prettyPrint := cmd.Flags().BoolS("pretty-print", "p", false, "Pretty-print the contents of <object> based on its type.")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		p := catFileParams{
