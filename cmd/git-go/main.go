@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/Nivl/git-go/internal/env"
 )
 
 func exitError(err error) {
@@ -11,11 +13,12 @@ func exitError(err error) {
 }
 
 func main() {
-	root, err := newRootCmd()
+	cwd, err := os.Getwd()
 	if err != nil {
 		exitError(err)
 	}
 
+	root := newRootCmd(cwd, env.NewFromOs())
 	if err = root.Execute(); err != nil {
 		exitError(err)
 	}

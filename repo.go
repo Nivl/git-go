@@ -51,6 +51,12 @@ type InitOptions struct {
 	// By default the filesystem will be used
 	// Setting this is useless if IsBare is set to true
 	WorkingTreeBackend afero.Fs
+	// GitDirPath represents the path to the .git directory
+	// Defaults to .git
+	GitDirPath string
+	// GitObjectDirPath represents the path to the .git/objects directory
+	// Defaults to .git/objects
+	GitObjectDirPath string
 }
 
 // InitRepository initialize a new git repository by creating the .git
@@ -129,6 +135,12 @@ type OpenOptions struct {
 	// By default the filesystem will be used
 	// Setting this is useless if IsBare is set to true
 	WorkingTreeBackend afero.Fs
+	// GitDirPath represents the path to the .git directory
+	// Defaults to .git
+	GitDirPath string
+	// GitObjectDirPath represents the path to the .git/objects directory
+	// Defaults to .git/objects
+	GitObjectDirPath string
 }
 
 // OpenRepository loads an existing git repository by reading its
