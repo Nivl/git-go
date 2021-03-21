@@ -25,7 +25,7 @@ func TestNewIndex(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		indexFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.idx"
-		indexFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, indexFileName)
+		indexFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPath, gitpath.ObjectsPackPath, indexFileName)
 		f, err := os.Open(indexFilePath)
 		require.NoError(t, err)
 		t.Cleanup(func() {
@@ -44,7 +44,7 @@ func TestNewIndex(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		indexFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.pack"
-		indexFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, indexFileName)
+		indexFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPath, gitpath.ObjectsPackPath, indexFileName)
 		f, err := os.Open(indexFilePath)
 		require.NoError(t, err)
 		t.Cleanup(func() {
@@ -68,7 +68,7 @@ func TestGetObjectOffset(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		indexFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.idx"
-		indexFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, indexFileName)
+		indexFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPath, gitpath.ObjectsPackPath, indexFileName)
 		f, err := os.Open(indexFilePath)
 		require.NoError(t, err)
 		t.Cleanup(func() {
