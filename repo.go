@@ -33,6 +33,7 @@ func buildDotGitPath(repoPath, gitDirCfg string, isBare bool) string {
 	// or not. It actually doesn't make sense to set this repo as bare if
 	// we're going to provide a gitDirCfg.
 	if gitDirCfg != "" {
+		dotGitPath = gitDirCfg
 		if !filepath.IsAbs(gitDirCfg) {
 			dotGitPath = filepath.Join(repoPath, gitDirCfg)
 		}
@@ -44,8 +45,9 @@ func buildDotGitPath(repoPath, gitDirCfg string, isBare bool) string {
 func buildDotGitObjectsPath(repoPath, dotGitPath, objectsPathCfg string) string {
 	gitObjectsPath := filepath.Join(dotGitPath, gitpath.ObjectsPath)
 	if objectsPathCfg != "" {
+		gitObjectsPath = objectsPathCfg
 		if !filepath.IsAbs(objectsPathCfg) {
-			dotGitPath = filepath.Join(repoPath, objectsPathCfg)
+			gitObjectsPath = filepath.Join(repoPath, objectsPathCfg)
 		}
 	}
 	return gitObjectsPath
@@ -57,10 +59,9 @@ func buildDotGitObjectsPath(repoPath, dotGitPath, objectsPathCfg string) string 
 // building a history over time.
 // https://blog.axosoft.com/learning-git-repository/
 type Repository struct {
-	dotGitPath string
-	dotGit     backend.Backend
-	repoRoot   string
-	wt         afero.Fs
+	dotGit   backend.Backend
+	repoRoot string
+	wt       afero.Fs
 
 	shouldCleanBackend bool
 }
@@ -108,15 +109,14 @@ func InitRepositoryWithOptions(repoPath string, opts InitOptions) (r *Repository
 		return nil, xerrors.Errorf("invalid path: not a directory")
 	}
 
-	dotGitPath := buildDotGitPath(repoPath, opts.GitDirPath, opts.IsBare)
 	r = &Repository{
-		repoRoot:   repoPath,
-		dotGitPath: dotGitPath,
+		repoRoot: repoPath,
 	}
 
 	if opts.GitBackend == nil {
+		dotGitPath := buildDotGitPath(repoPath, opts.GitDirPath, opts.IsBare)
 		gitObjectsPath := buildDotGitObjectsPath(repoPath, dotGitPath, opts.GitObjectDirPath)
-		r.dotGit, err = fsbackend.NewWithObjectsPath(r.dotGitPath, gitObjectsPath)
+		r.dotGit, err = fsbackend.NewWithObjectsPath(dotGitPath, gitObjectsPath)
 		if err != nil {
 			return nil, xerrors.Errorf("could not create backend: %w", err)
 		}
@@ -178,15 +178,14 @@ func OpenRepository(repoPath string) (*Repository, error) {
 // OpenRepositoryWithOptions loads an existing git repository by reading
 // its config file, and returns a Repository instance
 func OpenRepositoryWithOptions(repoPath string, opts OpenOptions) (r *Repository, err error) {
-	dotGitPath := buildDotGitPath(repoPath, opts.GitDirPath, opts.IsBare)
 	r = &Repository{
-		repoRoot:   repoPath,
-		dotGitPath: dotGitPath,
+		repoRoot: repoPath,
 	}
 
 	if opts.GitBackend == nil {
+		dotGitPath := buildDotGitPath(repoPath, opts.GitDirPath, opts.IsBare)
 		gitObjectsPath := buildDotGitObjectsPath(repoPath, dotGitPath, opts.GitObjectDirPath)
-		r.dotGit, err = fsbackend.NewWithObjectsPath(r.dotGitPath, gitObjectsPath)
+		r.dotGit, err = fsbackend.NewWithObjectsPath(dotGitPath, gitObjectsPath)
 		if err != nil {
 			return nil, xerrors.Errorf("could not create backend: %w", err)
 		}

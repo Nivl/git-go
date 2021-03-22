@@ -108,6 +108,16 @@ func (b *Backend) Close() (err error) {
 	return err
 }
 
+// Path returns the absolute path of the repo
+func (b *Backend) Path() string {
+	return b.root
+}
+
+// ObjectsPath returns the absolute path of the object directory
+func (b *Backend) ObjectsPath() string {
+	return b.objectsDirPath
+}
+
 // Init initializes a repository
 // This method cannot be called concurrently with other methods
 func (b *Backend) Init() error {
