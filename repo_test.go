@@ -159,6 +159,40 @@ func TestInit(t *testing.T) {
 		assert.True(t, r.IsBare(), "repos should be bare")
 	})
 
+	t.Run("repo with a custom .git", func(t *testing.T) {
+		t.Parallel()
+
+		d, cleanup := testhelper.TempDir(t)
+		t.Cleanup(cleanup)
+
+		// Run logic
+		r, err := InitRepositoryWithOptions(d, InitOptions{
+			GitDirPath: "dot-git",
+		})
+		require.NoError(t, err, "failed creating a repo")
+
+		// assert returned repository
+		require.Equal(t, filepath.Join(d, "dot-git"), r.dotGit.Path())
+	})
+
+	t.Run("repo with a custom .git and .git/objects", func(t *testing.T) {
+		t.Parallel()
+
+		d, cleanup := testhelper.TempDir(t)
+		t.Cleanup(cleanup)
+
+		// Run logic
+		r, err := InitRepositoryWithOptions(d, InitOptions{
+			GitDirPath:       "dot-git",
+			GitObjectDirPath: "dot-git-objects",
+		})
+		require.NoError(t, err, "failed creating a repo")
+
+		// assert returned repository
+		require.Equal(t, filepath.Join(d, "dot-git"), r.dotGit.Path())
+		require.Equal(t, filepath.Join(d, "dot-git-objects"), r.dotGit.ObjectsPath())
+	})
+
 	t.Run("should fail with a path that doesn't exist", func(t *testing.T) {
 		t.Parallel()
 
@@ -247,6 +281,26 @@ func TestOpen(t *testing.T) {
 		require.Equal(t, repoPath, r.dotGit.Path())
 		assert.Nil(t, r.wt)
 		assert.True(t, r.IsBare(), "repos should be bare")
+	})
+
+	t.Run("repo with a custom .git", func(t *testing.T) {
+		t.Parallel()
+
+		d, cleanupWt := testhelper.TempDir(t)
+		t.Cleanup(cleanupWt)
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		t.Cleanup(cleanup)
+		repoPath = filepath.Join(repoPath, gitpath.DotGitPath)
+
+		// Run logic
+		r, err := OpenRepositoryWithOptions(d, OpenOptions{
+			GitDirPath: repoPath,
+		})
+		require.NoError(t, err, "failed creating a repo")
+
+		// assert returned repository
+		require.Equal(t, repoPath, r.dotGit.Path())
 	})
 
 	t.Run("should fail if repo doesn't exist", func(t *testing.T) {
