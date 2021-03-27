@@ -1,3 +1,5 @@
+// Package env contains a wrapper around the environment, making it easier
+// to write code and tests that use environment variables.
 package env
 
 import (
