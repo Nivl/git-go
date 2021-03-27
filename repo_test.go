@@ -18,6 +18,15 @@ import (
 func TestBuildDotGitPath(t *testing.T) {
 	t.Parallel()
 
+	// To be able to build an absolute path on Windows we need to know
+	// the Volume name
+	dir, err := os.Getwd()
+	require.NoError(t, err)
+	root := filepath.VolumeName(dir)
+	if root == "" {
+		root = string(os.PathSeparator)
+	}
+
 	testCases := []struct {
 		desc      string
 		repoPath  string
@@ -27,38 +36,38 @@ func TestBuildDotGitPath(t *testing.T) {
 	}{
 		{
 			desc:      "Test basic repo",
-			repoPath:  filepath.Join(string(os.PathSeparator), "path", "to", "repo"),
+			repoPath:  filepath.Join(root, "path", "to", "repo"),
 			gitDirCfg: "",
 			isBare:    false,
-			expected:  filepath.Join(string(os.PathSeparator), "path", "to", "repo", gitpath.DotGitPath),
+			expected:  filepath.Join(root, "path", "to", "repo", gitpath.DotGitPath),
 		},
 		{
 			desc:      "Test bare repo",
-			repoPath:  filepath.Join(string(os.PathSeparator), "path", "to", "repo"),
+			repoPath:  filepath.Join(root, "path", "to", "repo"),
 			gitDirCfg: "",
 			isBare:    true,
-			expected:  filepath.Join(string(os.PathSeparator), "path", "to", "repo"),
+			expected:  filepath.Join(root, "path", "to", "repo"),
 		},
 		{
 			desc:      "Test repo with absolute config path",
-			repoPath:  filepath.Join(string(os.PathSeparator), "path", "to", "working-tree"),
-			gitDirCfg: filepath.Join(string(os.PathSeparator), "path", "to", "repo"),
+			repoPath:  filepath.Join(root, "path", "to", "working-tree"),
+			gitDirCfg: filepath.Join(root, "path", "to", "repo"),
 			isBare:    false,
-			expected:  filepath.Join(string(os.PathSeparator), "path", "to", "repo"),
+			expected:  filepath.Join(root, "path", "to", "repo"),
 		},
 		{
 			desc:      "Test repo with relative config path",
-			repoPath:  filepath.Join(string(os.PathSeparator), "path", "to", "working-tree"),
+			repoPath:  filepath.Join(root, "path", "to", "working-tree"),
 			gitDirCfg: filepath.Join("repo"),
 			isBare:    false,
-			expected:  filepath.Join(string(os.PathSeparator), "path", "to", "working-tree", "repo"),
+			expected:  filepath.Join(root, "path", "to", "working-tree", "repo"),
 		},
 		{
 			desc:      "Test bare repo with relative config path",
-			repoPath:  filepath.Join(string(os.PathSeparator), "path", "to", "working-tree"),
+			repoPath:  filepath.Join(root, "path", "to", "working-tree"),
 			gitDirCfg: filepath.Join("repo"),
 			isBare:    true,
-			expected:  filepath.Join(string(os.PathSeparator), "path", "to", "working-tree", "repo"),
+			expected:  filepath.Join(root, "path", "to", "working-tree", "repo"),
 		},
 	}
 	for i, tc := range testCases {
@@ -75,6 +84,15 @@ func TestBuildDotGitPath(t *testing.T) {
 func TestBuildDotGitObjectsPat(t *testing.T) {
 	t.Parallel()
 
+	// To be able to build an absolute path on Windows we need to know
+	// the Volume name
+	dir, err := os.Getwd()
+	require.NoError(t, err)
+	root := filepath.VolumeName(dir)
+	if root == "" {
+		root = string(os.PathSeparator)
+	}
+
 	testCases := []struct {
 		desc           string
 		repoPath       string
@@ -84,24 +102,24 @@ func TestBuildDotGitObjectsPat(t *testing.T) {
 	}{
 		{
 			desc:           "Test basic repo",
-			repoPath:       filepath.Join(string(os.PathSeparator), "path", "to", "repo"),
-			dotGitPath:     filepath.Join(string(os.PathSeparator), "path", "to", "repo", gitpath.DotGitPath),
+			repoPath:       filepath.Join(root, "path", "to", "repo"),
+			dotGitPath:     filepath.Join(root, "path", "to", "repo", gitpath.DotGitPath),
 			objectsPathCfg: "",
-			expected:       filepath.Join(string(os.PathSeparator), "path", "to", "repo", gitpath.DotGitPath, gitpath.ObjectsPath),
+			expected:       filepath.Join(root, "path", "to", "repo", gitpath.DotGitPath, gitpath.ObjectsPath),
 		},
 		{
 			desc:           "Test repo with absolute config path",
-			repoPath:       filepath.Join(string(os.PathSeparator), "path", "to", "repo"),
-			dotGitPath:     filepath.Join(string(os.PathSeparator), "path", "to", "repo", gitpath.DotGitPath),
-			objectsPathCfg: filepath.Join(string(os.PathSeparator), "path", "to", "objects"),
-			expected:       filepath.Join(string(os.PathSeparator), "path", "to", "objects"),
+			repoPath:       filepath.Join(root, "path", "to", "repo"),
+			dotGitPath:     filepath.Join(root, "path", "to", "repo", gitpath.DotGitPath),
+			objectsPathCfg: filepath.Join(root, "path", "to", "objects"),
+			expected:       filepath.Join(root, "path", "to", "objects"),
 		},
 		{
 			desc:           "Test repo with relative config path",
-			repoPath:       filepath.Join(string(os.PathSeparator), "path", "to", "repo"),
-			dotGitPath:     filepath.Join(string(os.PathSeparator), "path", "to", "repo", gitpath.DotGitPath),
+			repoPath:       filepath.Join(root, "path", "to", "repo"),
+			dotGitPath:     filepath.Join(root, "path", "to", "repo", gitpath.DotGitPath),
 			objectsPathCfg: filepath.Join("objects"),
-			expected:       filepath.Join(string(os.PathSeparator), "path", "to", "repo", "objects"),
+			expected:       filepath.Join(root, "path", "to", "repo", "objects"),
 		},
 	}
 	for i, tc := range testCases {
