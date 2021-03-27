@@ -22,10 +22,7 @@ func TestBuildDotGitPath(t *testing.T) {
 	// the Volume name
 	dir, err := os.Getwd()
 	require.NoError(t, err)
-	root := filepath.VolumeName(dir)
-	if root == "" {
-		root = string(os.PathSeparator)
-	}
+	root := filepath.VolumeName(dir) + string(os.PathSeparator)
 
 	testCases := []struct {
 		desc      string
@@ -88,10 +85,7 @@ func TestBuildDotGitObjectsPat(t *testing.T) {
 	// the Volume name
 	dir, err := os.Getwd()
 	require.NoError(t, err)
-	root := filepath.VolumeName(dir)
-	if root == "" {
-		root = string(os.PathSeparator)
-	}
+	root := filepath.VolumeName(dir) + string(os.PathSeparator)
 
 	testCases := []struct {
 		desc           string
