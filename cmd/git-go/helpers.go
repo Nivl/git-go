@@ -14,5 +14,8 @@ func loadRepository(cfg *config) (*git.Repository, error) {
 	repoPath = root
 
 	// run the command
-	return git.OpenRepository(repoPath)
+	return git.OpenRepositoryWithOptions(repoPath, git.OpenOptions{
+		GitDirPath:       cfg.GitDir,
+		GitObjectDirPath: cfg.GitObjectDir,
+	})
 }

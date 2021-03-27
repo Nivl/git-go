@@ -15,6 +15,118 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestBuildDotGitPath(t *testing.T) {
+	t.Parallel()
+
+	// To be able to build an absolute path on Windows we need to know
+	// the Volume name
+	dir, err := os.Getwd()
+	require.NoError(t, err)
+	root := filepath.VolumeName(dir) + string(os.PathSeparator)
+
+	testCases := []struct {
+		desc      string
+		repoPath  string
+		gitDirCfg string
+		isBare    bool
+		expected  string
+	}{
+		{
+			desc:      "Test basic repo",
+			repoPath:  filepath.Join(root, "path", "to", "repo"),
+			gitDirCfg: "",
+			isBare:    false,
+			expected:  filepath.Join(root, "path", "to", "repo", gitpath.DotGitPath),
+		},
+		{
+			desc:      "Test bare repo",
+			repoPath:  filepath.Join(root, "path", "to", "repo"),
+			gitDirCfg: "",
+			isBare:    true,
+			expected:  filepath.Join(root, "path", "to", "repo"),
+		},
+		{
+			desc:      "Test repo with absolute config path",
+			repoPath:  filepath.Join(root, "path", "to", "working-tree"),
+			gitDirCfg: filepath.Join(root, "path", "to", "repo"),
+			isBare:    false,
+			expected:  filepath.Join(root, "path", "to", "repo"),
+		},
+		{
+			desc:      "Test repo with relative config path",
+			repoPath:  filepath.Join(root, "path", "to", "working-tree"),
+			gitDirCfg: filepath.Join("repo"),
+			isBare:    false,
+			expected:  filepath.Join(root, "path", "to", "working-tree", "repo"),
+		},
+		{
+			desc:      "Test bare repo with relative config path",
+			repoPath:  filepath.Join(root, "path", "to", "working-tree"),
+			gitDirCfg: filepath.Join("repo"),
+			isBare:    true,
+			expected:  filepath.Join(root, "path", "to", "working-tree", "repo"),
+		},
+	}
+	for i, tc := range testCases {
+		tc := tc
+		i := i
+		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
+			t.Parallel()
+			out := buildDotGitPath(tc.repoPath, tc.gitDirCfg, tc.isBare)
+			assert.Equal(t, tc.expected, out)
+		})
+	}
+}
+
+func TestBuildDotGitObjectsPat(t *testing.T) {
+	t.Parallel()
+
+	// To be able to build an absolute path on Windows we need to know
+	// the Volume name
+	dir, err := os.Getwd()
+	require.NoError(t, err)
+	root := filepath.VolumeName(dir) + string(os.PathSeparator)
+
+	testCases := []struct {
+		desc           string
+		repoPath       string
+		dotGitPath     string
+		objectsPathCfg string
+		expected       string
+	}{
+		{
+			desc:           "Test basic repo",
+			repoPath:       filepath.Join(root, "path", "to", "repo"),
+			dotGitPath:     filepath.Join(root, "path", "to", "repo", gitpath.DotGitPath),
+			objectsPathCfg: "",
+			expected:       filepath.Join(root, "path", "to", "repo", gitpath.DotGitPath, gitpath.ObjectsPath),
+		},
+		{
+			desc:           "Test repo with absolute config path",
+			repoPath:       filepath.Join(root, "path", "to", "repo"),
+			dotGitPath:     filepath.Join(root, "path", "to", "repo", gitpath.DotGitPath),
+			objectsPathCfg: filepath.Join(root, "path", "to", "objects"),
+			expected:       filepath.Join(root, "path", "to", "objects"),
+		},
+		{
+			desc:           "Test repo with relative config path",
+			repoPath:       filepath.Join(root, "path", "to", "repo"),
+			dotGitPath:     filepath.Join(root, "path", "to", "repo", gitpath.DotGitPath),
+			objectsPathCfg: filepath.Join("objects"),
+			expected:       filepath.Join(root, "path", "to", "repo", "objects"),
+		},
+	}
+	for i, tc := range testCases {
+		tc := tc
+		i := i
+		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
+			t.Parallel()
+			out := buildDotGitObjectsPath(tc.repoPath, tc.dotGitPath, tc.objectsPathCfg)
+			assert.Equal(t, tc.expected, out)
+		})
+	}
+}
+
 func TestInit(t *testing.T) {
 	t.Parallel()
 
@@ -34,7 +146,7 @@ func TestInit(t *testing.T) {
 
 		// assert returned repository
 		assert.Equal(t, d, r.repoRoot)
-		assert.Equal(t, filepath.Join(d, gitpath.DotGitPath), r.dotGitPath)
+		assert.Equal(t, filepath.Join(d, gitpath.DotGitPath), r.dotGit.Path())
 		assert.NotNil(t, r.wt)
 		assert.False(t, r.IsBare(), "repos should not be bare")
 	})
@@ -54,9 +166,43 @@ func TestInit(t *testing.T) {
 
 		// assert returned repository
 		require.Equal(t, d, r.repoRoot)
-		require.Equal(t, d, r.dotGitPath)
+		require.Equal(t, d, r.dotGit.Path())
 		assert.Nil(t, r.wt)
 		assert.True(t, r.IsBare(), "repos should be bare")
+	})
+
+	t.Run("repo with a custom .git", func(t *testing.T) {
+		t.Parallel()
+
+		d, cleanup := testhelper.TempDir(t)
+		t.Cleanup(cleanup)
+
+		// Run logic
+		r, err := InitRepositoryWithOptions(d, InitOptions{
+			GitDirPath: "dot-git",
+		})
+		require.NoError(t, err, "failed creating a repo")
+
+		// assert returned repository
+		require.Equal(t, filepath.Join(d, "dot-git"), r.dotGit.Path())
+	})
+
+	t.Run("repo with a custom .git and .git/objects", func(t *testing.T) {
+		t.Parallel()
+
+		d, cleanup := testhelper.TempDir(t)
+		t.Cleanup(cleanup)
+
+		// Run logic
+		r, err := InitRepositoryWithOptions(d, InitOptions{
+			GitDirPath:       "dot-git",
+			GitObjectDirPath: "dot-git-objects",
+		})
+		require.NoError(t, err, "failed creating a repo")
+
+		// assert returned repository
+		require.Equal(t, filepath.Join(d, "dot-git"), r.dotGit.Path())
+		require.Equal(t, filepath.Join(d, "dot-git-objects"), r.dotGit.ObjectsPath())
 	})
 
 	t.Run("should fail with a path that doesn't exist", func(t *testing.T) {
@@ -121,7 +267,7 @@ func TestOpen(t *testing.T) {
 
 		// assert returned repository
 		assert.Equal(t, repoPath, r.repoRoot)
-		assert.Equal(t, filepath.Join(repoPath, gitpath.DotGitPath), r.dotGitPath)
+		assert.Equal(t, filepath.Join(repoPath, gitpath.DotGitPath), r.dotGit.Path())
 		assert.NotNil(t, r.wt)
 		assert.False(t, r.IsBare(), "repos should not be bare")
 	})
@@ -144,9 +290,30 @@ func TestOpen(t *testing.T) {
 
 		// assert returned repository
 		require.Equal(t, repoPath, r.repoRoot)
-		require.Equal(t, repoPath, r.dotGitPath)
+		require.Equal(t, repoPath, r.dotGit.Path())
 		assert.Nil(t, r.wt)
 		assert.True(t, r.IsBare(), "repos should be bare")
+	})
+
+	t.Run("repo with a custom .git", func(t *testing.T) {
+		t.Parallel()
+
+		d, cleanupWt := testhelper.TempDir(t)
+		t.Cleanup(cleanupWt)
+
+		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		t.Cleanup(cleanup)
+		repoPath = filepath.Join(repoPath, gitpath.DotGitPath)
+
+		// Run logic
+		r, err := OpenRepositoryWithOptions(d, OpenOptions{
+			GitDirPath: repoPath,
+		})
+		require.NoError(t, err, "failed creating a repo")
+		require.NoError(t, r.Close())
+
+		// assert returned repository
+		require.Equal(t, repoPath, r.dotGit.Path())
 	})
 
 	t.Run("should fail if repo doesn't exist", func(t *testing.T) {
@@ -242,7 +409,7 @@ func TestRepositoryNewBlob(t *testing.T) {
 	assert.Equal(t, []byte(data), blob.Bytes())
 
 	// make sure the blob was persisted
-	p := filepath.Join(r.dotGitPath, gitpath.ObjectsPath, blob.ID().String()[0:2], blob.ID().String()[2:])
+	p := filepath.Join(r.dotGit.Path(), gitpath.ObjectsPath, blob.ID().String()[0:2], blob.ID().String()[2:])
 	_, err = os.Stat(p)
 	require.NoError(t, err)
 }

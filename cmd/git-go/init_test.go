@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/Nivl/git-go/internal/env"
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -32,8 +33,10 @@ func TestInitParams(t *testing.T) {
 			t.Cleanup(cleanup)
 			tc.args = append(tc.args, "-C", dirPath)
 
-			cmd, err := newRootCmd()
+			cwd, err := os.Getwd()
 			require.NoError(t, err)
+
+			cmd := newRootCmd(cwd, env.NewFromOs())
 			cmd.SetArgs(tc.args)
 
 			require.NotPanics(t, func() {
