@@ -111,11 +111,10 @@ func NewTypeFromString(t string) (Type, error) {
 // (kind of an optimized git database) located in .git/objects/packs
 // https://git-scm.com/book/en/v2/Git-Internals-Git-Objects
 type Object struct {
-	id      ginternals.Oid
-	typ     Type
-	content []byte
-
+	content      []byte
 	idProcessing sync.Once
+	typ          Type
+	id           ginternals.Oid
 }
 
 // New creates a new git object of the given type

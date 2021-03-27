@@ -83,12 +83,6 @@ type Pack struct {
 	r       afero.File
 	idxFile afero.File
 	idx     *PackIndex
-	header  [packfileHeaderSize]byte
-	id      ginternals.Oid
-
-	// Mutex used to protect the exported methods from being called
-	// concurrently
-	mu sync.Mutex
 
 	// baseObjectCache is a cache for all the base objects.
 	// We only cache the base objects for 2 reasons:
@@ -98,6 +92,13 @@ type Pack struct {
 	//   requesting. Here, we're mostly focused on improving the parsing
 	//   performances rather than just caching anything
 	baseObjectCache *cache.LRU
+
+	id     ginternals.Oid
+	header [packfileHeaderSize]byte
+
+	// Mutex used to protect the exported methods from being called
+	// concurrently
+	mu sync.Mutex
 }
 
 // NewFromFile returns a pack object from the given file

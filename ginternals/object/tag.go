@@ -23,7 +23,6 @@ type Tag struct {
 	rawObject *Object
 
 	tagger  Signature
-	typ     Type
 	tag     string
 	message string
 
@@ -31,6 +30,8 @@ type Tag struct {
 
 	id     ginternals.Oid
 	target ginternals.Oid
+
+	typ Type
 }
 
 // NewTag creates a new Tag object

@@ -45,11 +45,11 @@ func newCatFileCmd(cfg *config) *cobra.Command {
 }
 
 type catFileParams struct {
+	objectName  string
+	typ         string
 	typeOnly    bool
 	sizeOnly    bool
 	prettyPrint bool
-	objectName  string
-	typ         string
 }
 
 func catFileCmd(out io.Writer, cfg *config, p catFileParams) (err error) {

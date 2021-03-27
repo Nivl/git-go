@@ -178,7 +178,11 @@ func (b *Backend) writeReference(ref *ginternals.Reference) error {
 func (b *Backend) WalkReferences(f backend.RefWalkFunc) error {
 	var topError error
 	b.refs.Range(func(key, value interface{}) bool {
-		name := key.(string)
+		name, ok := key.(string)
+		if !ok {
+			topError = xerrors.Errorf("invalid key type for %s. expected string got %T", name, key)
+			return false
+		}
 		ref, err := b.Reference(name)
 		if err != nil {
 			topError = xerrors.Errorf("could not resolve reference %s: %w", name, err)

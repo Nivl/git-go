@@ -22,12 +22,6 @@ var _ backend.Backend = (*Backend)(nil)
 
 // Backend is a Backend implementation that uses the filesystem to store data
 type Backend struct {
-	// we use afero.Fs instead of the regular os package
-	// because some part of the library requires an Fs object.
-	// It's easier and cleaner to use the same thing everywhere.
-	fs   afero.Fs
-	root string
-
 	objectMu     *syncutil.NamedMutex
 	cache        *cache.LRU
 	looseObjects *sync.Map
@@ -35,6 +29,12 @@ type Backend struct {
 	packfiles map[ginternals.Oid]*packfile.Pack
 
 	refs *sync.Map
+
+	// we use afero.Fs instead of the regular os package
+	// because some part of the library requires an Fs object.
+	// It's easier and cleaner to use the same thing everywhere.
+	fs   afero.Fs
+	root string
 }
 
 // New returns a new Backend object

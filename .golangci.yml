@@ -29,7 +29,10 @@ issues:
         - errcheck
         - gosec
         - goerr113
-        - maligned
+        - forcetypeassert
+
+    - path: _test\.go
+      text: "fieldalignment: struct"
 
     # No need to check for non-wrapped errors in cmd/ since most
     # command might return inline errors
@@ -55,16 +58,13 @@ linters:
     - golint
     - stylecheck
     - gosec
-    - interfacer
     - unconvert
     - asciicheck
     - goimports
-    - maligned
     - misspell
     - unparam
     - dogsled
     - prealloc
-    - scopelint
     - gocritic
     - gochecknoinits
     - whitespace
@@ -80,13 +80,12 @@ linters:
     - revive
     - durationcheck
     - forbidigo
+    - forcetypeassert
+    - nilerr
 
 linters-settings:
-  maligned:
-    suggest-new: true
-
   govet:
-    check-shadowing: true
+    enable-all: true
 
   gocritic:
     enabled-tags:

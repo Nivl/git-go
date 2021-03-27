@@ -19,9 +19,9 @@ var ErrSignatureInvalid = errors.New("commit signature is invalid")
 
 // Signature represents the author/committer and time of a commit
 type Signature struct {
+	Time  time.Time
 	Name  string
 	Email string
-	Time  time.Time
 }
 
 // String returns a stringified version of the Signature
@@ -114,12 +114,12 @@ func NewSignatureFromBytes(b []byte) (Signature, error) {
 
 // CommitOptions represents all the optional data available to create a commit
 type CommitOptions struct {
-	ParentsID []ginternals.Oid
-	Message   string
-	GPGSig    string
+	Message string
+	GPGSig  string
 	// Committer represent the person creating the commit.
 	// If not provided, the author will be used as committer
 	Committer Signature
+	ParentsID []ginternals.Oid
 }
 
 // Commit represents a commit object

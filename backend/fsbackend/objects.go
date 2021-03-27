@@ -143,7 +143,7 @@ func (b *Backend) loadPacks() error {
 	p := filepath.Join(b.root, gitpath.ObjectsPackPath)
 	return afero.Walk(b.fs, p, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
-			// in case of error we just skip it and move on.
+			//nolint:nilerr // in case of error we just skip it and move on.
 			// this will happen if the repo is empty and the ./objects/pack
 			// folder doesn't exists
 			return nil
@@ -274,7 +274,7 @@ func (b *Backend) loadLooseObject() error {
 	p := filepath.Join(b.root, gitpath.ObjectsPath)
 	return afero.Walk(b.fs, p, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
-			// in case of error we just skip it and move on.
+			//nolint:nilerr // in case of error we just skip it and move on.
 			// this will happen if the repo is empty and the ./objects
 			// folder doesn't exists
 			return nil
