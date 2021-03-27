@@ -310,6 +310,7 @@ func TestOpen(t *testing.T) {
 			GitDirPath: repoPath,
 		})
 		require.NoError(t, err, "failed creating a repo")
+		require.NoError(t, r.Close())
 
 		// assert returned repository
 		require.Equal(t, repoPath, r.dotGit.Path())
