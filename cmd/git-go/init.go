@@ -20,7 +20,7 @@ func newInitCmd(cfg *config) *cobra.Command {
 
 func initCmd(cfg *config) error {
 	r, err := git.InitRepositoryWithOptions(cfg.C.String(), git.InitOptions{
-		EnvOptions: NewEnvOptionsFromCfg(cfg),
+		EnvOptions: newEnvOptionsFromCfg(cfg),
 	})
 	if err != nil {
 		return err
