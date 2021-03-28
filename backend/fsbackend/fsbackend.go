@@ -33,24 +33,32 @@ type Backend struct {
 	// we use afero.Fs instead of the regular os package
 	// because some part of the library requires an Fs object.
 	// It's easier and cleaner to use the same thing everywhere.
-	fs   afero.Fs
-	root string
+	fs             afero.Fs
+	root           string
+	objectsDirPath string
 }
 
 // New returns a new Backend object
 func New(dotGitPath string) (*Backend, error) {
+	return NewWithObjectsPath(dotGitPath, filepath.Join(dotGitPath, gitpath.ObjectsPath))
+}
+
+// NewWithObjectsPath returns a new backend object that stores object at
+// the given paths
+func NewWithObjectsPath(dotGitPath, dotGitObjectsPath string) (*Backend, error) {
 	c, err := cache.NewLRU(1000)
 	if err != nil {
 		return nil, xerrors.Errorf("could not create LRU cache: %w", err)
 	}
 	b := &Backend{
-		fs:           afero.NewOsFs(),
-		root:         dotGitPath,
-		cache:        c,
-		objectMu:     syncutil.NewNamedMutex(101),
-		packfiles:    map[ginternals.Oid]*packfile.Pack{},
-		refs:         &sync.Map{},
-		looseObjects: &sync.Map{},
+		fs:             afero.NewOsFs(),
+		root:           dotGitPath,
+		objectsDirPath: dotGitObjectsPath,
+		cache:          c,
+		objectMu:       syncutil.NewNamedMutex(101),
+		packfiles:      map[ginternals.Oid]*packfile.Pack{},
+		refs:           &sync.Map{},
+		looseObjects:   &sync.Map{},
 	}
 
 	// we load a few things in memory
@@ -100,20 +108,29 @@ func (b *Backend) Close() (err error) {
 	return err
 }
 
+// Path returns the absolute path of the repo
+func (b *Backend) Path() string {
+	return b.root
+}
+
+// ObjectsPath returns the absolute path of the object directory
+func (b *Backend) ObjectsPath() string {
+	return b.objectsDirPath
+}
+
 // Init initializes a repository
 // This method cannot be called concurrently with other methods
 func (b *Backend) Init() error {
 	// Create the directories
 	dirs := []string{
-		gitpath.ObjectsPath,
-		gitpath.RefsTagsPath,
-		gitpath.RefsHeadsPath,
-		gitpath.ObjectsInfoPath,
-		gitpath.ObjectsPackPath,
+		filepath.Join(b.root, gitpath.RefsTagsPath),
+		filepath.Join(b.root, gitpath.RefsHeadsPath),
+		b.objectsDirPath,
+		filepath.Join(b.objectsDirPath, gitpath.ObjectsInfoPath),
+		filepath.Join(b.objectsDirPath, gitpath.ObjectsPackPath),
 	}
 	for _, d := range dirs {
-		fullPath := filepath.Join(b.root, d)
-		if err := b.fs.MkdirAll(fullPath, 0o750); err != nil {
+		if err := b.fs.MkdirAll(d, 0o750); err != nil {
 			return xerrors.Errorf("could not create directory %s: %w", d, err)
 		}
 	}

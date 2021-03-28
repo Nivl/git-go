@@ -26,7 +26,7 @@ func TestNewFromFile(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		packFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.pack"
-		packFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, packFileName)
+		packFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPath, gitpath.ObjectsPackPath, packFileName)
 		pack, err := packfile.NewFromFile(afero.NewOsFs(), packFilePath)
 		require.NoError(t, err)
 		assert.NotNil(t, pack)
@@ -43,7 +43,7 @@ func TestNewFromFile(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		packFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.idx"
-		packFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, packFileName)
+		packFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPath, gitpath.ObjectsPackPath, packFileName)
 		pack, err := packfile.NewFromFile(afero.NewOsFs(), packFilePath)
 		require.Error(t, err)
 		assert.True(t, xerrors.Is(err, packfile.ErrInvalidMagic))
@@ -61,7 +61,7 @@ func TestGetObject(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		packFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.pack"
-		packFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, packFileName)
+		packFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPath, gitpath.ObjectsPackPath, packFileName)
 		pack, err := packfile.NewFromFile(afero.NewOsFs(), packFilePath)
 		require.NoError(t, err)
 		assert.NotNil(t, pack)
@@ -150,7 +150,7 @@ func TestObjectCount(t *testing.T) {
 
 		// Load the packfile
 		packFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.pack"
-		packFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, packFileName)
+		packFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPath, gitpath.ObjectsPackPath, packFileName)
 		pack, err := packfile.NewFromFile(afero.NewOsFs(), packFilePath)
 		require.NoError(t, err)
 		assert.NotNil(t, pack)
@@ -172,7 +172,7 @@ func TestWalkOids(t *testing.T) {
 	t.Cleanup(cleanup)
 	// Load the packfile
 	packFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.pack"
-	packFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPackPath, packFileName)
+	packFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPath, gitpath.ObjectsPackPath, packFileName)
 	pack, err := packfile.NewFromFile(afero.NewOsFs(), packFilePath)
 	require.NoError(t, err)
 	assert.NotNil(t, pack)

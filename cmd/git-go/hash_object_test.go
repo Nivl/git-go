@@ -3,9 +3,11 @@ package main
 import (
 	"bytes"
 	"io"
+	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/Nivl/git-go/internal/env"
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,9 +25,11 @@ func TestHashObjectCmd(t *testing.T) {
 			repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 			t.Cleanup(cleanup)
 
-			outBuf := bytes.NewBufferString("")
-			cmd, err := newRootCmd()
+			cwd, err := os.Getwd()
 			require.NoError(t, err)
+
+			outBuf := bytes.NewBufferString("")
+			cmd := newRootCmd(cwd, env.NewFromOs())
 			cmd.SetArgs([]string{
 				"hash-object",
 				filepath.Join(repoPath, "README.md"),
@@ -45,8 +49,11 @@ func TestHashObjectCmd(t *testing.T) {
 		t.Run("blob opt should work", func(t *testing.T) {
 			t.Parallel()
 
+			cwd, err := os.Getwd()
+			require.NoError(t, err)
+
 			outBuf := bytes.NewBufferString("")
-			cmd, err := newRootCmd()
+			cmd := newRootCmd(cwd, env.NewFromOs())
 			require.NoError(t, err)
 			cmd.SetArgs([]string{
 				"hash-object",
@@ -72,8 +79,11 @@ func TestHashObjectCmd(t *testing.T) {
 		t.Run("valid tree should work", func(t *testing.T) {
 			t.Parallel()
 
+			cwd, err := os.Getwd()
+			require.NoError(t, err)
+
 			outBuf := bytes.NewBufferString("")
-			cmd, err := newRootCmd()
+			cmd := newRootCmd(cwd, env.NewFromOs())
 			require.NoError(t, err)
 			cmd.SetArgs([]string{
 				"hash-object",
@@ -95,8 +105,11 @@ func TestHashObjectCmd(t *testing.T) {
 		t.Run("invalid tree should fail", func(t *testing.T) {
 			t.Parallel()
 
+			cwd, err := os.Getwd()
+			require.NoError(t, err)
+
 			outBuf := bytes.NewBufferString("")
-			cmd, err := newRootCmd()
+			cmd := newRootCmd(cwd, env.NewFromOs())
 			require.NoError(t, err)
 			cmd.SetArgs([]string{
 				"hash-object",
@@ -123,8 +136,11 @@ func TestHashObjectCmd(t *testing.T) {
 		t.Run("valid commit should work", func(t *testing.T) {
 			t.Parallel()
 
+			cwd, err := os.Getwd()
+			require.NoError(t, err)
+
 			outBuf := bytes.NewBufferString("")
-			cmd, err := newRootCmd()
+			cmd := newRootCmd(cwd, env.NewFromOs())
 			require.NoError(t, err)
 			cmd.SetArgs([]string{
 				"hash-object",
@@ -146,8 +162,11 @@ func TestHashObjectCmd(t *testing.T) {
 		t.Run("invalid commit should fail", func(t *testing.T) {
 			t.Parallel()
 
+			cwd, err := os.Getwd()
+			require.NoError(t, err)
+
 			outBuf := bytes.NewBufferString("")
-			cmd, err := newRootCmd()
+			cmd := newRootCmd(cwd, env.NewFromOs())
 			require.NoError(t, err)
 			cmd.SetArgs([]string{
 				"hash-object",

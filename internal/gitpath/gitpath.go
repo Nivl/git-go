@@ -3,7 +3,6 @@
 package gitpath
 
 import (
-	"os"
 	"path"
 )
 
@@ -18,8 +17,8 @@ const (
 	PackedRefsPath  = "packed-refs"
 	HEADPath        = "HEAD"
 	ObjectsPath     = "objects"
-	ObjectsInfoPath = ObjectsPath + string(os.PathSeparator) + "info"
-	ObjectsPackPath = ObjectsPath + string(os.PathSeparator) + "pack"
+	ObjectsInfoPath = "info"
+	ObjectsPackPath = "pack"
 	RefsPath        = "refs"
 	RefsTagsPath    = RefsPath + "/tags"
 	RefsHeadsPath   = RefsPath + "/heads"

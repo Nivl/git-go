@@ -23,16 +23,45 @@ var (
 	ErrTagExists                    = errors.New("tag already exists")
 )
 
+// buildDotGitPath returns the absolute path to the .git directory
+func buildDotGitPath(repoPath, gitDirCfg string, isBare bool) string {
+	dotGitPath := repoPath
+	if !isBare {
+		dotGitPath = filepath.Join(repoPath, gitpath.DotGitPath)
+	}
+	// if gitDirCfg is set then it doesn't matter if the repo is bare
+	// or not. It actually doesn't make sense to set this repo as bare if
+	// we're going to provide a gitDirCfg.
+	if gitDirCfg != "" {
+		dotGitPath = gitDirCfg
+		if !filepath.IsAbs(gitDirCfg) {
+			dotGitPath = filepath.Join(repoPath, gitDirCfg)
+		}
+	}
+	return dotGitPath
+}
+
+// buildDotGitObjectsPath returns the absolute path to the .git/objects directory
+func buildDotGitObjectsPath(repoPath, dotGitPath, objectsPathCfg string) string {
+	gitObjectsPath := filepath.Join(dotGitPath, gitpath.ObjectsPath)
+	if objectsPathCfg != "" {
+		gitObjectsPath = objectsPathCfg
+		if !filepath.IsAbs(objectsPathCfg) {
+			gitObjectsPath = filepath.Join(repoPath, objectsPathCfg)
+		}
+	}
+	return gitObjectsPath
+}
+
 // Repository represent a git repository
 // A Git repository is the .git/ folder inside a project.
 // This repository tracks all changes made to files in your project,
 // building a history over time.
 // https://blog.axosoft.com/learning-git-repository/
 type Repository struct {
-	wt         afero.Fs
-	dotGit     backend.Backend
-	dotGitPath string
-	repoRoot   string
+	wt       afero.Fs
+	dotGit   backend.Backend
+	repoRoot string
 
 	shouldCleanBackend bool
 }
@@ -49,6 +78,12 @@ type InitOptions struct {
 	// By default the filesystem will be used
 	// Setting this is useless if IsBare is set to true
 	WorkingTreeBackend afero.Fs
+	// GitDirPath represents the path to the .git directory
+	// Defaults to .git
+	GitDirPath string
+	// GitObjectDirPath represents the path to the .git/objects directory
+	// Defaults to .git/objects
+	GitObjectDirPath string
 	// IsBare represents whether a bare repository will be created or not
 	IsBare bool
 }
@@ -74,17 +109,14 @@ func InitRepositoryWithOptions(repoPath string, opts InitOptions) (r *Repository
 		return nil, xerrors.Errorf("invalid path: not a directory")
 	}
 
-	dotGitPath := repoPath
-	if !opts.IsBare {
-		dotGitPath = filepath.Join(repoPath, gitpath.DotGitPath)
-	}
 	r = &Repository{
-		repoRoot:   repoPath,
-		dotGitPath: dotGitPath,
+		repoRoot: repoPath,
 	}
 
 	if opts.GitBackend == nil {
-		r.dotGit, err = fsbackend.New(r.dotGitPath)
+		dotGitPath := buildDotGitPath(repoPath, opts.GitDirPath, opts.IsBare)
+		gitObjectsPath := buildDotGitObjectsPath(repoPath, dotGitPath, opts.GitObjectDirPath)
+		r.dotGit, err = fsbackend.NewWithObjectsPath(dotGitPath, gitObjectsPath)
 		if err != nil {
 			return nil, xerrors.Errorf("could not create backend: %w", err)
 		}
@@ -127,6 +159,12 @@ type OpenOptions struct {
 	// By default the filesystem will be used
 	// Setting this is useless if IsBare is set to true
 	WorkingTreeBackend afero.Fs
+	// GitDirPath represents the path to the .git directory
+	// Defaults to .git
+	GitDirPath string
+	// GitObjectDirPath represents the path to the .git/objects directory
+	// Defaults to .git/objects
+	GitObjectDirPath string
 	// IsBare represents whether a bare repository will be created or not
 	IsBare bool
 }
@@ -140,17 +178,14 @@ func OpenRepository(repoPath string) (*Repository, error) {
 // OpenRepositoryWithOptions loads an existing git repository by reading
 // its config file, and returns a Repository instance
 func OpenRepositoryWithOptions(repoPath string, opts OpenOptions) (r *Repository, err error) {
-	dotGitPath := repoPath
-	if !opts.IsBare {
-		dotGitPath = filepath.Join(repoPath, gitpath.DotGitPath)
-	}
 	r = &Repository{
-		repoRoot:   repoPath,
-		dotGitPath: dotGitPath,
+		repoRoot: repoPath,
 	}
 
 	if opts.GitBackend == nil {
-		r.dotGit, err = fsbackend.New(r.dotGitPath)
+		dotGitPath := buildDotGitPath(repoPath, opts.GitDirPath, opts.IsBare)
+		gitObjectsPath := buildDotGitObjectsPath(repoPath, dotGitPath, opts.GitObjectDirPath)
+		r.dotGit, err = fsbackend.NewWithObjectsPath(dotGitPath, gitObjectsPath)
 		if err != nil {
 			return nil, xerrors.Errorf("could not create backend: %w", err)
 		}

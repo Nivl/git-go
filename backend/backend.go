@@ -22,6 +22,12 @@ type Backend interface {
 	// Close free the resources
 	Close() error
 
+	// Path returns the absolute path of the repo
+	Path() string
+
+	// ObjectsPath returns the absolute path of the object directory
+	ObjectsPath() string
+
 	// Init initializes a repository
 	Init() error
 

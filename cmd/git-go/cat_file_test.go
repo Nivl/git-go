@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Nivl/git-go/internal/env"
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -59,8 +60,10 @@ func TestCatFileParams(t *testing.T) {
 		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
 			t.Parallel()
 
-			cmd, err := newRootCmd()
+			cwd, err := os.Getwd()
 			require.NoError(t, err)
+
+			cmd := newRootCmd(cwd, env.NewFromOs())
 			cmd.SetArgs(tc.args)
 
 			require.NotPanics(t, func() {
@@ -173,9 +176,11 @@ func TestCatFile(t *testing.T) {
 		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
 			t.Parallel()
 
-			outBuf := bytes.NewBufferString("")
-			cmd, err := newRootCmd()
+			cwd, err := os.Getwd()
 			require.NoError(t, err)
+
+			outBuf := bytes.NewBufferString("")
+			cmd := newRootCmd(cwd, env.NewFromOs())
 			cmd.SetOut(outBuf)
 			args := append([]string{"-C", repoPath}, tc.args...)
 			cmd.SetArgs(args)
