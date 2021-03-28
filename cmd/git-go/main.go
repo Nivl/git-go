@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Nivl/git-go/internal/env"
+	"github.com/Nivl/git-go/env"
 )
 
 func exitError(err error) {

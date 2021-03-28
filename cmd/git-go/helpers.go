@@ -15,7 +15,15 @@ func loadRepository(cfg *config) (*git.Repository, error) {
 
 	// run the command
 	return git.OpenRepositoryWithOptions(repoPath, git.OpenOptions{
+		EnvOptions: NewEnvOptionsFromCfg(cfg),
+	})
+}
+
+func NewEnvOptionsFromCfg(cfg *config) *git.EnvOptions {
+	return &git.EnvOptions{
 		GitDirPath:       cfg.GitDir,
 		GitObjectDirPath: cfg.GitObjectDir,
-	})
+		SkipSystemConfig: cfg.SkipSystemConfig,
+		GitConfig:        cfg.GitConfig,
+	}
 }
