@@ -62,9 +62,9 @@ type Tree struct {
 
 // TreeEntry represents an entry inside a git tree
 type TreeEntry struct {
-	Mode TreeObjectMode
-	ID   ginternals.Oid
 	Path string
+	ID   ginternals.Oid
+	Mode TreeObjectMode
 }
 
 // NewTree returns a new tree with the given entries

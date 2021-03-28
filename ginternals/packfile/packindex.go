@@ -82,14 +82,16 @@ func indexHeader() []byte {
 // Resources:
 // https://codewords.recurse.com/issues/three/unpacking-git-packfiles#idx-files
 // https://git-scm.com/docs/pack-format
+//
+//nolint:govet // aligning the memory makes the struct harder to read since we want to keep "parseError" and "parsed" together
 type PackIndex struct {
+	mu sync.Mutex
+
 	r          readutil.BufferedReader
 	hashOffset map[ginternals.Oid]uint64
 
-	parsed     bool
 	parseError error
-
-	mu sync.Mutex
+	parsed     bool
 }
 
 // NewIndex returns an index object from the given reader

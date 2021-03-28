@@ -59,9 +59,9 @@ func buildDotGitObjectsPath(repoPath, dotGitPath, objectsPathCfg string) string 
 // building a history over time.
 // https://blog.axosoft.com/learning-git-repository/
 type Repository struct {
+	wt       afero.Fs
 	dotGit   backend.Backend
 	repoRoot string
-	wt       afero.Fs
 
 	shouldCleanBackend bool
 }
@@ -69,8 +69,6 @@ type Repository struct {
 // InitOptions contains all the optional data used to initialized a
 // repository
 type InitOptions struct {
-	// IsBare represents whether a bare repository will be created or not
-	IsBare bool
 	// GitBackend represents the underlying backend to use to init the
 	// repository and interact with the odb
 	// By default the filesystem will be used
@@ -86,6 +84,8 @@ type InitOptions struct {
 	// GitObjectDirPath represents the path to the .git/objects directory
 	// Defaults to .git/objects
 	GitObjectDirPath string
+	// IsBare represents whether a bare repository will be created or not
+	IsBare bool
 }
 
 // InitRepository initialize a new git repository by creating the .git
@@ -150,8 +150,6 @@ func InitRepositoryWithOptions(repoPath string, opts InitOptions) (r *Repository
 // OpenOptions contains all the optional data used to open a
 // repository
 type OpenOptions struct {
-	// IsBare represents whether a bare repository will be created or not
-	IsBare bool
 	// GitBackend represents the underlying backend to use to init the
 	// repository and interact with the odb
 	// By default the filesystem will be used
@@ -167,6 +165,8 @@ type OpenOptions struct {
 	// GitObjectDirPath represents the path to the .git/objects directory
 	// Defaults to .git/objects
 	GitObjectDirPath string
+	// IsBare represents whether a bare repository will be created or not
+	IsBare bool
 }
 
 // OpenRepository loads an existing git repository by reading its
