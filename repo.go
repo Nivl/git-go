@@ -79,6 +79,9 @@ func InitRepositoryWithOptions(repoPath string, opts InitOptions) (r *Repository
 	}
 
 	if opts.GitBackend == nil {
+		if opts.GitOptions == nil {
+			opts.GitOptions = &env.GitOptions{}
+		}
 		opts.GitOptions.Finalize(env.FinalizeOptions{
 			ProjectPath: repoPath,
 			IsBare:      opts.IsBare,
@@ -148,6 +151,9 @@ func OpenRepositoryWithOptions(repoPath string, opts OpenOptions) (r *Repository
 	}
 
 	if opts.GitBackend == nil {
+		if opts.GitOptions == nil {
+			opts.GitOptions = &env.GitOptions{}
+		}
 		opts.GitOptions.Finalize(env.FinalizeOptions{
 			ProjectPath: repoPath,
 			IsBare:      opts.IsBare,

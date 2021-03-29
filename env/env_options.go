@@ -49,6 +49,17 @@ func NewGitOptions(e *Env) *GitOptions {
 	}
 }
 
+// NewDefaultGitOptions returns a new GitOptions that skips the env
+// and uses the default values
+func NewDefaultGitOptions(p FinalizeOptions) *GitOptions {
+	opts := &GitOptions{}
+	opts.isFinalized = true
+	opts.GitDirPath = opts.buildDotGitPath(p.ProjectPath, p.IsBare)
+	opts.GitObjectDirPath = opts.buildDotGitObjectsPath(p.ProjectPath, opts.GitDirPath)
+	opts.GitConfig = filepath.Join(opts.GitDirPath, gitpath.ConfigPath)
+	return opts
+}
+
 // FinalizeOptions represents all the options available to finalize
 // the GitOptions
 type FinalizeOptions struct {
