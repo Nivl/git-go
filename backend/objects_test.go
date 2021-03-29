@@ -1,4 +1,4 @@
-package fsbackend
+package backend
 
 import (
 	"errors"
@@ -30,7 +30,7 @@ func TestObject(t *testing.T) {
 		oid, err := ginternals.NewOidFromStr("b07e28976ac8972715598f390964d53cf4dbc1bd")
 		require.NoError(t, err)
 
-		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		b, err := NewFS(nil, filepath.Join(repoPath, gitpath.DotGitPath))
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -54,7 +54,7 @@ func TestObject(t *testing.T) {
 		oid, err := ginternals.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
 		require.NoError(t, err)
 
-		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		b, err := NewFS(nil, filepath.Join(repoPath, gitpath.DotGitPath))
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -77,7 +77,7 @@ func TestObject(t *testing.T) {
 		oid, err := ginternals.NewOidFromStr("2dcdadc2a420225783794fbffd51e2e137a69646")
 		require.NoError(t, err)
 
-		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		b, err := NewFS(nil, filepath.Join(repoPath, gitpath.DotGitPath))
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -99,7 +99,7 @@ func TestHasObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		b, err := NewFS(nil, filepath.Join(repoPath, gitpath.DotGitPath))
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -119,7 +119,7 @@ func TestHasObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		b, err := NewFS(nil, filepath.Join(repoPath, gitpath.DotGitPath))
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -139,7 +139,7 @@ func TestHasObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		b, err := NewFS(nil, filepath.Join(repoPath, gitpath.DotGitPath))
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -170,7 +170,7 @@ func TestHasObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		b, err := NewFS(nil, filepath.Join(repoPath, gitpath.DotGitPath))
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -201,7 +201,7 @@ func TestWriteObject(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		dotGitPath := filepath.Join(repoPath, gitpath.DotGitPath)
-		b, err := New(dotGitPath)
+		b, err := NewFS(nil, dotGitPath)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -233,7 +233,7 @@ func TestWriteObject(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		dotGitPath := filepath.Join(repoPath, gitpath.DotGitPath)
-		b, err := New(dotGitPath)
+		b, err := NewFS(nil, dotGitPath)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -273,7 +273,7 @@ func TestWalkPackedObjectIDs(t *testing.T) {
 	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 	t.Cleanup(cleanup)
 	dotGitPath := filepath.Join(repoPath, gitpath.DotGitPath)
-	b, err := New(dotGitPath)
+	b, err := NewFS(nil, dotGitPath)
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, b.Close())
@@ -330,7 +330,7 @@ func TestLoosePackedObjectIDs(t *testing.T) {
 	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 	t.Cleanup(cleanup)
 	dotGitPath := filepath.Join(repoPath, gitpath.DotGitPath)
-	b, err := New(dotGitPath)
+	b, err := NewFS(nil, dotGitPath)
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, b.Close())
@@ -378,7 +378,7 @@ func TestIsLooseObjectDir(t *testing.T) {
 	dir, cleanup := testhelper.TempDir(t)
 	t.Cleanup(cleanup)
 
-	b, err := New(filepath.Join(dir, gitpath.DotGitPath))
+	b, err := NewFS(nil, filepath.Join(dir, gitpath.DotGitPath))
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, b.Close())

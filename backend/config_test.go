@@ -1,4 +1,4 @@
-package fsbackend_test
+package backend_test
 
 import (
 	"os"
@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/Nivl/git-go/backend/fsbackend"
+	"github.com/Nivl/git-go/backend"
 	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/stretchr/testify/assert"
@@ -23,7 +23,7 @@ func TestInit(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		b, err := fsbackend.New(filepath.Join(dir, gitpath.DotGitPath))
+		b, err := backend.NewFS(nil, filepath.Join(dir, gitpath.DotGitPath))
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -40,7 +40,7 @@ func TestInit(t *testing.T) {
 
 		gitDir := filepath.Join(repo, gitpath.DotGitPath)
 		objectDir := filepath.Join(repo, "git-objects")
-		b, err := fsbackend.NewWithObjectsPath(gitDir, objectDir)
+		b, err := backend.NewFSWithObjectsPath(nil, gitDir, objectDir)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -70,7 +70,7 @@ func TestInit(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		b, err := fsbackend.New(dir)
+		b, err := backend.NewFS(nil, dir)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -93,7 +93,7 @@ func TestInit(t *testing.T) {
 		err = os.WriteFile(filepath.Join(dir, gitpath.DescriptionPath), []byte{}, 0o644)
 		require.NoError(t, err)
 
-		b, err := fsbackend.New(dir)
+		b, err := backend.NewFS(nil, dir)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -117,7 +117,7 @@ func TestInit(t *testing.T) {
 		err := os.MkdirAll(filepath.Join(dir, gitpath.ObjectsPath), 0o550)
 		require.NoError(t, err)
 
-		b, err := fsbackend.New(dir)
+		b, err := backend.NewFS(nil, dir)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -139,7 +139,7 @@ func TestInit(t *testing.T) {
 		err := os.WriteFile(filepath.Join(dir, gitpath.DescriptionPath), []byte{}, 0o444)
 		require.NoError(t, err)
 
-		b, err := fsbackend.New(dir)
+		b, err := backend.NewFS(nil, dir)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -149,61 +149,5 @@ func TestInit(t *testing.T) {
 		var perror *os.PathError
 		require.True(t, xerrors.As(err, &perror), "error should be os.PathError")
 		assert.Contains(t, perror.Err.Error(), "denied")
-	})
-}
-
-func TestPath(t *testing.T) {
-	t.Parallel()
-
-	dir, cleanup := testhelper.TempDir(t)
-	t.Cleanup(cleanup)
-
-	dotGitPath := filepath.Join(dir, gitpath.DotGitPath)
-
-	b, err := fsbackend.New(dotGitPath)
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		require.NoError(t, b.Close())
-	})
-
-	require.Equal(t, dotGitPath, b.Path())
-}
-
-func TestObjectPath(t *testing.T) {
-	t.Parallel()
-
-	t.Run("automatically set on dotGit path", func(t *testing.T) {
-		t.Parallel()
-
-		dir, cleanup := testhelper.TempDir(t)
-		t.Cleanup(cleanup)
-
-		dotGitPath := filepath.Join(dir, gitpath.DotGitPath)
-
-		b, err := fsbackend.New(dotGitPath)
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			require.NoError(t, b.Close())
-		})
-
-		require.Equal(t, filepath.Join(dotGitPath, gitpath.ObjectsPath), b.ObjectsPath())
-	})
-
-	t.Run("manually set", func(t *testing.T) {
-		t.Parallel()
-
-		dir, cleanup := testhelper.TempDir(t)
-		t.Cleanup(cleanup)
-
-		dotGitPath := filepath.Join(dir, gitpath.DotGitPath)
-		objectsPath := filepath.Join(dir, "git-objects")
-
-		b, err := fsbackend.NewWithObjectsPath(dotGitPath, objectsPath)
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			require.NoError(t, b.Close())
-		})
-
-		require.Equal(t, objectsPath, b.ObjectsPath())
 	})
 }

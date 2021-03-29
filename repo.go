@@ -3,11 +3,8 @@ package git
 import (
 	"errors"
 	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/Nivl/git-go/backend"
-	"github.com/Nivl/git-go/backend/fsbackend"
 	"github.com/Nivl/git-go/env"
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/object"
@@ -25,75 +22,6 @@ var (
 	ErrTagExists                    = errors.New("tag already exists")
 )
 
-// EnvOptions represents the options that can be set using the env
-type EnvOptions struct {
-	// GitDirPath represents the path to the .git directory
-	// Defaults to .git
-	// Maps to GIT_DIR
-	GitDirPath string
-	// GitObjectDirPath represents the path to the .git/objects directory
-	// Defaults to .git/objects
-	// Maps to GIT_OBJECT_DIRECTORY
-	GitObjectDirPath string
-	// SkipSystemConfig states whether we should use the system config or not
-	// Defaults to false
-	// Maps to GIT_CONFIG_NOSYSTEM
-	SkipSystemConfig bool
-	// GitConfig represents the config file to load
-	// Defaults to .git/config
-	// Maps to GIT_CONFIG
-	GitConfig string
-}
-
-// NewEnvOptions returns a new EnvOptions that fetches the data from the
-// env
-//
-// Usage: NewEnvOptions(env.NewFromOs())
-func NewEnvOptions(e *env.Env) *EnvOptions {
-	SkipSystemConfig := false
-	switch strings.ToLower(e.Get("GIT_CONFIG_NOSYSTEM")) {
-	case "yes", "1", "true":
-		SkipSystemConfig = true
-	}
-
-	return &EnvOptions{
-		GitDirPath:       e.Get("GIT_DIR"),
-		GitObjectDirPath: e.Get("GIT_OBJECT_DIRECTORY"),
-		SkipSystemConfig: SkipSystemConfig,
-		GitConfig:        e.Get("GIT_CONFIG"),
-	}
-}
-
-// buildDotGitPath returns the absolute path to the .git directory
-func (opts *EnvOptions) buildDotGitPath(repoPath string, isBare bool) string {
-	dotGitPath := repoPath
-	if !isBare {
-		dotGitPath = filepath.Join(repoPath, gitpath.DotGitPath)
-	}
-	// if GitDirPath is set then it doesn't matter if the repo is bare
-	// or not. It actually doesn't make sense to set this repo as bare if
-	// we're going to provide a GitDirPath.
-	if opts.GitDirPath != "" {
-		dotGitPath = opts.GitDirPath
-		if !filepath.IsAbs(opts.GitDirPath) {
-			dotGitPath = filepath.Join(repoPath, opts.GitDirPath)
-		}
-	}
-	return dotGitPath
-}
-
-// buildDotGitObjectsPath returns the absolute path to the .git/objects directory
-func (opts *EnvOptions) buildDotGitObjectsPath(repoPath, dotGitPath string) string {
-	gitObjectsPath := filepath.Join(dotGitPath, gitpath.ObjectsPath)
-	if opts.GitObjectDirPath != "" {
-		gitObjectsPath = opts.GitObjectDirPath
-		if !filepath.IsAbs(opts.GitObjectDirPath) {
-			gitObjectsPath = filepath.Join(repoPath, opts.GitObjectDirPath)
-		}
-	}
-	return gitObjectsPath
-}
-
 // Repository represent a git repository
 // A Git repository is the .git/ folder inside a project.
 // This repository tracks all changes made to files in your project,
@@ -101,7 +29,7 @@ func (opts *EnvOptions) buildDotGitObjectsPath(repoPath, dotGitPath string) stri
 // https://blog.axosoft.com/learning-git-repository/
 type Repository struct {
 	wt       afero.Fs
-	dotGit   backend.Backend
+	dotGit   *backend.Backend
 	repoRoot string
 
 	shouldCleanBackend bool
@@ -110,12 +38,12 @@ type Repository struct {
 // InitOptions contains all the optional data used to initialized a
 // repository
 type InitOptions struct {
-	*EnvOptions
+	*env.GitOptions
 
 	// GitBackend represents the underlying backend to use to init the
 	// repository and interact with the odb
 	// By default the filesystem will be used
-	GitBackend backend.Backend
+	GitBackend *backend.Backend
 	// WorkingTreeBackend represents the underlying backend to use to
 	// interact with the working tree.
 	// By default the filesystem will be used
@@ -151,9 +79,11 @@ func InitRepositoryWithOptions(repoPath string, opts InitOptions) (r *Repository
 	}
 
 	if opts.GitBackend == nil {
-		dotGitPath := opts.buildDotGitPath(repoPath, opts.IsBare)
-		gitObjectsPath := opts.buildDotGitObjectsPath(repoPath, dotGitPath)
-		r.dotGit, err = fsbackend.NewWithObjectsPath(dotGitPath, gitObjectsPath)
+		opts.GitOptions.Finalize(env.FinalizeOptions{
+			ProjectPath: repoPath,
+			IsBare:      opts.IsBare,
+		})
+		r.dotGit, err = backend.NewFS(opts.GitOptions)
 		if err != nil {
 			return nil, xerrors.Errorf("could not create backend: %w", err)
 		}
@@ -187,12 +117,12 @@ func InitRepositoryWithOptions(repoPath string, opts InitOptions) (r *Repository
 // OpenOptions contains all the optional data used to open a
 // repository
 type OpenOptions struct {
-	*EnvOptions
+	GitOptions *env.GitOptions
 
 	// GitBackend represents the underlying backend to use to init the
 	// repository and interact with the odb
 	// By default the filesystem will be used
-	GitBackend backend.Backend
+	GitBackend *backend.Backend
 	// WorkingTreeBackend represents the underlying backend to use to
 	// interact with the working tree.
 	// By default the filesystem will be used
@@ -218,9 +148,11 @@ func OpenRepositoryWithOptions(repoPath string, opts OpenOptions) (r *Repository
 	}
 
 	if opts.GitBackend == nil {
-		dotGitPath := opts.buildDotGitPath(repoPath, opts.IsBare)
-		gitObjectsPath := opts.buildDotGitObjectsPath(repoPath, dotGitPath)
-		r.dotGit, err = fsbackend.NewWithObjectsPath(dotGitPath, gitObjectsPath)
+		opts.GitOptions.Finalize(env.FinalizeOptions{
+			ProjectPath: repoPath,
+			IsBare:      opts.IsBare,
+		})
+		r.dotGit, err = backend.NewFS(opts.GitOptions)
 		if err != nil {
 			return nil, xerrors.Errorf("could not create backend: %w", err)
 		}

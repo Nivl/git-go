@@ -1,4 +1,4 @@
-package fsbackend
+package backend
 
 import (
 	"bufio"
@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Nivl/git-go/backend"
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/internal/errutil"
 	"github.com/Nivl/git-go/internal/gitpath"
@@ -34,7 +33,7 @@ func (b *Backend) Reference(name string) (*ginternals.Reference, error) {
 // Ex.: On windows refs/heads/master would return refs\heads\master
 func (b *Backend) systemPath(name string) string {
 	name = filepath.FromSlash(name)
-	return filepath.Join(b.root, name)
+	return filepath.Join(b.Path(), name)
 }
 
 // loadRefs loads the references in memory
@@ -43,7 +42,7 @@ func (b *Backend) loadRefs() (err error) {
 	// and may or may not contain outdated information
 	// (outdated information will be overwritten once we parse the
 	// on-disk references).
-	f, err := b.fs.Open(filepath.Join(b.root, gitpath.PackedRefsPath))
+	f, err := b.fs.Open(filepath.Join(b.Path(), gitpath.PackedRefsPath))
 	if err != nil && !xerrors.Is(err, os.ErrNotExist) {
 		return xerrors.Errorf("could not open %s: %w", gitpath.PackedRefsPath, err)
 	}
@@ -76,7 +75,7 @@ func (b *Backend) loadRefs() (err error) {
 
 	// Now we browse all the references on disk
 	// TODO(melvin): Do we really want to stop if we cannot parse one file?
-	refsPath := filepath.Join(b.root, gitpath.RefsPath)
+	refsPath := filepath.Join(b.Path(), gitpath.RefsPath)
 	err = afero.Walk(b.fs, refsPath, func(path string, info fs.FileInfo, e error) error {
 		// if refsPath doesn't exists this will return nil and skip the error
 		// this is useful in case where the repo is empty and has no
@@ -97,7 +96,7 @@ func (b *Backend) loadRefs() (err error) {
 		if e != nil {
 			return xerrors.Errorf("could not read reference at %s: %w", path, e)
 		}
-		relpath, e := filepath.Rel(b.root, path)
+		relpath, e := filepath.Rel(b.Path(), path)
 		if e != nil {
 			return e // the error message is already pretty descriptive
 		}
@@ -119,7 +118,7 @@ func (b *Backend) loadRefs() (err error) {
 		ginternals.CherryPickHead,
 	}
 	for _, path := range headPaths {
-		data, err := afero.ReadFile(b.fs, filepath.Join(b.root, path))
+		data, err := afero.ReadFile(b.fs, filepath.Join(b.Path(), path))
 		if err != nil {
 			if xerrors.Is(err, os.ErrNotExist) {
 				continue
@@ -175,7 +174,7 @@ func (b *Backend) writeReference(ref *ginternals.Reference) error {
 }
 
 // WalkReferences runs the provided method on all the references
-func (b *Backend) WalkReferences(f backend.RefWalkFunc) error {
+func (b *Backend) WalkReferences(f RefWalkFunc) error {
 	var topError error
 	b.refs.Range(func(key, value interface{}) bool {
 		name, ok := key.(string)
@@ -190,7 +189,7 @@ func (b *Backend) WalkReferences(f backend.RefWalkFunc) error {
 		}
 
 		if err = f(ref); err != nil {
-			if err != backend.WalkStop { //nolint:errorlint,goerr113 // it's a fake error so no need to use Error.Is()
+			if err != WalkStop { //nolint:errorlint,goerr113 // it's a fake error so no need to use Error.Is()
 				topError = err
 			}
 			return false

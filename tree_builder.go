@@ -11,7 +11,7 @@ import (
 
 // TreeBuilder is used to build trees
 type TreeBuilder struct {
-	Backend backend.Backend
+	Backend *backend.Backend
 	entries map[string]object.TreeEntry
 }
 
