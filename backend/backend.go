@@ -16,7 +16,7 @@ import (
 
 // Backend is a Backend implementation that uses the filesystem to store data
 type Backend struct {
-	opts *config.GitOptions
+	params *config.GitParams
 
 	objectMu     *syncutil.NamedMutex
 	cache        *cache.LRU
@@ -30,18 +30,18 @@ type Backend struct {
 }
 
 // NewFS returns a new Backend object using the local FileSystem
-func NewFS(opts *config.GitOptions) (*Backend, error) {
-	return New(opts, afero.NewOsFs())
+func NewFS(params *config.GitParams) (*Backend, error) {
+	return New(params, afero.NewOsFs())
 }
 
 // New returns a new Backend object
-func New(opts *config.GitOptions, fs afero.Fs) (*Backend, error) {
+func New(params *config.GitParams, fs afero.Fs) (*Backend, error) {
 	c, err := cache.NewLRU(1000)
 	if err != nil {
 		return nil, xerrors.Errorf("could not create LRU cache: %w", err)
 	}
 	b := &Backend{
-		opts:         opts,
+		params:       params,
 		fs:           fs,
 		cache:        c,
 		objectMu:     syncutil.NewNamedMutex(101),
@@ -112,10 +112,10 @@ func (b *Backend) Close() (err error) {
 
 // Path returns the absolute path of the repo
 func (b *Backend) Path() string {
-	return b.opts.GitDirPath
+	return b.params.GitDirPath
 }
 
 // ObjectsPath returns the absolute path of the object directory
 func (b *Backend) ObjectsPath() string {
-	return b.opts.GitObjectDirPath
+	return b.params.ObjectDirPath
 }

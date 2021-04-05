@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Nivl/git-go/backend"
+	"github.com/Nivl/git-go/env"
 	"github.com/Nivl/git-go/ginternals/config"
 	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/testhelper"
@@ -19,8 +20,9 @@ func TestPath(t *testing.T) {
 
 	dotGitPath := filepath.Join(dir, gitpath.DotGitPath)
 
-	opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
-		ProjectPath: dir,
+	opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+		WorkTreePath: dir,
+		GitDirPath:   dotGitPath,
 	})
 	require.NoError(t, err)
 	b, err := backend.NewFS(opts)
@@ -42,8 +44,9 @@ func TestObjectPath(t *testing.T) {
 
 		dotGitPath := filepath.Join(dir, gitpath.DotGitPath)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
-			ProjectPath: dir,
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: dir,
+			GitDirPath:   dotGitPath,
 		})
 		require.NoError(t, err)
 		b, err := backend.NewFS(opts)
@@ -61,16 +64,24 @@ func TestObjectPath(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		opts := &config.GitOptions{
-			GitDirPath:       filepath.Join(dir, gitpath.DotGitPath),
-			GitObjectDirPath: filepath.Join(dir, "git-objects"),
-		}
-		b, err := backend.NewFS(opts)
+		gitDirPath := filepath.Join(dir, gitpath.DotGitPath)
+		objectDirPath := filepath.Join(dir, "objectDirPath")
+
+		e := env.NewFromKVList([]string{
+			"GIT_DIR=" + gitDirPath,
+			"GIT_OBJECT_DIRECTORY=" + objectDirPath,
+		})
+		p, err := config.NewGitParams(e, config.NewGitParamsOptions{
+			IsBare: true,
+		})
+		require.NoError(t, err)
+
+		b, err := backend.NewFS(p)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
 
-		require.Equal(t, opts.GitObjectDirPath, b.ObjectsPath())
+		require.Equal(t, objectDirPath, b.ObjectsPath())
 	})
 }

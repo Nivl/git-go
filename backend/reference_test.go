@@ -24,8 +24,9 @@ func TestReference(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
-			ProjectPath: repoPath,
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
 		})
 		require.NoError(t, err)
 
@@ -46,8 +47,9 @@ func TestReference(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
-			ProjectPath: repoPath,
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
 		})
 		require.NoError(t, err)
 
@@ -73,8 +75,9 @@ func TestReference(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
-			ProjectPath: repoPath,
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
 		})
 		require.NoError(t, err)
 
@@ -101,9 +104,9 @@ func TestParsePackedRefs(t *testing.T) {
 	createRepo := func(t *testing.T) (dir string, cleanup func()) {
 		dir, cleanup = testhelper.TempDir(t)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
-			ProjectPath: dir,
-			IsBare:      true,
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			GitDirPath: dir,
+			IsBare:     true,
 		})
 		require.NoError(t, err)
 
@@ -121,9 +124,9 @@ func TestParsePackedRefs(t *testing.T) {
 		dir, cleanup := createRepo(t)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
-			ProjectPath: dir,
-			IsBare:      true,
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			GitDirPath: dir,
+			IsBare:     true,
 		})
 		require.NoError(t, err)
 
@@ -151,9 +154,9 @@ func TestParsePackedRefs(t *testing.T) {
 		err := os.WriteFile(fPath, []byte("not valid data"), 0o644)
 		require.NoError(t, err)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
-			ProjectPath: dir,
-			IsBare:      true,
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			GitDirPath: dir,
+			IsBare:     true,
 		})
 		require.NoError(t, err)
 
@@ -172,9 +175,9 @@ func TestParsePackedRefs(t *testing.T) {
 		err := os.WriteFile(fPath, []byte("^de111c003b5661db802f17ac69419dcb9f4f3137\n# this is a comment"), 0o644)
 		require.NoError(t, err)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
-			ProjectPath: dir,
-			IsBare:      true,
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			GitDirPath: dir,
+			IsBare:     true,
 		})
 		require.NoError(t, err)
 
@@ -188,8 +191,9 @@ func TestParsePackedRefs(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
-			ProjectPath: repoPath,
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
 		})
 		require.NoError(t, err)
 
@@ -239,8 +243,9 @@ func TestWriteReference(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
-			ProjectPath: dir,
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: dir,
+			GitDirPath:   filepath.Join(dir, gitpath.DotGitPath),
 		})
 		require.NoError(t, err)
 
@@ -266,8 +271,9 @@ func TestWriteReference(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
-			ProjectPath: dir,
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: dir,
+			GitDirPath:   filepath.Join(dir, gitpath.DotGitPath),
 		})
 		require.NoError(t, err)
 
@@ -295,8 +301,9 @@ func TestWriteReference(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
-			ProjectPath: dir,
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: dir,
+			GitDirPath:   filepath.Join(dir, gitpath.DotGitPath),
 		})
 		require.NoError(t, err)
 
@@ -319,8 +326,9 @@ func TestWriteReference(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
-			ProjectPath: repoPath,
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
 		})
 		require.NoError(t, err)
 
@@ -350,8 +358,9 @@ func TestWriteReference(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
-			ProjectPath: repoPath,
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
 		})
 		require.NoError(t, err)
 
@@ -387,8 +396,9 @@ func TestWriteReferenceSafe(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
-			ProjectPath: dir,
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: dir,
+			GitDirPath:   filepath.Join(dir, gitpath.DotGitPath),
 		})
 		require.NoError(t, err)
 
@@ -415,8 +425,9 @@ func TestWriteReferenceSafe(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
-			ProjectPath: dir,
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: dir,
+			GitDirPath:   filepath.Join(dir, gitpath.DotGitPath),
 		})
 		require.NoError(t, err)
 
@@ -445,8 +456,9 @@ func TestWriteReferenceSafe(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
-			ProjectPath: dir,
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: dir,
+			GitDirPath:   filepath.Join(dir, gitpath.DotGitPath),
 		})
 		require.NoError(t, err)
 
@@ -469,8 +481,9 @@ func TestWriteReferenceSafe(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
-			ProjectPath: repoPath,
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
 		})
 		require.NoError(t, err)
 
@@ -502,8 +515,9 @@ func TestWriteReferenceSafe(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
-			ProjectPath: repoPath,
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
 		})
 		require.NoError(t, err)
 
@@ -537,8 +551,9 @@ func TestWalkReferences(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
-			ProjectPath: repoPath,
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
 		})
 		require.NoError(t, err)
 
@@ -563,8 +578,9 @@ func TestWalkReferences(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
-			ProjectPath: repoPath,
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
 		})
 		require.NoError(t, err)
 
@@ -592,8 +608,9 @@ func TestWalkReferences(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
-			ProjectPath: repoPath,
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
 		})
 		require.NoError(t, err)
 

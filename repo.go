@@ -29,10 +29,9 @@ var (
 // building a history over time.
 // https://blog.axosoft.com/learning-git-repository/
 type Repository struct {
-	params       *config.GitParams
-	workTree     afero.Fs
-	dotGit       *backend.Backend
-	workTreePath string
+	params   *config.GitParams
+	workTree afero.Fs
+	dotGit   *backend.Backend
 
 	shouldCleanBackend bool
 }
@@ -151,8 +150,6 @@ func InitRepositoryWithParams(params *config.GitParams, opts InitOptions) (r *Re
 // OpenOptions contains all the optional data used to open a
 // repository
 type OpenOptions struct {
-	GitOptions *config.GitOptions
-
 	// GitBackend represents the underlying backend to use to init the
 	// repository and interact with the odb
 	// By default the filesystem will be used
@@ -170,22 +167,54 @@ type OpenOptions struct {
 
 // OpenRepository loads an existing git repository by reading its
 // config file, and returns a Repository instance
+//
+// This assumes:
+// - The repo is not bare (see WithOptions)
+// - We're not interested in env vars (see WithParams)
+// - The git dir is in the working tree under .git
 func OpenRepository(workTreePath string) (*Repository, error) {
 	return OpenRepositoryWithOptions(workTreePath, OpenOptions{})
 }
 
 // OpenRepositoryWithOptions loads an existing git repository by reading
 // its config file, and returns a Repository instance
-func OpenRepositoryWithOptions(workTreePath string, opts OpenOptions) (r *Repository, err error) {
+//
+// This assumes:
+// - We're not interested in env vars (see WithParams)
+// - The git dir is in the working tree under .git
+func OpenRepositoryWithOptions(rootPath string, opts OpenOptions) (r *Repository, err error) {
+	WorkTreePath := rootPath
+	GitDirPath := filepath.Join(rootPath, gitpath.DotGitPath)
+	if opts.IsBare {
+		WorkTreePath = ""
+		GitDirPath = rootPath
+	}
+
+	params, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+		WorkTreePath: WorkTreePath,
+		GitDirPath:   GitDirPath,
+		IsBare:       opts.IsBare,
+	})
+	if err != nil {
+		return nil, xerrors.Errorf("could not get the repo params: %w", err)
+	}
+	return OpenRepositoryWithParams(params, opts)
+}
+
+func OpenRepositoryWithParams(params *config.GitParams, opts OpenOptions) (r *Repository, err error) {
 	r = &Repository{
-		workTreePath: workTreePath,
+		params: params,
+	}
+
+	if !opts.IsBare {
+		r.workTree = opts.WorkingTreeBackend
+		if r.workTree == nil {
+			r.workTree = afero.NewOsFs()
+		}
 	}
 
 	if opts.GitBackend == nil {
-		if opts.GitOptions == nil {
-			opts.GitOptions = &config.GitOptions{}
-		}
-		r.dotGit, err = backend.NewFS(opts.GitOptions)
+		r.dotGit, err = backend.NewFS(params)
 		if err != nil {
 			return nil, xerrors.Errorf("could not create backend: %w", err)
 		}
@@ -197,13 +226,6 @@ func OpenRepositoryWithOptions(workTreePath string, opts OpenOptions) (r *Reposi
 				r.dotGit.Close() //nolint:errcheck // it already failed
 			}
 		}(r)
-	}
-
-	if !opts.IsBare {
-		r.workTree = opts.WorkingTreeBackend
-		if r.workTree == nil {
-			r.workTree = afero.NewOsFs()
-		}
 	}
 
 	// since we can't check if the directory exists on disk to
