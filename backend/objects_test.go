@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Nivl/git-go/env"
 	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/config"
 	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/Nivl/git-go/ginternals/packfile"
 	"github.com/Nivl/git-go/internal/testhelper"
@@ -30,9 +30,12 @@ func TestObject(t *testing.T) {
 		oid, err := ginternals.NewOidFromStr("b07e28976ac8972715598f390964d53cf4dbc1bd")
 		require.NoError(t, err)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: repoPath,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -56,9 +59,12 @@ func TestObject(t *testing.T) {
 		oid, err := ginternals.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
 		require.NoError(t, err)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: repoPath,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -81,9 +87,12 @@ func TestObject(t *testing.T) {
 		oid, err := ginternals.NewOidFromStr("2dcdadc2a420225783794fbffd51e2e137a69646")
 		require.NoError(t, err)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: repoPath,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -105,9 +114,12 @@ func TestHasObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: repoPath,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -127,9 +139,12 @@ func TestHasObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: repoPath,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -149,9 +164,12 @@ func TestHasObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: repoPath,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -182,9 +200,12 @@ func TestHasObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: repoPath,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -214,9 +235,12 @@ func TestWriteObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: repoPath,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -247,9 +271,12 @@ func TestWriteObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: repoPath,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -288,9 +315,12 @@ func TestWalkPackedObjectIDs(t *testing.T) {
 
 	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 	t.Cleanup(cleanup)
-	b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+	opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 		ProjectPath: repoPath,
-	}))
+	})
+	require.NoError(t, err)
+
+	b, err := NewFS(opts)
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, b.Close())
@@ -346,9 +376,12 @@ func TestLoosePackedObjectIDs(t *testing.T) {
 
 	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 	t.Cleanup(cleanup)
-	b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+	opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 		ProjectPath: repoPath,
-	}))
+	})
+	require.NoError(t, err)
+
+	b, err := NewFS(opts)
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, b.Close())
@@ -396,9 +429,12 @@ func TestIsLooseObjectDir(t *testing.T) {
 	dir, cleanup := testhelper.TempDir(t)
 	t.Cleanup(cleanup)
 
-	b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+	opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 		ProjectPath: dir,
-	}))
+	})
+	require.NoError(t, err)
+
+	b, err := NewFS(opts)
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, b.Close())

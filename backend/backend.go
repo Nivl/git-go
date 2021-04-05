@@ -5,8 +5,8 @@ package backend
 import (
 	"sync"
 
-	"github.com/Nivl/git-go/env"
 	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/config"
 	"github.com/Nivl/git-go/ginternals/packfile"
 	"github.com/Nivl/git-go/internal/cache"
 	"github.com/Nivl/git-go/internal/syncutil"
@@ -16,7 +16,7 @@ import (
 
 // Backend is a Backend implementation that uses the filesystem to store data
 type Backend struct {
-	opts *env.GitOptions
+	opts *config.GitOptions
 
 	objectMu     *syncutil.NamedMutex
 	cache        *cache.LRU
@@ -30,18 +30,15 @@ type Backend struct {
 }
 
 // NewFS returns a new Backend object using the local FileSystem
-func NewFS(opts *env.GitOptions) (*Backend, error) {
+func NewFS(opts *config.GitOptions) (*Backend, error) {
 	return New(opts, afero.NewOsFs())
 }
 
 // New returns a new Backend object
-func New(opts *env.GitOptions, fs afero.Fs) (*Backend, error) {
+func New(opts *config.GitOptions, fs afero.Fs) (*Backend, error) {
 	c, err := cache.NewLRU(1000)
 	if err != nil {
 		return nil, xerrors.Errorf("could not create LRU cache: %w", err)
-	}
-	if !opts.IsFinalized() {
-		return nil, xerrors.Errorf("the provided options should be finalized")
 	}
 	b := &Backend{
 		opts:         opts,

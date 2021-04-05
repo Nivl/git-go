@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/Nivl/git-go/env"
 	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/config"
 	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/stretchr/testify/assert"
@@ -24,9 +24,12 @@ func TestReference(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: repoPath,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -43,9 +46,12 @@ func TestReference(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: repoPath,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -67,9 +73,12 @@ func TestReference(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: repoPath,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -91,11 +100,16 @@ func TestParsePackedRefs(t *testing.T) {
 
 	createRepo := func(t *testing.T) (dir string, cleanup func()) {
 		dir, cleanup = testhelper.TempDir(t)
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: dir,
 			IsBare:      true,
-		}))
+		})
 		require.NoError(t, err)
+
+		b, err := NewFS(opts)
+		require.NoError(t, err)
+
 		defer require.NoError(t, b.Close())
 		require.NoError(t, b.Init())
 		return dir, cleanup
@@ -107,10 +121,13 @@ func TestParsePackedRefs(t *testing.T) {
 		dir, cleanup := createRepo(t)
 		t.Cleanup(cleanup)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: dir,
 			IsBare:      true,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -134,10 +151,13 @@ func TestParsePackedRefs(t *testing.T) {
 		err := os.WriteFile(fPath, []byte("not valid data"), 0o644)
 		require.NoError(t, err)
 
-		_, err = NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: dir,
 			IsBare:      true,
-		}))
+		})
+		require.NoError(t, err)
+
+		_, err = NewFS(opts)
 		require.Error(t, err)
 		assert.True(t, xerrors.Is(err, ginternals.ErrPackedRefInvalid), "unexpected error received")
 	})
@@ -152,10 +172,13 @@ func TestParsePackedRefs(t *testing.T) {
 		err := os.WriteFile(fPath, []byte("^de111c003b5661db802f17ac69419dcb9f4f3137\n# this is a comment"), 0o644)
 		require.NoError(t, err)
 
-		_, err = NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: dir,
 			IsBare:      true,
-		}))
+		})
+		require.NoError(t, err)
+
+		_, err = NewFS(opts)
 		require.NoError(t, err)
 	})
 
@@ -165,9 +188,12 @@ func TestParsePackedRefs(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: repoPath,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -213,9 +239,12 @@ func TestWriteReference(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: dir,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -237,9 +266,12 @@ func TestWriteReference(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: dir,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -263,9 +295,12 @@ func TestWriteReference(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: dir,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -284,9 +319,12 @@ func TestWriteReference(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: repoPath,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -312,9 +350,12 @@ func TestWriteReference(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: repoPath,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -346,9 +387,12 @@ func TestWriteReferenceSafe(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: dir,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -371,9 +415,12 @@ func TestWriteReferenceSafe(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: dir,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -398,9 +445,12 @@ func TestWriteReferenceSafe(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: dir,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -419,9 +469,12 @@ func TestWriteReferenceSafe(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: repoPath,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -449,9 +502,12 @@ func TestWriteReferenceSafe(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: repoPath,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -481,9 +537,12 @@ func TestWalkReferences(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: repoPath,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -504,9 +563,12 @@ func TestWalkReferences(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: repoPath,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -530,9 +592,12 @@ func TestWalkReferences(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: repoPath,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())

@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/Nivl/git-go"
-	"github.com/Nivl/git-go/env"
+	git "github.com/Nivl/git-go"
+	"github.com/Nivl/git-go/ginternals/config"
 	"github.com/Nivl/git-go/internal/pathutil"
+	"golang.org/x/xerrors"
 )
 
-func loadRepository(cfg *config) (*git.Repository, error) {
+func loadRepository(cfg *flags) (*git.Repository, error) {
 	repoPath := cfg.C.String()
 	root, err := pathutil.RepoRootFromPath(repoPath)
 	if err != nil {
@@ -14,17 +15,15 @@ func loadRepository(cfg *config) (*git.Repository, error) {
 	}
 	repoPath = root
 
+	opts, err := config.NewGitOptions(cfg.env, config.NewGitOptionsParams{
+		ProjectPath: repoPath,
+	})
+	if err != nil {
+		return nil, xerrors.Errorf("could not create options: %w", err)
+	}
+
 	// run the command
 	return git.OpenRepositoryWithOptions(repoPath, git.OpenOptions{
-		GitOptions: newEnvOptionsFromCfg(cfg),
+		GitOptions: opts,
 	})
-}
-
-func newEnvOptionsFromCfg(cfg *config) *env.GitOptions {
-	return &env.GitOptions{
-		GitDirPath:       cfg.GitDir,
-		GitObjectDirPath: cfg.GitObjectDir,
-		SkipSystemConfig: cfg.SkipSystemConfig,
-		GitConfig:        cfg.GitConfig,
-	}
 }

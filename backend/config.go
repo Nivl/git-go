@@ -19,6 +19,7 @@ func (b *Backend) loadConfig() error {
 func (b *Backend) Init() error {
 	// Create the directories
 	dirs := []string{
+		b.Path(),
 		filepath.Join(b.Path(), gitpath.RefsTagsPath),
 		filepath.Join(b.Path(), gitpath.RefsHeadsPath),
 		b.ObjectsPath(),

@@ -1,11 +1,13 @@
 package main
 
 import (
-	"github.com/Nivl/git-go"
+	git "github.com/Nivl/git-go"
+	"github.com/Nivl/git-go/ginternals/config"
 	"github.com/spf13/cobra"
+	"golang.org/x/xerrors"
 )
 
-func newInitCmd(cfg *config) *cobra.Command {
+func newInitCmd(cfg *flags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "init a new git repository",
@@ -18,9 +20,16 @@ func newInitCmd(cfg *config) *cobra.Command {
 	return cmd
 }
 
-func initCmd(cfg *config) error {
+func initCmd(cfg *flags) error {
+	opts, err := config.NewGitOptions(cfg.env, config.NewGitOptionsParams{
+		ProjectPath: cfg.C.String(),
+	})
+	if err != nil {
+		return xerrors.Errorf("could not create options: %w", err)
+	}
+
 	r, err := git.InitRepositoryWithOptions(cfg.C.String(), git.InitOptions{
-		GitOptions: newEnvOptionsFromCfg(cfg),
+		GitOptions: opts,
 	})
 	if err != nil {
 		return err

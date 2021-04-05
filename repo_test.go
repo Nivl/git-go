@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/Nivl/git-go/env"
 	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/config"
 	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/testhelper"
@@ -34,9 +34,9 @@ func TestInit(t *testing.T) {
 		})
 
 		// assert returned repository
-		assert.Equal(t, d, r.repoRoot)
+		assert.Equal(t, d, r.workTreePath)
 		assert.Equal(t, filepath.Join(d, gitpath.DotGitPath), r.dotGit.Path())
-		assert.NotNil(t, r.wt)
+		assert.NotNil(t, r.workTree)
 		assert.False(t, r.IsBare(), "repos should not be bare")
 	})
 
@@ -54,9 +54,9 @@ func TestInit(t *testing.T) {
 		require.NoError(t, err, "failed creating a repo")
 
 		// assert returned repository
-		require.Equal(t, d, r.repoRoot)
+		require.Equal(t, d, r.workTreePath)
 		require.Equal(t, d, r.dotGit.Path())
-		assert.Nil(t, r.wt)
+		assert.Nil(t, r.workTree)
 		assert.True(t, r.IsBare(), "repos should be bare")
 	})
 
@@ -68,7 +68,7 @@ func TestInit(t *testing.T) {
 
 		// Run logic
 		r, err := InitRepositoryWithOptions(d, InitOptions{
-			GitOptions: &env.GitOptions{
+			GitOptions: &config.GitOptions{
 				GitDirPath: "dot-git",
 			},
 		})
@@ -86,7 +86,7 @@ func TestInit(t *testing.T) {
 
 		// Run logic
 		r, err := InitRepositoryWithOptions(d, InitOptions{
-			GitOptions: &env.GitOptions{
+			GitOptions: &config.GitOptions{
 				GitDirPath:       "dot-git",
 				GitObjectDirPath: "dot-git-objects",
 			},
@@ -159,9 +159,9 @@ func TestOpen(t *testing.T) {
 		})
 
 		// assert returned repository
-		assert.Equal(t, repoPath, r.repoRoot)
+		assert.Equal(t, repoPath, r.workTreePath)
 		assert.Equal(t, filepath.Join(repoPath, gitpath.DotGitPath), r.dotGit.Path())
-		assert.NotNil(t, r.wt)
+		assert.NotNil(t, r.workTree)
 		assert.False(t, r.IsBare(), "repos should not be bare")
 	})
 
@@ -182,9 +182,9 @@ func TestOpen(t *testing.T) {
 		})
 
 		// assert returned repository
-		require.Equal(t, repoPath, r.repoRoot)
+		require.Equal(t, repoPath, r.workTreePath)
 		require.Equal(t, repoPath, r.dotGit.Path())
-		assert.Nil(t, r.wt)
+		assert.Nil(t, r.workTree)
 		assert.True(t, r.IsBare(), "repos should be bare")
 	})
 
@@ -200,7 +200,7 @@ func TestOpen(t *testing.T) {
 
 		// Run logic
 		r, err := OpenRepositoryWithOptions(d, OpenOptions{
-			GitOptions: &env.GitOptions{
+			GitOptions: &config.GitOptions{
 				GitDirPath: repoPath,
 			},
 		})

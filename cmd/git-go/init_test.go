@@ -56,7 +56,7 @@ func TestInit(t *testing.T) {
 		dirPath, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		err := initCmd(&config{C: &testhelper.StringValue{Value: dirPath}})
+		err := initCmd(&flags{C: &testhelper.StringValue{Value: dirPath}})
 		require.NoError(t, err)
 
 		info, err := os.Stat(filepath.Join(dirPath, ".git"))
@@ -67,7 +67,7 @@ func TestInit(t *testing.T) {
 	t.Run("should fail on invalid path", func(t *testing.T) {
 		t.Parallel()
 
-		err := initCmd(&config{C: &testhelper.StringValue{Value: filepath.FromSlash("/this/path/is/fake")}})
+		err := initCmd(&flags{C: &testhelper.StringValue{Value: filepath.FromSlash("/this/path/is/fake")}})
 		require.Error(t, err)
 	})
 }

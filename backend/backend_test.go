@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/Nivl/git-go/backend"
-	"github.com/Nivl/git-go/env"
+	"github.com/Nivl/git-go/ginternals/config"
 	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/stretchr/testify/require"
@@ -19,10 +19,11 @@ func TestPath(t *testing.T) {
 
 	dotGitPath := filepath.Join(dir, gitpath.DotGitPath)
 
-	b, err := backend.NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+	opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 		ProjectPath: dir,
-	}))
+	})
 	require.NoError(t, err)
+	b, err := backend.NewFS(opts)
 	t.Cleanup(func() {
 		require.NoError(t, b.Close())
 	})
@@ -41,9 +42,11 @@ func TestObjectPath(t *testing.T) {
 
 		dotGitPath := filepath.Join(dir, gitpath.DotGitPath)
 
-		b, err := backend.NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: dir,
-		}))
+		})
+		require.NoError(t, err)
+		b, err := backend.NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -58,11 +61,10 @@ func TestObjectPath(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		opts := &env.GitOptions{
+		opts := &config.GitOptions{
 			GitDirPath:       filepath.Join(dir, gitpath.DotGitPath),
 			GitObjectDirPath: filepath.Join(dir, "git-objects"),
 		}
-		opts.Finalize(env.FinalizeOptions{})
 		b, err := backend.NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {

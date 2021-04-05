@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/Nivl/git-go/backend"
-	"github.com/Nivl/git-go/env"
+	"github.com/Nivl/git-go/ginternals/config"
 	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/stretchr/testify/assert"
@@ -24,9 +24,11 @@ func TestInit(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		b, err := backend.NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: dir,
-		}))
+		})
+		require.NoError(t, err)
+		b, err := backend.NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -41,11 +43,10 @@ func TestInit(t *testing.T) {
 		repo, cleanupRepo := testhelper.TempDir(t)
 		t.Cleanup(cleanupRepo)
 
-		opts := &env.GitOptions{
+		opts := &config.GitOptions{
 			GitDirPath:       filepath.Join(repo, gitpath.DotGitPath),
 			GitObjectDirPath: filepath.Join(repo, "git-objects"),
 		}
-		opts.Finalize(env.FinalizeOptions{})
 		b, err := backend.NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
@@ -76,10 +77,13 @@ func TestInit(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		b, err := backend.NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: dir,
 			IsBare:      true,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := backend.NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -102,10 +106,13 @@ func TestInit(t *testing.T) {
 		err = os.WriteFile(filepath.Join(dir, gitpath.DescriptionPath), []byte{}, 0o644)
 		require.NoError(t, err)
 
-		b, err := backend.NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: dir,
 			IsBare:      true,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := backend.NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -129,10 +136,13 @@ func TestInit(t *testing.T) {
 		err := os.MkdirAll(filepath.Join(dir, gitpath.ObjectsPath), 0o550)
 		require.NoError(t, err)
 
-		b, err := backend.NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: dir,
 			IsBare:      true,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := backend.NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -154,10 +164,13 @@ func TestInit(t *testing.T) {
 		err := os.WriteFile(filepath.Join(dir, gitpath.DescriptionPath), []byte{}, 0o444)
 		require.NoError(t, err)
 
-		b, err := backend.NewFS(env.NewDefaultGitOptions(env.FinalizeOptions{
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitOptionsParams{
 			ProjectPath: dir,
 			IsBare:      true,
-		}))
+		})
+		require.NoError(t, err)
+
+		b, err := backend.NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())

@@ -39,7 +39,7 @@ func TestLoadRepository(t *testing.T) {
 		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
 			t.Parallel()
 
-			cfg := &config{
+			cfg := &flags{
 				C: testhelper.NewStringValue(tc.C),
 			}
 			repo, err := loadRepository(cfg)

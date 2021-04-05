@@ -1,4 +1,4 @@
-package env
+package config
 
 import (
 	"fmt"
@@ -78,7 +78,7 @@ func TestBuildDotGitPath(t *testing.T) {
 	}
 }
 
-func TestBuildDotGitObjectsPat(t *testing.T) {
+func TestBuildDotGitObjectsPath(t *testing.T) {
 	t.Parallel()
 
 	// To be able to build an absolute path on Windows we need to know

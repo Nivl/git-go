@@ -17,7 +17,7 @@ import (
 
 var errBadFile = errors.New("bad file")
 
-func newCatFileCmd(cfg *config) *cobra.Command {
+func newCatFileCmd(cfg *flags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cat-file [TYPE] OBJECT",
 		Short: "Provide content or type and size information for repository objects",
@@ -52,7 +52,7 @@ type catFileParams struct {
 	prettyPrint bool
 }
 
-func catFileCmd(out io.Writer, cfg *config, p catFileParams) (err error) {
+func catFileCmd(out io.Writer, cfg *flags, p catFileParams) (err error) {
 	// Validate options
 	if p.typ != "" && (p.typeOnly || p.sizeOnly || p.prettyPrint) {
 		return errors.New("type not supported with options -t, -s, -p")
