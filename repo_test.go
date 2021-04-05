@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/Nivl/git-go/env"
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/config"
 	"github.com/Nivl/git-go/ginternals/object"
@@ -34,7 +35,7 @@ func TestInit(t *testing.T) {
 		})
 
 		// assert returned repository
-		assert.Equal(t, d, r.workTreePath)
+		assert.Equal(t, d, r.params.WorkTreePath)
 		assert.Equal(t, filepath.Join(d, gitpath.DotGitPath), r.dotGit.Path())
 		assert.NotNil(t, r.workTree)
 		assert.False(t, r.IsBare(), "repos should not be bare")
@@ -54,7 +55,7 @@ func TestInit(t *testing.T) {
 		require.NoError(t, err, "failed creating a repo")
 
 		// assert returned repository
-		require.Equal(t, d, r.workTreePath)
+		require.Empty(t, r.params.WorkTreePath)
 		require.Equal(t, d, r.dotGit.Path())
 		assert.Nil(t, r.workTree)
 		assert.True(t, r.IsBare(), "repos should be bare")
@@ -66,12 +67,14 @@ func TestInit(t *testing.T) {
 		d, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		// Run logic
-		r, err := InitRepositoryWithOptions(d, InitOptions{
-			GitOptions: &config.GitOptions{
-				GitDirPath: "dot-git",
-			},
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: d,
+			GitDirPath:   filepath.Join(d, "dot-git"),
 		})
+		require.NoError(t, err)
+
+		// Run logic
+		r, err := InitRepositoryWithParams(opts, InitOptions{})
 		require.NoError(t, err, "failed creating a repo")
 
 		// assert returned repository
@@ -85,32 +88,24 @@ func TestInit(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		// Run logic
-		r, err := InitRepositoryWithOptions(d, InitOptions{
-			GitOptions: &config.GitOptions{
-				GitDirPath:       "dot-git",
-				GitObjectDirPath: "dot-git-objects",
-			},
+		e := env.NewFromKVList([]string{
+			"GIT_DIR=" + filepath.Join(d, "dot-git"),
+			"GIT_OBJECT_DIRECTORY=" + filepath.Join(d, "dot-git-objects"),
+		})
+		p, err := config.NewGitParams(e, config.NewGitParamsOptions{
+			IsBare: true,
+		})
+		require.NoError(t, err)
+
+		// Run logic
+		r, err := InitRepositoryWithParams(p, InitOptions{
+			IsBare: true,
 		})
 		require.NoError(t, err, "failed creating a repo")
 
 		// assert returned repository
 		require.Equal(t, filepath.Join(d, "dot-git"), r.dotGit.Path())
 		require.Equal(t, filepath.Join(d, "dot-git-objects"), r.dotGit.ObjectsPath())
-	})
-
-	t.Run("should fail with a path that doesn't exist", func(t *testing.T) {
-		t.Parallel()
-
-		// Setup
-		d, cleanup := testhelper.TempDir(t)
-		t.Cleanup(cleanup)
-
-		// Run logic
-		_, err := InitRepositoryWithOptions(filepath.Join(d, "doesnt-exist"), InitOptions{
-			IsBare: true,
-		})
-		require.Error(t, err)
-		require.ErrorIs(t, err, os.ErrNotExist)
 	})
 
 	t.Run("should fail with a path that points to a file", func(t *testing.T) {
@@ -159,7 +154,7 @@ func TestOpen(t *testing.T) {
 		})
 
 		// assert returned repository
-		assert.Equal(t, repoPath, r.workTreePath)
+		assert.Equal(t, repoPath, r.params.WorkTreePath)
 		assert.Equal(t, filepath.Join(repoPath, gitpath.DotGitPath), r.dotGit.Path())
 		assert.NotNil(t, r.workTree)
 		assert.False(t, r.IsBare(), "repos should not be bare")
@@ -182,7 +177,7 @@ func TestOpen(t *testing.T) {
 		})
 
 		// assert returned repository
-		require.Equal(t, repoPath, r.workTreePath)
+		require.Empty(t, r.params.WorkTreePath)
 		require.Equal(t, repoPath, r.dotGit.Path())
 		assert.Nil(t, r.workTree)
 		assert.True(t, r.IsBare(), "repos should be bare")
@@ -198,12 +193,14 @@ func TestOpen(t *testing.T) {
 		t.Cleanup(cleanup)
 		repoPath = filepath.Join(repoPath, gitpath.DotGitPath)
 
-		// Run logic
-		r, err := OpenRepositoryWithOptions(d, OpenOptions{
-			GitOptions: &config.GitOptions{
-				GitDirPath: repoPath,
-			},
+		p, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: d,
+			GitDirPath:   repoPath,
 		})
+		require.NoError(t, err)
+
+		// Run logic
+		r, err := OpenRepositoryWithParams(p, OpenOptions{})
 		require.NoError(t, err, "failed creating a repo")
 		require.NoError(t, r.Close())
 
