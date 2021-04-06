@@ -49,6 +49,9 @@ type GitParams struct {
 // NewGitParamsOptions represents all the params used to set the default
 // values of GitOptions
 type NewGitParamsOptions struct {
+	// WorkingDirectory represents the current working directory
+	// Defaults to the current working directory
+	WorkingDirectory string
 	// WorkTreePath corresponds to the directory that should contain the .git.
 	// Set this value to change the default behavior and overwrite
 	// $GIT_WORK_TREE.
@@ -60,6 +63,14 @@ type NewGitParamsOptions struct {
 	// IsBare defines if the repo is base. It means that the repo ha no
 	// work tree
 	IsBare bool
+	// SkipGitDirLookUp will disable automatic lookup of the .git directory.
+	// Defaults to false which means that if no path is provided
+	// to $GitDirPath or $GIT_DIR, the method will look for a .git dir in
+	// $WorkingDirectory and will go up the tree until it finds one.
+	//
+	// You should only set this value to true if you want to initialize a
+	// new repository.
+	SkipGitDirLookUp bool
 }
 
 // NewGitParams returns a new GitParams that fetches the data from the
@@ -99,10 +110,16 @@ func NewGitOptionsSkipEnv(opts NewGitParamsOptions) (*GitParams, error) {
 	return p, nil
 }
 
-func setGitParams(p *GitParams, opts NewGitParamsOptions) error {
+func setGitParams(p *GitParams, opts NewGitParamsOptions) (err error) {
 	wd, err := os.Getwd()
 	if err != nil {
 		return xerrors.Errorf("could not get the current directory: %w", err)
+	}
+	if opts.WorkingDirectory == "" {
+		opts.WorkingDirectory = wd
+	}
+	if !filepath.IsAbs(opts.WorkingDirectory) {
+		opts.WorkingDirectory = filepath.Join(wd, opts.WorkingDirectory)
 	}
 
 	// $GIT_WORK_TREE and --work-tree cannot be set if $GIT_DIR or
@@ -122,18 +139,20 @@ func setGitParams(p *GitParams, opts NewGitParamsOptions) error {
 	if opts.GitDirPath != "" {
 		p.GitDirPath = opts.GitDirPath
 	}
-	guessedWorkingTree := wd
+	guessedWorkingTree := opts.WorkingDirectory
 	switch p.GitDirPath {
 	default:
 		if !filepath.IsAbs(p.GitDirPath) {
-			p.GitDirPath = filepath.Join(wd, p.GitDirPath)
+			p.GitDirPath = filepath.Join(opts.WorkingDirectory, p.GitDirPath)
 		}
 	case "":
-		guessedWorkingTree, err = pathutil.WorkingTree()
-		if err != nil {
-			return xerrors.Errorf("could not find working tree: %w", err)
+		if !opts.SkipGitDirLookUp {
+			guessedWorkingTree, err = pathutil.WorkingTreeFromPath(opts.WorkingDirectory)
+			if err != nil {
+				return xerrors.Errorf("could not find working tree: %w", err)
+			}
 		}
-		p.GitDirPath = filepath.Join(guessedWorkingTree, p.GitDirPath)
+		p.GitDirPath = filepath.Join(guessedWorkingTree, gitpath.DotGitPath)
 	}
 
 	// TODO(melvin): that should be where we load the config files so
@@ -166,7 +185,7 @@ func setGitParams(p *GitParams, opts NewGitParamsOptions) error {
 		p.WorkTreePath = guessedWorkingTree
 	}
 	if p.WorkTreePath != "" && !filepath.IsAbs(p.WorkTreePath) {
-		p.WorkTreePath = filepath.Join(wd, p.WorkTreePath)
+		p.WorkTreePath = filepath.Join(opts.WorkingDirectory, p.WorkTreePath)
 	}
 
 	// ObjectDirPath rules:
@@ -179,7 +198,7 @@ func setGitParams(p *GitParams, opts NewGitParamsOptions) error {
 		p.ObjectDirPath = filepath.Join(p.GitDirPath, gitpath.ObjectsPath)
 	}
 	if !filepath.IsAbs(p.ObjectDirPath) {
-		p.ObjectDirPath = filepath.Join(wd, p.ObjectDirPath)
+		p.ObjectDirPath = filepath.Join(opts.WorkingDirectory, p.ObjectDirPath)
 	}
 
 	// LocalConfig rules:
@@ -192,7 +211,8 @@ func setGitParams(p *GitParams, opts NewGitParamsOptions) error {
 		p.LocalConfig = filepath.Join(p.GitDirPath, gitpath.ConfigPath)
 	}
 	if !filepath.IsAbs(p.LocalConfig) {
-		p.LocalConfig = filepath.Join(wd, p.LocalConfig)
+		p.LocalConfig = filepath.Join(opts.WorkingDirectory, p.LocalConfig)
 	}
+
 	return nil
 }

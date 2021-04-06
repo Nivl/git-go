@@ -21,15 +21,19 @@ func newInitCmd(cfg *flags) *cobra.Command {
 }
 
 func initCmd(cfg *flags) error {
-	opts, err := config.NewGitOptions(cfg.env, config.NewGitOptionsParams{
-		ProjectPath: cfg.C.String(),
+	p, err := config.NewGitParams(cfg.env, config.NewGitParamsOptions{
+		WorkingDirectory: cfg.C.String(),
+		GitDirPath:       cfg.GitDir,
+		WorkTreePath:     cfg.WorkTree,
+		IsBare:           cfg.Bare,
+		SkipGitDirLookUp: true,
 	})
 	if err != nil {
-		return xerrors.Errorf("could not create options: %w", err)
+		return xerrors.Errorf("could not create param: %w", err)
 	}
 
-	r, err := git.InitRepositoryWithOptions(cfg.C.String(), git.InitOptions{
-		GitOptions: opts,
+	r, err := git.InitRepositoryWithParams(p, git.InitOptions{
+		IsBare: cfg.Bare,
 	})
 	if err != nil {
 		return err

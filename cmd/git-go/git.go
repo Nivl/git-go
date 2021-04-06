@@ -8,7 +8,10 @@ import (
 )
 
 type flags struct {
-	C pflag.Value // simpler version of git's -C: https://git-scm.com/docs/git#Documentation/git.txt--Cltpathgt
+	C        pflag.Value // simpler version of git's -C: https://git-scm.com/docs/git#Documentation/git.txt--Cltpathgt
+	WorkTree string
+	GitDir   string
+	Bare     bool
 
 	env *env.Env
 }
@@ -26,6 +29,9 @@ func newRootCmd(cwd string, e *env.Env) *cobra.Command {
 	}
 	cfg.C = pathutil.NewDirPathFlagWithDefault(cwd)
 	cmd.PersistentFlags().VarS(cfg.C, "C", "C", "Run as if git was started in the provided path instead of the current working directory.")
+	cmd.PersistentFlags().BoolVar(&cfg.Bare, "bare", false, "Treat the repository as a bare repository")
+	cmd.PersistentFlags().StringVar(&cfg.GitDir, "git-dir", "", "Set the path to the repository")
+	cmd.PersistentFlags().StringVar(&cfg.WorkTree, "work-tree", "", "Set the path to the root of the working tree")
 
 	// porcelain
 	cmd.AddCommand(newInitCmd(cfg))
