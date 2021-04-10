@@ -11,28 +11,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRepoRootFromPath(t *testing.T) {
+func TestWorkingTreeFromPath(t *testing.T) {
 	t.Parallel()
 
-	t.Run("subdir should be found", func(t *testing.T) {
-		t.Parallel()
-
-		path, cleanup := testhelper.TempDir(t)
-		t.Cleanup(cleanup)
-
-		err := os.WriteFile(filepath.Join(path, "HEAD"), []byte("ref: refs/heads/main"), 0o644)
-		require.NoError(t, err)
-
-		finalPath := filepath.Join(path, "a", "b", "c")
-		err = os.MkdirAll(finalPath, 0o755)
-		require.NoError(t, err)
-
-		p, err := pathutil.RepoRootFromPath(finalPath)
-		require.NoError(t, err)
-		assert.Equal(t, path, p)
-	})
-
-	t.Run("bare repo should be found", func(t *testing.T) {
+	t.Run("should be found fom subdir", func(t *testing.T) {
 		t.Parallel()
 
 		path, cleanup := testhelper.TempDir(t)
@@ -45,7 +27,7 @@ func TestRepoRootFromPath(t *testing.T) {
 		err = os.MkdirAll(finalPath, 0o755)
 		require.NoError(t, err)
 
-		p, err := pathutil.RepoRootFromPath(finalPath)
+		p, err := pathutil.WorkingTreeFromPath(finalPath)
 		require.NoError(t, err)
 		assert.Equal(t, path, p)
 	})
@@ -60,19 +42,19 @@ func TestRepoRootFromPath(t *testing.T) {
 		err := os.MkdirAll(finalPath, 0o755)
 		require.NoError(t, err)
 
-		_, err = pathutil.RepoRootFromPath(finalPath)
+		_, err = pathutil.WorkingTreeFromPath(finalPath)
 		require.Error(t, err)
 		assert.ErrorIs(t, err, pathutil.ErrNoRepo)
 	})
 }
 
-func TestRepoRoot(t *testing.T) {
+func TestWorkingTree(t *testing.T) {
 	t.Parallel()
 
 	t.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := pathutil.RepoRoot()
+		_, err := pathutil.WorkingTree()
 		require.NoError(t, err)
 	})
 }

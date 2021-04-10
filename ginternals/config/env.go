@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,6 +11,10 @@ import (
 	"github.com/Nivl/git-go/internal/pathutil"
 	"golang.org/x/xerrors"
 )
+
+// ErrNoWorkTreeAlone is thrown when a work tree path is given without
+// a git path
+var ErrNoWorkTreeAlone = errors.New("cannot specify a work tree without also specifying a git dir")
 
 // GitParams represents the options that can be set using the env
 // https://git-scm.com/book/en/v2/Git-Internals-Environment-Variables
@@ -125,7 +130,7 @@ func setGitParams(p *GitParams, opts NewGitParamsOptions) (err error) {
 	// $GIT_WORK_TREE and --work-tree cannot be set if $GIT_DIR or
 	// --git-dir isn't set
 	if opts.GitDirPath == "" && p.GitDirPath == "" && (opts.WorkTreePath != "" || p.WorkTreePath != "") {
-		return xerrors.Errorf("cannot specify a work tree without also specifying a git dir: %w", err)
+		return ErrNoWorkTreeAlone
 	}
 
 	// GirDir rules:
