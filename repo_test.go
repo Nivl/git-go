@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/Nivl/git-go/env"
@@ -120,7 +121,12 @@ func TestInit(t *testing.T) {
 			IsBare: true,
 		})
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "not a directory")
+		switch runtime.GOOS {
+		case "windows":
+			require.Contains(t, err.Error(), "The system cannot find the path specified")
+		default:
+			require.Contains(t, err.Error(), "not a directory")
+		}
 	})
 
 	t.Run("should fail with a repo that already exists", func(t *testing.T) {

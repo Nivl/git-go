@@ -50,6 +50,12 @@ func TestInitParams(t *testing.T) {
 func TestInit(t *testing.T) {
 	t.Parallel()
 
+	// To be able to build an absolute path on Windows we need to know
+	// the Volume name
+	dir, err := os.Getwd()
+	require.NoError(t, err)
+	root := filepath.VolumeName(dir) + string(os.PathSeparator)
+
 	t.Run("should work with default params", func(t *testing.T) {
 		t.Parallel()
 
@@ -72,7 +78,7 @@ func TestInit(t *testing.T) {
 
 		err := initCmd(&flags{
 			env: env.NewFromKVList([]string{}),
-			C:   &testhelper.StringValue{Value: filepath.FromSlash("/this/path/is/fake")},
+			C:   &testhelper.StringValue{Value: filepath.Join(root, "this", "path", "is", "fake")},
 		})
 		require.Error(t, err)
 	})
