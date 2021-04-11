@@ -76,13 +76,21 @@ func TestInit(t *testing.T) {
 	t.Run("should fail on invalid path", func(t *testing.T) {
 		t.Parallel()
 
+		fmt.Println("path:", filepath.Join(root, "this", "path", "is", "fake"))
+		_, err2 := os.Stat(filepath.Join(root, "this", "path", "is", "fake"))
+		fmt.Println("error:", err2, os.IsNotExist(err2))
+
+		fmt.Println("path:", "what")
+		_, err2 = os.Stat("what")
+		fmt.Println("error:", err2, os.IsNotExist(err2))
+
 		err := initCmd(&flags{
 			env: env.NewFromKVList([]string{}),
 			C:   &testhelper.StringValue{Value: filepath.Join(root, "this", "path", "is", "fake")},
 		})
 
 		fmt.Println("path:", filepath.Join(root, "this", "path", "is", "fake"))
-		_, err2 := os.Stat(filepath.Join(root, "this", "path", "is", "fake"))
+		_, err2 = os.Stat(filepath.Join(root, "this", "path", "is", "fake"))
 		fmt.Println("error:", err2, os.IsNotExist(err2))
 
 		require.Error(t, err)
