@@ -50,12 +50,6 @@ func TestInitParams(t *testing.T) {
 func TestInit(t *testing.T) {
 	t.Parallel()
 
-	// To be able to build an absolute path on Windows we need to know
-	// the Volume name
-	dir, err := os.Getwd()
-	require.NoError(t, err)
-	root := filepath.VolumeName(dir) + string(os.PathSeparator)
-
 	t.Run("should work with default params", func(t *testing.T) {
 		t.Parallel()
 
@@ -73,26 +67,16 @@ func TestInit(t *testing.T) {
 		assert.True(t, info.IsDir(), "expected .git to be a dir")
 	})
 
-	t.Run("should fail on invalid path", func(t *testing.T) {
+	t.Run("should create un-existing path", func(t *testing.T) {
 		t.Parallel()
 
-		fmt.Println("path:", filepath.Join(root, "this", "path", "is", "fake"))
-		_, err2 := os.Stat(filepath.Join(root, "this", "path", "is", "fake"))
-		fmt.Println("error:", err2, os.IsNotExist(err2))
-
-		fmt.Println("path:", "what")
-		_, err2 = os.Stat("what")
-		fmt.Println("error:", err2, os.IsNotExist(err2))
+		dir, cleanup := testhelper.TempDir(t)
+		t.Cleanup(cleanup)
 
 		err := initCmd(&flags{
 			env: env.NewFromKVList([]string{}),
-			C:   &testhelper.StringValue{Value: filepath.Join(root, "this", "path", "is", "fake")},
+			C:   &testhelper.StringValue{Value: filepath.Join(dir, "this", "path", "is", "fake")},
 		})
-
-		fmt.Println("path:", filepath.Join(root, "this", "path", "is", "fake"))
-		_, err2 = os.Stat(filepath.Join(root, "this", "path", "is", "fake"))
-		fmt.Println("error:", err2, os.IsNotExist(err2))
-
-		require.Error(t, err)
+		require.NoError(t, err)
 	})
 }
