@@ -92,6 +92,12 @@ func InitRepositoryWithOptions(rootPath string, opts InitOptions) (r *Repository
 	return InitRepositoryWithParams(params, opts)
 }
 
+// InitRepositoryWithParams initialize a new git repository by creating the .git
+// directory in the given path, which is where almost everything that
+// Git stores and manipulates is located.
+// https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain#ch10-git-internals
+//
+// This assumes methods makes no assumptions
 func InitRepositoryWithParams(params *config.GitParams, opts InitOptions) (r *Repository, err error) {
 	r = &Repository{
 		params: params,
@@ -101,7 +107,7 @@ func InitRepositoryWithParams(params *config.GitParams, opts InitOptions) (r *Re
 	// the working tree
 	if !opts.IsBare {
 		info, err := os.Stat(params.WorkTreePath)
-		switch err {
+		switch err { //nolint:errorlint // we only want nil or not nil
 		case nil:
 			if !info.IsDir() {
 				return nil, xerrors.Errorf("invalid path: not a directory")
@@ -201,6 +207,10 @@ func OpenRepositoryWithOptions(rootPath string, opts OpenOptions) (r *Repository
 	return OpenRepositoryWithParams(params, opts)
 }
 
+// OpenRepositoryWithParams loads an existing git repository by reading
+// its config file, and returns a Repository instance
+//
+// This method makes no assumptions
 func OpenRepositoryWithParams(params *config.GitParams, opts OpenOptions) (r *Repository, err error) {
 	r = &Repository{
 		params: params,

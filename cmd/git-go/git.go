@@ -8,12 +8,12 @@ import (
 )
 
 type flags struct {
+	env *env.Env
+
 	C        pflag.Value // simpler version of git's -C: https://git-scm.com/docs/git#Documentation/git.txt--Cltpathgt
 	WorkTree string
 	GitDir   string
 	Bare     bool
-
-	env *env.Env
 }
 
 func newRootCmd(cwd string, e *env.Env) *cobra.Command {

@@ -26,6 +26,7 @@ func TestPath(t *testing.T) {
 	})
 	require.NoError(t, err)
 	b, err := backend.NewFS(opts)
+	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, b.Close())
 	})
