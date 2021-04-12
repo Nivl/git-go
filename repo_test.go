@@ -141,6 +141,78 @@ func TestInit(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrRepositoryExists)
 	})
+
+	t.Run("should fail creating a repo if the target dir is a file", func(t *testing.T) {
+		t.Parallel()
+
+		file, cleanup := testhelper.TempFile(t)
+		t.Cleanup(cleanup)
+
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkingDirectory: file.Name(),
+			SkipGitDirLookUp: true,
+		})
+		require.NoError(t, err)
+
+		// Run logic
+		_, err = InitRepositoryWithParams(opts, InitOptions{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "not a directory")
+	})
+
+	t.Run("should fail creating a repo if one of the parent dir is a file", func(t *testing.T) {
+		t.Parallel()
+
+		// Setup
+		file, cleanup := testhelper.TempFile(t)
+		t.Cleanup(cleanup)
+
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkingDirectory: filepath.Join(file.Name(), "wt"),
+			SkipGitDirLookUp: true,
+		})
+		require.NoError(t, err)
+
+		// Run logic
+		_, err = InitRepositoryWithParams(opts, InitOptions{})
+		require.Error(t, err)
+
+		// Windows seems to be ok to run a stat on a path that
+		// contains a file as directory, but won't let you create
+		// directories in that path.
+		// UNIX will make the stat fail.
+		switch runtime.GOOS {
+		case "windows":
+			require.Contains(t, err.Error(), "could not create")
+		default:
+			require.Contains(t, err.Error(), "could not check")
+		}
+	})
+
+	// Windows deals with permission differently
+	if runtime.GOOS != "windows" {
+		t.Run("should fail creating a repo in a protected directory", func(t *testing.T) {
+			t.Parallel()
+
+			dir, cleanup := testhelper.TempDir(t)
+			t.Cleanup(cleanup)
+
+			target := filepath.Join(dir, "protected")
+			err := os.MkdirAll(target, 0o100)
+			require.NoError(t, err)
+
+			opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+				WorkingDirectory: filepath.Join(target, "wt"),
+				SkipGitDirLookUp: true,
+			})
+			require.NoError(t, err)
+
+			// Run logic
+			_, err = InitRepositoryWithParams(opts, InitOptions{})
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "could not create")
+		})
+	}
 }
 
 func TestOpen(t *testing.T) {
