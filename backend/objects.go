@@ -1,4 +1,4 @@
-package fsbackend
+package backend
 
 import (
 	"compress/zlib"
@@ -63,7 +63,7 @@ func (b *Backend) objectUnsafe(oid ginternals.Oid) (*object.Object, error) {
 // Ex. path of fcfe68a0e44e04bd7fd564fc0b75f1ae457e18b3 is:
 // .git/objects/fc/fe68a0e44e04bd7fd564fc0b75f1ae457e18b3
 func (b *Backend) looseObjectPath(sha string) string {
-	return filepath.Join(b.root, gitpath.ObjectsPath, sha[:2], sha[2:])
+	return filepath.Join(b.Path(), gitpath.ObjectsPath, sha[:2], sha[2:])
 }
 
 // looseObject returns the object matching the given OID
@@ -140,7 +140,7 @@ func (b *Backend) looseObject(oid ginternals.Oid) (o *object.Object, err error) 
 
 // loadPacks loads the packfiles in memory
 func (b *Backend) loadPacks() error {
-	p := filepath.Join(b.objectsDirPath, gitpath.ObjectsPackPath)
+	p := filepath.Join(b.ObjectsPath(), gitpath.ObjectsPackPath)
 	return afero.Walk(b.fs, p, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			//nolint:nilerr // in case of error we just skip it and move on.
@@ -271,14 +271,14 @@ func (b *Backend) WalkPackedObjectIDs(f packfile.OidWalkFunc) error {
 
 // loadLooseObject loads the loose object in memory
 func (b *Backend) loadLooseObject() error {
-	return afero.Walk(b.fs, b.objectsDirPath, func(path string, info fs.FileInfo, err error) error {
+	return afero.Walk(b.fs, b.ObjectsPath(), func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			//nolint:nilerr // in case of error we just skip it and move on.
 			// this will happen if the repo is empty and the ./objects
 			// folder doesn't exists
 			return nil
 		}
-		if path == b.objectsDirPath {
+		if path == b.ObjectsPath() {
 			return nil
 		}
 

@@ -1,16 +1,19 @@
 package main
 
 import (
-	"github.com/Nivl/git-go/internal/env"
+	"github.com/Nivl/git-go/env"
 	"github.com/Nivl/git-go/internal/pathutil"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
 
-type config struct {
-	C            pflag.Value // simpler version of git's -C: https://git-scm.com/docs/git#Documentation/git.txt--Cltpathgt
-	GitDir       string      // Loaded from env $GIT_DIR
-	GitObjectDir string      // Loaded from env $GIT_OBJECT_DIRECTORY
+type flags struct {
+	env *env.Env
+
+	C        pflag.Value // simpler version of git's -C: https://git-scm.com/docs/git#Documentation/git.txt--Cltpathgt
+	WorkTree string
+	GitDir   string
+	Bare     bool
 }
 
 func newRootCmd(cwd string, e *env.Env) *cobra.Command {
@@ -21,12 +24,14 @@ func newRootCmd(cwd string, e *env.Env) *cobra.Command {
 		SilenceUsage:  true,
 	}
 
-	cfg := &config{
-		GitDir:       e.Get("GIT_DIR"),
-		GitObjectDir: e.Get("GIT_OBJECT_DIRECTORY"),
+	cfg := &flags{
+		env: e,
 	}
 	cfg.C = pathutil.NewDirPathFlagWithDefault(cwd)
 	cmd.PersistentFlags().VarS(cfg.C, "C", "C", "Run as if git was started in the provided path instead of the current working directory.")
+	cmd.PersistentFlags().BoolVar(&cfg.Bare, "bare", false, "Treat the repository as a bare repository")
+	cmd.PersistentFlags().StringVar(&cfg.GitDir, "git-dir", "", "Set the path to the repository")
+	cmd.PersistentFlags().StringVar(&cfg.WorkTree, "work-tree", "", "Set the path to the root of the working tree")
 
 	// porcelain
 	cmd.AddCommand(newInitCmd(cfg))

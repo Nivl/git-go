@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 
 	"github.com/Nivl/git-go/backend"
-	"github.com/Nivl/git-go/backend/fsbackend"
 	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/config"
 	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/spf13/afero"
@@ -23,45 +23,15 @@ var (
 	ErrTagExists                    = errors.New("tag already exists")
 )
 
-// buildDotGitPath returns the absolute path to the .git directory
-func buildDotGitPath(repoPath, gitDirCfg string, isBare bool) string {
-	dotGitPath := repoPath
-	if !isBare {
-		dotGitPath = filepath.Join(repoPath, gitpath.DotGitPath)
-	}
-	// if gitDirCfg is set then it doesn't matter if the repo is bare
-	// or not. It actually doesn't make sense to set this repo as bare if
-	// we're going to provide a gitDirCfg.
-	if gitDirCfg != "" {
-		dotGitPath = gitDirCfg
-		if !filepath.IsAbs(gitDirCfg) {
-			dotGitPath = filepath.Join(repoPath, gitDirCfg)
-		}
-	}
-	return dotGitPath
-}
-
-// buildDotGitObjectsPath returns the absolute path to the .git/objects directory
-func buildDotGitObjectsPath(repoPath, dotGitPath, objectsPathCfg string) string {
-	gitObjectsPath := filepath.Join(dotGitPath, gitpath.ObjectsPath)
-	if objectsPathCfg != "" {
-		gitObjectsPath = objectsPathCfg
-		if !filepath.IsAbs(objectsPathCfg) {
-			gitObjectsPath = filepath.Join(repoPath, objectsPathCfg)
-		}
-	}
-	return gitObjectsPath
-}
-
 // Repository represent a git repository
 // A Git repository is the .git/ folder inside a project.
 // This repository tracks all changes made to files in your project,
 // building a history over time.
 // https://blog.axosoft.com/learning-git-repository/
 type Repository struct {
-	wt       afero.Fs
-	dotGit   backend.Backend
-	repoRoot string
+	params   *config.GitParams
+	workTree afero.Fs
+	dotGit   *backend.Backend
 
 	shouldCleanBackend bool
 }
@@ -72,18 +42,12 @@ type InitOptions struct {
 	// GitBackend represents the underlying backend to use to init the
 	// repository and interact with the odb
 	// By default the filesystem will be used
-	GitBackend backend.Backend
+	GitBackend *backend.Backend
 	// WorkingTreeBackend represents the underlying backend to use to
 	// interact with the working tree.
 	// By default the filesystem will be used
 	// Setting this is useless if IsBare is set to true
 	WorkingTreeBackend afero.Fs
-	// GitDirPath represents the path to the .git directory
-	// Defaults to .git
-	GitDirPath string
-	// GitObjectDirPath represents the path to the .git/objects directory
-	// Defaults to .git/objects
-	GitObjectDirPath string
 	// IsBare represents whether a bare repository will be created or not
 	IsBare bool
 }
@@ -92,49 +56,91 @@ type InitOptions struct {
 // directory in the given path, which is where almost everything that
 // Git stores and manipulates is located.
 // https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain#ch10-git-internals
-func InitRepository(repoPath string) (*Repository, error) {
-	return InitRepositoryWithOptions(repoPath, InitOptions{})
+//
+// This assumes:
+// - The repo is not bare (see WithOptions)
+// - We're not interested in env vars (see WithParams)
+// - The git dir is in the working tree under .git
+func InitRepository(workTreePath string) (*Repository, error) {
+	return InitRepositoryWithOptions(workTreePath, InitOptions{})
 }
 
 // InitRepositoryWithOptions initialize a new git repository by creating
 // the .git directory in the given path, which is where almost everything
 // that Git stores and manipulates is located.
 // https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain#ch10-git-internals
-func InitRepositoryWithOptions(repoPath string, opts InitOptions) (r *Repository, err error) {
-	info, err := os.Stat(repoPath)
-	if err != nil {
-		return nil, xerrors.Errorf("invalid path: %w", err)
-	}
-	if !info.IsDir() {
-		return nil, xerrors.Errorf("invalid path: not a directory")
+//
+// This assumes:
+// - We're not interested in env vars (see WithParams)
+// - The git dir is in the working tree under .git
+func InitRepositoryWithOptions(rootPath string, opts InitOptions) (r *Repository, err error) {
+	WorkTreePath := rootPath
+	GitDirPath := filepath.Join(rootPath, gitpath.DotGitPath)
+	if opts.IsBare {
+		WorkTreePath = ""
+		GitDirPath = rootPath
 	}
 
+	params, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+		WorkTreePath: WorkTreePath,
+		GitDirPath:   GitDirPath,
+		IsBare:       opts.IsBare,
+	})
+	if err != nil {
+		return nil, xerrors.Errorf("could not get the repo params: %w", err)
+	}
+	return InitRepositoryWithParams(params, opts)
+}
+
+// InitRepositoryWithParams initialize a new git repository by creating the .git
+// directory in the given path, which is where almost everything that
+// Git stores and manipulates is located.
+// https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain#ch10-git-internals
+//
+// This assumes methods makes no assumptions
+func InitRepositoryWithParams(params *config.GitParams, opts InitOptions) (r *Repository, err error) {
 	r = &Repository{
-		repoRoot: repoPath,
+		params: params,
+	}
+
+	// if the repo is not bare, then we need to make sure to create
+	// the working tree
+	if !opts.IsBare {
+		info, err := os.Stat(params.WorkTreePath)
+		switch err { //nolint:errorlint // we only want nil or not nil
+		case nil:
+			if !info.IsDir() {
+				return nil, xerrors.Errorf("invalid path: not a directory")
+			}
+		default:
+			if !errors.Is(err, os.ErrNotExist) {
+				return nil, xerrors.Errorf("could not check %s: %w", params.WorkTreePath, err)
+			}
+			err = os.MkdirAll(params.WorkTreePath, 0o755)
+			if err != nil {
+				return nil, xerrors.Errorf("could not create %s: %w", params.WorkTreePath, err)
+			}
+		}
+
+		r.workTree = opts.WorkingTreeBackend
+		if r.workTree == nil {
+			r.workTree = afero.NewOsFs()
+		}
 	}
 
 	if opts.GitBackend == nil {
-		dotGitPath := buildDotGitPath(repoPath, opts.GitDirPath, opts.IsBare)
-		gitObjectsPath := buildDotGitObjectsPath(repoPath, dotGitPath, opts.GitObjectDirPath)
-		r.dotGit, err = fsbackend.NewWithObjectsPath(dotGitPath, gitObjectsPath)
+		r.dotGit, err = backend.NewFS(params)
 		if err != nil {
 			return nil, xerrors.Errorf("could not create backend: %w", err)
 		}
 		r.shouldCleanBackend = true
 		// we pass the repo by copy because in case of error the pointer
-		// will be chaged to nil
+		// will be changed to nil
 		defer func(r *Repository) {
 			if err != nil {
 				r.dotGit.Close() //nolint:errcheck // it already failed
 			}
 		}(r)
-	}
-
-	if !opts.IsBare {
-		r.wt = opts.WorkingTreeBackend
-		if r.wt == nil {
-			r.wt = afero.NewOsFs()
-		}
 	}
 
 	if err = r.dotGit.Init(); err != nil {
@@ -153,7 +159,7 @@ type OpenOptions struct {
 	// GitBackend represents the underlying backend to use to init the
 	// repository and interact with the odb
 	// By default the filesystem will be used
-	GitBackend backend.Backend
+	GitBackend *backend.Backend
 	// WorkingTreeBackend represents the underlying backend to use to
 	// interact with the working tree.
 	// By default the filesystem will be used
@@ -161,31 +167,64 @@ type OpenOptions struct {
 	WorkingTreeBackend afero.Fs
 	// GitDirPath represents the path to the .git directory
 	// Defaults to .git
-	GitDirPath string
-	// GitObjectDirPath represents the path to the .git/objects directory
-	// Defaults to .git/objects
-	GitObjectDirPath string
 	// IsBare represents whether a bare repository will be created or not
 	IsBare bool
 }
 
 // OpenRepository loads an existing git repository by reading its
 // config file, and returns a Repository instance
-func OpenRepository(repoPath string) (*Repository, error) {
-	return OpenRepositoryWithOptions(repoPath, OpenOptions{})
+//
+// This assumes:
+// - The repo is not bare (see WithOptions)
+// - We're not interested in env vars (see WithParams)
+// - The git dir is in the working tree under .git
+func OpenRepository(workTreePath string) (*Repository, error) {
+	return OpenRepositoryWithOptions(workTreePath, OpenOptions{})
 }
 
 // OpenRepositoryWithOptions loads an existing git repository by reading
 // its config file, and returns a Repository instance
-func OpenRepositoryWithOptions(repoPath string, opts OpenOptions) (r *Repository, err error) {
+//
+// This assumes:
+// - We're not interested in env vars (see WithParams)
+// - The git dir is in the working tree under .git
+func OpenRepositoryWithOptions(rootPath string, opts OpenOptions) (r *Repository, err error) {
+	WorkTreePath := rootPath
+	GitDirPath := filepath.Join(rootPath, gitpath.DotGitPath)
+	if opts.IsBare {
+		WorkTreePath = ""
+		GitDirPath = rootPath
+	}
+
+	params, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+		WorkTreePath: WorkTreePath,
+		GitDirPath:   GitDirPath,
+		IsBare:       opts.IsBare,
+	})
+	if err != nil {
+		return nil, xerrors.Errorf("could not get the repo params: %w", err)
+	}
+	return OpenRepositoryWithParams(params, opts)
+}
+
+// OpenRepositoryWithParams loads an existing git repository by reading
+// its config file, and returns a Repository instance
+//
+// This method makes no assumptions
+func OpenRepositoryWithParams(params *config.GitParams, opts OpenOptions) (r *Repository, err error) {
 	r = &Repository{
-		repoRoot: repoPath,
+		params: params,
+	}
+
+	if !opts.IsBare {
+		r.workTree = opts.WorkingTreeBackend
+		if r.workTree == nil {
+			r.workTree = afero.NewOsFs()
+		}
 	}
 
 	if opts.GitBackend == nil {
-		dotGitPath := buildDotGitPath(repoPath, opts.GitDirPath, opts.IsBare)
-		gitObjectsPath := buildDotGitObjectsPath(repoPath, dotGitPath, opts.GitObjectDirPath)
-		r.dotGit, err = fsbackend.NewWithObjectsPath(dotGitPath, gitObjectsPath)
+		r.dotGit, err = backend.NewFS(params)
 		if err != nil {
 			return nil, xerrors.Errorf("could not create backend: %w", err)
 		}
@@ -199,13 +238,6 @@ func OpenRepositoryWithOptions(repoPath string, opts OpenOptions) (r *Repository
 		}(r)
 	}
 
-	if !opts.IsBare {
-		r.wt = opts.WorkingTreeBackend
-		if r.wt == nil {
-			r.wt = afero.NewOsFs()
-		}
-	}
-
 	// since we can't check if the directory exists on disk to
 	// validate if the repo exists, we're instead going to see if HEAD
 	// exists (since it should always be there)
@@ -214,27 +246,13 @@ func OpenRepositoryWithOptions(repoPath string, opts OpenOptions) (r *Repository
 		return nil, ErrRepositoryNotExist
 	}
 
-	// TODO(melvin): Config check temporarily removed during starage
-	// refactor to limit size of PR/sCommits
-	// Load the config file
-	// https://git-scm.com/docs/git-config
-	// cfg, err := ini.Load(filepath.Join(r.path, ConfigPath))
-	// if err != nil {
-	// 	return xerrors.Errorf("could not read config file: %w", err)
-	// }
-	// // Validate the config
-	// repoVersion := cfg.Section(cfgCore).Key(cfgCoreFormatVersion).MustInt(0)
-	// if repoVersion != 0 {
-	// 	return ErrRepositoryUnsupportedVersion
-	// }
-
 	return r, nil
 }
 
 // IsBare returns whether the repo is bare or not.
 // A bare repo doesn't have a workign tree
 func (r *Repository) IsBare() bool {
-	return r.wt == nil
+	return r.workTree == nil
 }
 
 // GetObject returns the object matching the given ID

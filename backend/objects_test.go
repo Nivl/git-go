@@ -1,4 +1,4 @@
-package fsbackend
+package backend
 
 import (
 	"errors"
@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/config"
 	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/Nivl/git-go/ginternals/packfile"
 	"github.com/Nivl/git-go/internal/gitpath"
@@ -30,7 +31,13 @@ func TestObject(t *testing.T) {
 		oid, err := ginternals.NewOidFromStr("b07e28976ac8972715598f390964d53cf4dbc1bd")
 		require.NoError(t, err)
 
-		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -54,7 +61,13 @@ func TestObject(t *testing.T) {
 		oid, err := ginternals.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
 		require.NoError(t, err)
 
-		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -77,7 +90,13 @@ func TestObject(t *testing.T) {
 		oid, err := ginternals.NewOidFromStr("2dcdadc2a420225783794fbffd51e2e137a69646")
 		require.NoError(t, err)
 
-		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -99,7 +118,13 @@ func TestHasObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -119,7 +144,13 @@ func TestHasObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -139,7 +170,13 @@ func TestHasObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -170,7 +207,13 @@ func TestHasObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -200,8 +243,13 @@ func TestWriteObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		dotGitPath := filepath.Join(repoPath, gitpath.DotGitPath)
-		b, err := New(dotGitPath)
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -220,7 +268,7 @@ func TestWriteObject(t *testing.T) {
 		assert.NotEqual(t, ginternals.NullOid, storedO.ID(), "invalid ID")
 
 		// make sure the blob was persisted
-		p := filepath.Join(dotGitPath, gitpath.ObjectsPath, storedO.ID().String()[0:2], storedO.ID().String()[2:])
+		p := filepath.Join(b.ObjectsPath(), storedO.ID().String()[0:2], storedO.ID().String()[2:])
 		info, err := os.Stat(p)
 		require.NoError(t, err)
 		assert.Equal(t, os.FileMode(0o444), info.Mode(), "objects should be read only")
@@ -232,8 +280,13 @@ func TestWriteObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		dotGitPath := filepath.Join(repoPath, gitpath.DotGitPath)
-		b, err := New(dotGitPath)
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -252,7 +305,7 @@ func TestWriteObject(t *testing.T) {
 		assert.NotEqual(t, ginternals.NullOid, storedO.ID(), "invalid ID")
 
 		// make sure the blob was persisted
-		p := filepath.Join(dotGitPath, gitpath.ObjectsPath, storedO.ID().String()[0:2], storedO.ID().String()[2:])
+		p := filepath.Join(b.ObjectsPath(), storedO.ID().String()[0:2], storedO.ID().String()[2:])
 		originalInfo, err := os.Stat(p)
 		require.NoError(t, err)
 
@@ -272,8 +325,13 @@ func TestWalkPackedObjectIDs(t *testing.T) {
 
 	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 	t.Cleanup(cleanup)
-	dotGitPath := filepath.Join(repoPath, gitpath.DotGitPath)
-	b, err := New(dotGitPath)
+	opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+		WorkTreePath: repoPath,
+		GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
+	})
+	require.NoError(t, err)
+
+	b, err := NewFS(opts)
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, b.Close())
@@ -329,8 +387,13 @@ func TestLoosePackedObjectIDs(t *testing.T) {
 
 	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 	t.Cleanup(cleanup)
-	dotGitPath := filepath.Join(repoPath, gitpath.DotGitPath)
-	b, err := New(dotGitPath)
+	opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+		WorkTreePath: repoPath,
+		GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
+	})
+	require.NoError(t, err)
+
+	b, err := NewFS(opts)
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, b.Close())
@@ -378,7 +441,13 @@ func TestIsLooseObjectDir(t *testing.T) {
 	dir, cleanup := testhelper.TempDir(t)
 	t.Cleanup(cleanup)
 
-	b, err := New(filepath.Join(dir, gitpath.DotGitPath))
+	opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+		WorkTreePath: dir,
+		GitDirPath:   filepath.Join(dir, gitpath.DotGitPath),
+	})
+	require.NoError(t, err)
+
+	b, err := NewFS(opts)
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, b.Close())

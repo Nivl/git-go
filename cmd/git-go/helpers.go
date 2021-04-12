@@ -1,21 +1,24 @@
 package main
 
 import (
-	"github.com/Nivl/git-go"
-	"github.com/Nivl/git-go/internal/pathutil"
+	git "github.com/Nivl/git-go"
+	"github.com/Nivl/git-go/ginternals/config"
+	"golang.org/x/xerrors"
 )
 
-func loadRepository(cfg *config) (*git.Repository, error) {
-	repoPath := cfg.C.String()
-	root, err := pathutil.RepoRootFromPath(repoPath)
+func loadRepository(cfg *flags) (*git.Repository, error) {
+	p, err := config.NewGitParams(cfg.env, config.NewGitParamsOptions{
+		WorkingDirectory: cfg.C.String(),
+		GitDirPath:       cfg.GitDir,
+		WorkTreePath:     cfg.WorkTree,
+		IsBare:           cfg.Bare,
+	})
 	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf("could not create param: %w", err)
 	}
-	repoPath = root
 
 	// run the command
-	return git.OpenRepositoryWithOptions(repoPath, git.OpenOptions{
-		GitDirPath:       cfg.GitDir,
-		GitObjectDirPath: cfg.GitObjectDir,
+	return git.OpenRepositoryWithParams(p, git.OpenOptions{
+		IsBare: cfg.Bare,
 	})
 }

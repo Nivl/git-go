@@ -1,62 +1,121 @@
-// Package backend contains interfaces and implementations to store and
-// retrieve data from the odb
+// Package backend contains structs and methods to store and
+// retrieve data from the .git directory
 package backend
 
 import (
-	"errors"
+	"sync"
 
 	"github.com/Nivl/git-go/ginternals"
-	"github.com/Nivl/git-go/ginternals/object"
+	"github.com/Nivl/git-go/ginternals/config"
 	"github.com/Nivl/git-go/ginternals/packfile"
+	"github.com/Nivl/git-go/internal/cache"
+	"github.com/Nivl/git-go/internal/syncutil"
+	"github.com/spf13/afero"
+	"golang.org/x/xerrors"
 )
 
-// This line generates a mock of the interfaces using gomock
-// (https://github.com/golang/mock). To regenerate the mocks, you'll need
-// gomock and mockgen installed, then run `go generate github.com/Nivl/git-go/backend`
-//
-//go:generate mockgen -package mockpackfile -destination ../internal/mocks/mockbackend/backend.go github.com/Nivl/git-go/backend Backend
+// Backend is a Backend implementation that uses the filesystem to store data
+type Backend struct {
+	params *config.GitParams
 
-// Backend represents an object that can store and retrieve data
-// from and rto the odb
-type Backend interface {
-	// Close free the resources
-	Close() error
+	objectMu     *syncutil.NamedMutex
+	cache        *cache.LRU
+	looseObjects *sync.Map
 
-	// Path returns the absolute path of the repo
-	Path() string
+	packfiles map[ginternals.Oid]*packfile.Pack
 
-	// ObjectsPath returns the absolute path of the object directory
-	ObjectsPath() string
+	refs *sync.Map
 
-	// Init initializes a repository
-	Init() error
-
-	// Reference returns a stored reference from its name
-	Reference(name string) (*ginternals.Reference, error)
-	// WriteReference writes the given reference int the db. If the
-	// reference already exists it will be overwritten
-	WriteReference(ref *ginternals.Reference) error
-	// WriteReferenceSafe writes the given reference in the db
-	// ErrRefExists is returned if the reference already exists
-	WriteReferenceSafe(ref *ginternals.Reference) error
-	// WalkReferences runs the provided method on all the references
-	WalkReferences(f RefWalkFunc) error
-
-	// Object returns the object that has given oid
-	Object(ginternals.Oid) (*object.Object, error)
-	// HasObject returns whether an object exists in the odb
-	HasObject(ginternals.Oid) (bool, error)
-	// WriteObject adds an object to the odb
-	WriteObject(*object.Object) (ginternals.Oid, error)
-	// WalkPackedObjectIDs runs the provided method on all the objects ids
-	WalkPackedObjectIDs(f packfile.OidWalkFunc) error
-	// WalkLooseObjectIDs runs the provided method on all the loose ids
-	WalkLooseObjectIDs(f packfile.OidWalkFunc) error
+	fs afero.Fs
 }
 
-// RefWalkFunc represents a function that will be applied on all references
-// found by Walk()
-type RefWalkFunc = func(ref *ginternals.Reference) error
+// NewFS returns a new Backend object using the local FileSystem
+func NewFS(params *config.GitParams) (*Backend, error) {
+	return New(params, afero.NewOsFs())
+}
 
-// WalkStop is a fake error used to tell Walk() to stop
-var WalkStop = errors.New("stop walking") //nolint // the linter expects all errors to start with Err, but since here we're faking an error we don't want that
+// New returns a new Backend object
+func New(params *config.GitParams, fs afero.Fs) (*Backend, error) {
+	c, err := cache.NewLRU(1000)
+	if err != nil {
+		return nil, xerrors.Errorf("could not create LRU cache: %w", err)
+	}
+	b := &Backend{
+		params:       params,
+		fs:           fs,
+		cache:        c,
+		objectMu:     syncutil.NewNamedMutex(101),
+		packfiles:    map[ginternals.Oid]*packfile.Pack{},
+		refs:         &sync.Map{},
+		looseObjects: &sync.Map{},
+	}
+
+	// we load a few things in memory
+	wg := sync.WaitGroup{}
+
+	var loadRefsErr error
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		loadRefsErr = b.loadRefs()
+	}()
+	var loadLooseObjectErr error
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		loadLooseObjectErr = b.loadLooseObject()
+	}()
+	var loadPackErr error
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		loadPackErr = b.loadPacks()
+	}()
+	var loadConfigErr error
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		loadConfigErr = b.loadConfig()
+	}()
+
+	wg.Wait()
+
+	if loadRefsErr != nil {
+		return nil, xerrors.Errorf("could not load references: %w", loadRefsErr)
+	}
+	if loadPackErr != nil {
+		return nil, xerrors.Errorf("could not load packs: %w", loadPackErr)
+	}
+	if loadLooseObjectErr != nil {
+		return nil, xerrors.Errorf("could not load loose objects: %w", loadLooseObjectErr)
+	}
+	if loadConfigErr != nil {
+		return nil, xerrors.Errorf("could not load config: %w", loadConfigErr)
+	}
+
+	return b, nil
+}
+
+// Close frees the resources used by the Backend
+// This method cannot be called concurrently with other methods
+func (b *Backend) Close() (err error) {
+	for oid, pack := range b.packfiles {
+		if e := pack.Close(); e != nil {
+			// we don't return directly because we still want to try to
+			// close the other packfiles
+			err = xerrors.Errorf("could not close packfile %s: %w", oid.String(), err)
+		}
+	}
+	b.packfiles = map[ginternals.Oid]*packfile.Pack{}
+	return err
+}
+
+// Path returns the absolute path of the repo
+func (b *Backend) Path() string {
+	return b.params.GitDirPath
+}
+
+// ObjectsPath returns the absolute path of the object directory
+func (b *Backend) ObjectsPath() string {
+	return b.params.ObjectDirPath
+}

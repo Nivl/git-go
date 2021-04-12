@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/Nivl/git-go/internal/env"
+	"github.com/Nivl/git-go/env"
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -56,7 +56,10 @@ func TestInit(t *testing.T) {
 		dirPath, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		err := initCmd(&config{C: &testhelper.StringValue{Value: dirPath}})
+		err := initCmd(&flags{
+			env: env.NewFromKVList([]string{}),
+			C:   &testhelper.StringValue{Value: dirPath},
+		})
 		require.NoError(t, err)
 
 		info, err := os.Stat(filepath.Join(dirPath, ".git"))
@@ -64,10 +67,16 @@ func TestInit(t *testing.T) {
 		assert.True(t, info.IsDir(), "expected .git to be a dir")
 	})
 
-	t.Run("should fail on invalid path", func(t *testing.T) {
+	t.Run("should create un-existing path", func(t *testing.T) {
 		t.Parallel()
 
-		err := initCmd(&config{C: &testhelper.StringValue{Value: filepath.FromSlash("/this/path/is/fake")}})
-		require.Error(t, err)
+		dir, cleanup := testhelper.TempDir(t)
+		t.Cleanup(cleanup)
+
+		err := initCmd(&flags{
+			env: env.NewFromKVList([]string{}),
+			C:   &testhelper.StringValue{Value: filepath.Join(dir, "this", "path", "is", "fake")},
+		})
+		require.NoError(t, err)
 	})
 }

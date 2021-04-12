@@ -1,4 +1,4 @@
-package fsbackend
+package backend
 
 import (
 	"errors"
@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/Nivl/git-go/backend"
 	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/config"
 	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/stretchr/testify/assert"
@@ -24,7 +24,13 @@ func TestReference(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -41,7 +47,13 @@ func TestReference(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -63,7 +75,13 @@ func TestReference(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -85,8 +103,16 @@ func TestParsePackedRefs(t *testing.T) {
 
 	createRepo := func(t *testing.T) (dir string, cleanup func()) {
 		dir, cleanup = testhelper.TempDir(t)
-		b, err := New(dir)
+
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			GitDirPath: dir,
+			IsBare:     true,
+		})
 		require.NoError(t, err)
+
+		b, err := NewFS(opts)
+		require.NoError(t, err)
+
 		defer require.NoError(t, b.Close())
 		require.NoError(t, b.Init())
 		return dir, cleanup
@@ -98,7 +124,13 @@ func TestParsePackedRefs(t *testing.T) {
 		dir, cleanup := createRepo(t)
 		t.Cleanup(cleanup)
 
-		b, err := New(dir)
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			GitDirPath: dir,
+			IsBare:     true,
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -122,7 +154,13 @@ func TestParsePackedRefs(t *testing.T) {
 		err := os.WriteFile(fPath, []byte("not valid data"), 0o644)
 		require.NoError(t, err)
 
-		_, err = New(dir)
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			GitDirPath: dir,
+			IsBare:     true,
+		})
+		require.NoError(t, err)
+
+		_, err = NewFS(opts)
 		require.Error(t, err)
 		assert.True(t, xerrors.Is(err, ginternals.ErrPackedRefInvalid), "unexpected error received")
 	})
@@ -137,7 +175,13 @@ func TestParsePackedRefs(t *testing.T) {
 		err := os.WriteFile(fPath, []byte("^de111c003b5661db802f17ac69419dcb9f4f3137\n# this is a comment"), 0o644)
 		require.NoError(t, err)
 
-		_, err = New(dir)
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			GitDirPath: dir,
+			IsBare:     true,
+		})
+		require.NoError(t, err)
+
+		_, err = NewFS(opts)
 		require.NoError(t, err)
 	})
 
@@ -147,7 +191,13 @@ func TestParsePackedRefs(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -193,7 +243,13 @@ func TestWriteReference(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		b, err := New(dir)
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: dir,
+			GitDirPath:   filepath.Join(dir, gitpath.DotGitPath),
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -204,7 +260,7 @@ func TestWriteReference(t *testing.T) {
 		err = b.WriteReference(ref)
 		require.NoError(t, err)
 
-		data, err := os.ReadFile(filepath.Join(b.root, "HEAD"))
+		data, err := os.ReadFile(filepath.Join(b.Path(), "HEAD"))
 		require.NoError(t, err)
 		assert.Equal(t, "ref: refs/heads/master\n", string(data))
 	})
@@ -215,7 +271,13 @@ func TestWriteReference(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		b, err := New(dir)
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: dir,
+			GitDirPath:   filepath.Join(dir, gitpath.DotGitPath),
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -228,7 +290,7 @@ func TestWriteReference(t *testing.T) {
 		err = b.WriteReference(ref)
 		require.NoError(t, err)
 
-		data, err := os.ReadFile(filepath.Join(b.root, "HEAD"))
+		data, err := os.ReadFile(filepath.Join(b.Path(), "HEAD"))
 		require.NoError(t, err)
 		assert.Equal(t, target.String()+"\n", string(data))
 	})
@@ -239,7 +301,13 @@ func TestWriteReference(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		b, err := New(dir)
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: dir,
+			GitDirPath:   filepath.Join(dir, gitpath.DotGitPath),
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -258,14 +326,20 @@ func TestWriteReference(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
 
 		// assert current data on disk
-		data, err := os.ReadFile(filepath.Join(b.root, "HEAD"))
+		data, err := os.ReadFile(filepath.Join(b.Path(), "HEAD"))
 		require.NoError(t, err)
 		assert.Equal(t, "ref: refs/heads/ml/packfile/tests\n", string(data))
 
@@ -273,7 +347,7 @@ func TestWriteReference(t *testing.T) {
 		err = b.WriteReference(ref)
 		require.NoError(t, err)
 
-		data, err = os.ReadFile(filepath.Join(b.root, "HEAD"))
+		data, err = os.ReadFile(filepath.Join(b.Path(), "HEAD"))
 		require.NoError(t, err)
 		assert.Equal(t, "ref: refs/heads/master\n", string(data))
 	})
@@ -284,14 +358,20 @@ func TestWriteReference(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
 
 		// assert current data on disk
-		data, err := os.ReadFile(filepath.Join(b.root, "HEAD"))
+		data, err := os.ReadFile(filepath.Join(b.Path(), "HEAD"))
 		require.NoError(t, err)
 		assert.Equal(t, "ref: refs/heads/ml/packfile/tests\n", string(data))
 
@@ -301,7 +381,7 @@ func TestWriteReference(t *testing.T) {
 		err = b.WriteReference(ref)
 		require.NoError(t, err)
 
-		data, err = os.ReadFile(filepath.Join(b.root, "HEAD"))
+		data, err = os.ReadFile(filepath.Join(b.Path(), "HEAD"))
 		require.NoError(t, err)
 		assert.Equal(t, target.String()+"\n", string(data))
 	})
@@ -316,7 +396,13 @@ func TestWriteReferenceSafe(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		b, err := New(dir)
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: dir,
+			GitDirPath:   filepath.Join(dir, gitpath.DotGitPath),
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -328,7 +414,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 		require.NoError(t, err)
 
 		// Let's make sure the data changed on disk
-		data, err := os.ReadFile(filepath.Join(b.root, "refs", "heads", "my_feature"))
+		data, err := os.ReadFile(filepath.Join(b.Path(), "refs", "heads", "my_feature"))
 		require.NoError(t, err)
 		assert.Equal(t, "ref: refs/heads/master\n", string(data))
 	})
@@ -339,7 +425,13 @@ func TestWriteReferenceSafe(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		b, err := New(dir)
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: dir,
+			GitDirPath:   filepath.Join(dir, gitpath.DotGitPath),
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -353,7 +445,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 		require.NoError(t, err)
 
 		// Let's make sure the data changed on disk
-		data, err := os.ReadFile(filepath.Join(b.root, "refs", "heads", "my_feature"))
+		data, err := os.ReadFile(filepath.Join(b.Path(), "refs", "heads", "my_feature"))
 		require.NoError(t, err)
 		assert.Equal(t, target.String()+"\n", string(data))
 	})
@@ -364,7 +456,13 @@ func TestWriteReferenceSafe(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		b, err := New(dir)
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: dir,
+			GitDirPath:   filepath.Join(dir, gitpath.DotGitPath),
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -383,14 +481,20 @@ func TestWriteReferenceSafe(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
 
 		// assert current data on disk
-		data, err := os.ReadFile(filepath.Join(b.root, "HEAD"))
+		data, err := os.ReadFile(filepath.Join(b.Path(), "HEAD"))
 		require.NoError(t, err)
 		assert.Equal(t, "ref: refs/heads/ml/packfile/tests\n", string(data))
 
@@ -400,7 +504,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 		require.True(t, xerrors.Is(err, ginternals.ErrRefExists), "unexpected error")
 
 		// let's make sure the data have not changed
-		data, err = os.ReadFile(filepath.Join(b.root, "HEAD"))
+		data, err = os.ReadFile(filepath.Join(b.Path(), "HEAD"))
 		require.NoError(t, err)
 		assert.Equal(t, "ref: refs/heads/ml/packfile/tests\n", string(data))
 	})
@@ -411,14 +515,20 @@ func TestWriteReferenceSafe(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
 
 		// assert current data on disk (there are none)
-		_, err = os.ReadFile(filepath.Join(b.root, "refs", "heads", "master"))
+		_, err = os.ReadFile(filepath.Join(b.Path(), "refs", "heads", "master"))
 		require.Error(t, err)
 
 		ref := ginternals.NewSymbolicReference("refs/heads/master", "refs/heads/branch")
@@ -427,7 +537,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 		require.True(t, xerrors.Is(err, ginternals.ErrRefExists), "unexpected error")
 
 		// Let's make sure the data have not been persisted
-		_, err = os.ReadFile(filepath.Join(b.root, "refs", "heads", "master"))
+		_, err = os.ReadFile(filepath.Join(b.Path(), "refs", "heads", "master"))
 		require.Error(t, err)
 	})
 }
@@ -441,7 +551,13 @@ func TestWalkReferences(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -462,7 +578,13 @@ func TestWalkReferences(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -471,7 +593,7 @@ func TestWalkReferences(t *testing.T) {
 		var count int
 		err = b.WalkReferences(func(ref *ginternals.Reference) error {
 			if count == 4 {
-				return backend.WalkStop
+				return WalkStop
 			}
 			count++
 			return nil
@@ -486,7 +608,13 @@ func TestWalkReferences(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		b, err := New(filepath.Join(repoPath, gitpath.DotGitPath))
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: repoPath,
+			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
+		})
+		require.NoError(t, err)
+
+		b, err := NewFS(opts)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())

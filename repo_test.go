@@ -5,127 +5,18 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
+	"github.com/Nivl/git-go/env"
 	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/config"
 	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func TestBuildDotGitPath(t *testing.T) {
-	t.Parallel()
-
-	// To be able to build an absolute path on Windows we need to know
-	// the Volume name
-	dir, err := os.Getwd()
-	require.NoError(t, err)
-	root := filepath.VolumeName(dir) + string(os.PathSeparator)
-
-	testCases := []struct {
-		desc      string
-		repoPath  string
-		gitDirCfg string
-		isBare    bool
-		expected  string
-	}{
-		{
-			desc:      "Test basic repo",
-			repoPath:  filepath.Join(root, "path", "to", "repo"),
-			gitDirCfg: "",
-			isBare:    false,
-			expected:  filepath.Join(root, "path", "to", "repo", gitpath.DotGitPath),
-		},
-		{
-			desc:      "Test bare repo",
-			repoPath:  filepath.Join(root, "path", "to", "repo"),
-			gitDirCfg: "",
-			isBare:    true,
-			expected:  filepath.Join(root, "path", "to", "repo"),
-		},
-		{
-			desc:      "Test repo with absolute config path",
-			repoPath:  filepath.Join(root, "path", "to", "working-tree"),
-			gitDirCfg: filepath.Join(root, "path", "to", "repo"),
-			isBare:    false,
-			expected:  filepath.Join(root, "path", "to", "repo"),
-		},
-		{
-			desc:      "Test repo with relative config path",
-			repoPath:  filepath.Join(root, "path", "to", "working-tree"),
-			gitDirCfg: filepath.Join("repo"),
-			isBare:    false,
-			expected:  filepath.Join(root, "path", "to", "working-tree", "repo"),
-		},
-		{
-			desc:      "Test bare repo with relative config path",
-			repoPath:  filepath.Join(root, "path", "to", "working-tree"),
-			gitDirCfg: filepath.Join("repo"),
-			isBare:    true,
-			expected:  filepath.Join(root, "path", "to", "working-tree", "repo"),
-		},
-	}
-	for i, tc := range testCases {
-		tc := tc
-		i := i
-		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
-			t.Parallel()
-			out := buildDotGitPath(tc.repoPath, tc.gitDirCfg, tc.isBare)
-			assert.Equal(t, tc.expected, out)
-		})
-	}
-}
-
-func TestBuildDotGitObjectsPat(t *testing.T) {
-	t.Parallel()
-
-	// To be able to build an absolute path on Windows we need to know
-	// the Volume name
-	dir, err := os.Getwd()
-	require.NoError(t, err)
-	root := filepath.VolumeName(dir) + string(os.PathSeparator)
-
-	testCases := []struct {
-		desc           string
-		repoPath       string
-		dotGitPath     string
-		objectsPathCfg string
-		expected       string
-	}{
-		{
-			desc:           "Test basic repo",
-			repoPath:       filepath.Join(root, "path", "to", "repo"),
-			dotGitPath:     filepath.Join(root, "path", "to", "repo", gitpath.DotGitPath),
-			objectsPathCfg: "",
-			expected:       filepath.Join(root, "path", "to", "repo", gitpath.DotGitPath, gitpath.ObjectsPath),
-		},
-		{
-			desc:           "Test repo with absolute config path",
-			repoPath:       filepath.Join(root, "path", "to", "repo"),
-			dotGitPath:     filepath.Join(root, "path", "to", "repo", gitpath.DotGitPath),
-			objectsPathCfg: filepath.Join(root, "path", "to", "objects"),
-			expected:       filepath.Join(root, "path", "to", "objects"),
-		},
-		{
-			desc:           "Test repo with relative config path",
-			repoPath:       filepath.Join(root, "path", "to", "repo"),
-			dotGitPath:     filepath.Join(root, "path", "to", "repo", gitpath.DotGitPath),
-			objectsPathCfg: filepath.Join("objects"),
-			expected:       filepath.Join(root, "path", "to", "repo", "objects"),
-		},
-	}
-	for i, tc := range testCases {
-		tc := tc
-		i := i
-		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
-			t.Parallel()
-			out := buildDotGitObjectsPath(tc.repoPath, tc.dotGitPath, tc.objectsPathCfg)
-			assert.Equal(t, tc.expected, out)
-		})
-	}
-}
 
 func TestInit(t *testing.T) {
 	t.Parallel()
@@ -145,9 +36,9 @@ func TestInit(t *testing.T) {
 		})
 
 		// assert returned repository
-		assert.Equal(t, d, r.repoRoot)
+		assert.Equal(t, d, r.params.WorkTreePath)
 		assert.Equal(t, filepath.Join(d, gitpath.DotGitPath), r.dotGit.Path())
-		assert.NotNil(t, r.wt)
+		assert.NotNil(t, r.workTree)
 		assert.False(t, r.IsBare(), "repos should not be bare")
 	})
 
@@ -165,9 +56,9 @@ func TestInit(t *testing.T) {
 		require.NoError(t, err, "failed creating a repo")
 
 		// assert returned repository
-		require.Equal(t, d, r.repoRoot)
+		require.Empty(t, r.params.WorkTreePath)
 		require.Equal(t, d, r.dotGit.Path())
-		assert.Nil(t, r.wt)
+		assert.Nil(t, r.workTree)
 		assert.True(t, r.IsBare(), "repos should be bare")
 	})
 
@@ -177,10 +68,14 @@ func TestInit(t *testing.T) {
 		d, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		// Run logic
-		r, err := InitRepositoryWithOptions(d, InitOptions{
-			GitDirPath: "dot-git",
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: d,
+			GitDirPath:   filepath.Join(d, "dot-git"),
 		})
+		require.NoError(t, err)
+
+		// Run logic
+		r, err := InitRepositoryWithParams(opts, InitOptions{})
 		require.NoError(t, err, "failed creating a repo")
 
 		// assert returned repository
@@ -194,30 +89,24 @@ func TestInit(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		// Run logic
-		r, err := InitRepositoryWithOptions(d, InitOptions{
-			GitDirPath:       "dot-git",
-			GitObjectDirPath: "dot-git-objects",
+		e := env.NewFromKVList([]string{
+			"GIT_DIR=" + filepath.Join(d, "dot-git"),
+			"GIT_OBJECT_DIRECTORY=" + filepath.Join(d, "dot-git-objects"),
+		})
+		p, err := config.NewGitParams(e, config.NewGitParamsOptions{
+			IsBare: true,
+		})
+		require.NoError(t, err)
+
+		// Run logic
+		r, err := InitRepositoryWithParams(p, InitOptions{
+			IsBare: true,
 		})
 		require.NoError(t, err, "failed creating a repo")
 
 		// assert returned repository
 		require.Equal(t, filepath.Join(d, "dot-git"), r.dotGit.Path())
 		require.Equal(t, filepath.Join(d, "dot-git-objects"), r.dotGit.ObjectsPath())
-	})
-
-	t.Run("should fail with a path that doesn't exist", func(t *testing.T) {
-		t.Parallel()
-
-		// Setup
-		d, cleanup := testhelper.TempDir(t)
-		t.Cleanup(cleanup)
-
-		// Run logic
-		_, err := InitRepositoryWithOptions(filepath.Join(d, "doesnt-exist"), InitOptions{
-			IsBare: true,
-		})
-		require.Error(t, err)
-		require.ErrorIs(t, err, os.ErrNotExist)
 	})
 
 	t.Run("should fail with a path that points to a file", func(t *testing.T) {
@@ -232,7 +121,12 @@ func TestInit(t *testing.T) {
 			IsBare: true,
 		})
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "not a directory")
+		switch runtime.GOOS {
+		case "windows":
+			require.Contains(t, err.Error(), "The system cannot find the path specified")
+		default:
+			require.Contains(t, err.Error(), "not a directory")
+		}
 	})
 
 	t.Run("should fail with a repo that already exists", func(t *testing.T) {
@@ -247,6 +141,78 @@ func TestInit(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrRepositoryExists)
 	})
+
+	t.Run("should fail creating a repo if the target dir is a file", func(t *testing.T) {
+		t.Parallel()
+
+		file, cleanup := testhelper.TempFile(t)
+		t.Cleanup(cleanup)
+
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkingDirectory: file.Name(),
+			SkipGitDirLookUp: true,
+		})
+		require.NoError(t, err)
+
+		// Run logic
+		_, err = InitRepositoryWithParams(opts, InitOptions{})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "not a directory")
+	})
+
+	t.Run("should fail creating a repo if one of the parent dir is a file", func(t *testing.T) {
+		t.Parallel()
+
+		// Setup
+		file, cleanup := testhelper.TempFile(t)
+		t.Cleanup(cleanup)
+
+		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkingDirectory: filepath.Join(file.Name(), "wt"),
+			SkipGitDirLookUp: true,
+		})
+		require.NoError(t, err)
+
+		// Run logic
+		_, err = InitRepositoryWithParams(opts, InitOptions{})
+		require.Error(t, err)
+
+		// Windows seems to be ok to run a stat on a path that
+		// contains a file as directory, but won't let you create
+		// directories in that path.
+		// UNIX will make the stat fail.
+		switch runtime.GOOS {
+		case "windows":
+			require.Contains(t, err.Error(), "could not create")
+		default:
+			require.Contains(t, err.Error(), "could not check")
+		}
+	})
+
+	// Windows deals with permission differently
+	if runtime.GOOS != "windows" {
+		t.Run("should fail creating a repo in a protected directory", func(t *testing.T) {
+			t.Parallel()
+
+			dir, cleanup := testhelper.TempDir(t)
+			t.Cleanup(cleanup)
+
+			target := filepath.Join(dir, "protected")
+			err := os.MkdirAll(target, 0o100)
+			require.NoError(t, err)
+
+			opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+				WorkingDirectory: filepath.Join(target, "wt"),
+				SkipGitDirLookUp: true,
+			})
+			require.NoError(t, err)
+
+			// Run logic
+			_, err = InitRepositoryWithParams(opts, InitOptions{})
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "could not create")
+		})
+	}
 }
 
 func TestOpen(t *testing.T) {
@@ -266,9 +232,9 @@ func TestOpen(t *testing.T) {
 		})
 
 		// assert returned repository
-		assert.Equal(t, repoPath, r.repoRoot)
+		assert.Equal(t, repoPath, r.params.WorkTreePath)
 		assert.Equal(t, filepath.Join(repoPath, gitpath.DotGitPath), r.dotGit.Path())
-		assert.NotNil(t, r.wt)
+		assert.NotNil(t, r.workTree)
 		assert.False(t, r.IsBare(), "repos should not be bare")
 	})
 
@@ -289,9 +255,9 @@ func TestOpen(t *testing.T) {
 		})
 
 		// assert returned repository
-		require.Equal(t, repoPath, r.repoRoot)
+		require.Empty(t, r.params.WorkTreePath)
 		require.Equal(t, repoPath, r.dotGit.Path())
-		assert.Nil(t, r.wt)
+		assert.Nil(t, r.workTree)
 		assert.True(t, r.IsBare(), "repos should be bare")
 	})
 
@@ -305,10 +271,14 @@ func TestOpen(t *testing.T) {
 		t.Cleanup(cleanup)
 		repoPath = filepath.Join(repoPath, gitpath.DotGitPath)
 
-		// Run logic
-		r, err := OpenRepositoryWithOptions(d, OpenOptions{
-			GitDirPath: repoPath,
+		p, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			WorkTreePath: d,
+			GitDirPath:   repoPath,
 		})
+		require.NoError(t, err)
+
+		// Run logic
+		r, err := OpenRepositoryWithParams(p, OpenOptions{})
 		require.NoError(t, err, "failed creating a repo")
 		require.NoError(t, r.Close())
 

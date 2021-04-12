@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/Nivl/git-go/env"
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -39,8 +40,9 @@ func TestLoadRepository(t *testing.T) {
 		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
 			t.Parallel()
 
-			cfg := &config{
-				C: testhelper.NewStringValue(tc.C),
+			cfg := &flags{
+				env: env.NewFromKVList([]string{}),
+				C:   testhelper.NewStringValue(tc.C),
 			}
 			repo, err := loadRepository(cfg)
 			if tc.expectError {
