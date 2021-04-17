@@ -1,10 +1,11 @@
 package main
 
 import (
+	"fmt"
+
 	git "github.com/Nivl/git-go"
 	"github.com/Nivl/git-go/ginternals/config"
 	"github.com/spf13/cobra"
-	"golang.org/x/xerrors"
 )
 
 func newInitCmd(cfg *flags) *cobra.Command {
@@ -29,7 +30,7 @@ func initCmd(cfg *flags) error {
 		SkipGitDirLookUp: true,
 	})
 	if err != nil {
-		return xerrors.Errorf("could not create param: %w", err)
+		return fmt.Errorf("could not create param: %w", err)
 	}
 
 	r, err := git.InitRepositoryWithParams(p, git.InitOptions{

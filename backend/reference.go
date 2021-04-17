@@ -2,6 +2,7 @@ package backend
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -12,7 +13,6 @@ import (
 	"github.com/Nivl/git-go/internal/errutil"
 	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/spf13/afero"
-	"golang.org/x/xerrors"
 )
 
 // Reference returns a stored reference from its name
@@ -22,7 +22,7 @@ func (b *Backend) Reference(name string) (*ginternals.Reference, error) {
 	finder := func(name string) ([]byte, error) {
 		data, ok := b.refs.Load(name)
 		if !ok {
-			return nil, xerrors.Errorf(`ref "%s": %w`, name, ginternals.ErrRefNotFound)
+			return nil, fmt.Errorf(`ref "%s": %w`, name, ginternals.ErrRefNotFound)
 		}
 		return data.([]byte), nil
 	}
@@ -43,8 +43,8 @@ func (b *Backend) loadRefs() (err error) {
 	// (outdated information will be overwritten once we parse the
 	// on-disk references).
 	f, err := b.fs.Open(filepath.Join(b.Path(), gitpath.PackedRefsPath))
-	if err != nil && !xerrors.Is(err, os.ErrNotExist) {
-		return xerrors.Errorf("could not open %s: %w", gitpath.PackedRefsPath, err)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("could not open %s: %w", gitpath.PackedRefsPath, err)
 	}
 	// if the file doesn't exist then there's nothing to do
 	if err == nil {
@@ -62,14 +62,14 @@ func (b *Backend) loadRefs() (err error) {
 			// "oid ref-name"
 			parts := strings.Split(line, " ")
 			if len(parts) != 2 {
-				return xerrors.Errorf("could not parse %s, unexpected data line %d: %w", gitpath.PackedRefsPath, i, ginternals.ErrPackedRefInvalid)
+				return fmt.Errorf("could not parse %s, unexpected data line %d: %w", gitpath.PackedRefsPath, i, ginternals.ErrPackedRefInvalid)
 			}
 			// the name of the ref is its UNIX path
 			b.refs.Store(filepath.ToSlash(parts[1]), []byte(parts[0]))
 		}
 
 		if sc.Err() != nil {
-			return xerrors.Errorf("could not parse %s: %w", gitpath.PackedRefsPath, err)
+			return fmt.Errorf("could not parse %s: %w", gitpath.PackedRefsPath, err)
 		}
 	}
 
@@ -85,7 +85,7 @@ func (b *Backend) loadRefs() (err error) {
 		}
 
 		if e != nil {
-			return xerrors.Errorf("could not walk %s: %w", path, e)
+			return fmt.Errorf("could not walk %s: %w", path, e)
 		}
 		if info.IsDir() {
 			return nil
@@ -94,7 +94,7 @@ func (b *Backend) loadRefs() (err error) {
 		// data we can read
 		data, e := afero.ReadFile(b.fs, path)
 		if e != nil {
-			return xerrors.Errorf("could not read reference at %s: %w", path, e)
+			return fmt.Errorf("could not read reference at %s: %w", path, e)
 		}
 		relpath, e := filepath.Rel(b.Path(), path)
 		if e != nil {
@@ -105,7 +105,7 @@ func (b *Backend) loadRefs() (err error) {
 		return nil
 	})
 	if err != nil {
-		return xerrors.Errorf("could not browse the refs directory: %w", err)
+		return fmt.Errorf("could not browse the refs directory: %w", err)
 	}
 
 	// Now we look for the special HEADs references:
@@ -120,10 +120,10 @@ func (b *Backend) loadRefs() (err error) {
 	for _, path := range headPaths {
 		data, err := afero.ReadFile(b.fs, filepath.Join(b.Path(), path))
 		if err != nil {
-			if xerrors.Is(err, os.ErrNotExist) {
+			if errors.Is(err, os.ErrNotExist) {
 				continue
 			}
-			return xerrors.Errorf("could not read reference at %s: %w", path, err)
+			return fmt.Errorf("could not read reference at %s: %w", path, err)
 		}
 		b.refs.Store(path, data)
 	}
@@ -160,14 +160,14 @@ func (b *Backend) writeReference(ref *ginternals.Reference) error {
 	case ginternals.OidReference:
 		target = fmt.Sprintf("%s\n", ref.Target().String())
 	default:
-		return xerrors.Errorf("reference type %d: %w", ref.Type(), ginternals.ErrUnknownRefType)
+		return fmt.Errorf("reference type %d: %w", ref.Type(), ginternals.ErrUnknownRefType)
 	}
 
 	refPath := b.systemPath(ref.Name())
 	data := []byte(target)
 	err := afero.WriteFile(b.fs, refPath, data, 0o644)
 	if err != nil {
-		return xerrors.Errorf("could not persist reference to disk: %w", err)
+		return fmt.Errorf("could not persist reference to disk: %w", err)
 	}
 	b.refs.Store(ref.Name(), data)
 	return nil
@@ -179,12 +179,12 @@ func (b *Backend) WalkReferences(f RefWalkFunc) error {
 	b.refs.Range(func(key, value interface{}) bool {
 		name, ok := key.(string)
 		if !ok {
-			topError = xerrors.Errorf("invalid key type for %s. expected string got %T", name, key)
+			topError = fmt.Errorf("invalid key type for %s. expected string got %T", name, key)
 			return false
 		}
 		ref, err := b.Reference(name)
 		if err != nil {
-			topError = xerrors.Errorf("could not resolve reference %s: %w", name, err)
+			topError = fmt.Errorf("could not resolve reference %s: %w", name, err)
 			return false
 		}
 

@@ -1,13 +1,13 @@
 package ginternals_test
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/xerrors"
 )
 
 func TestNewOidFromStr(t *testing.T) {
@@ -46,7 +46,7 @@ func TestNewOidFromStr(t *testing.T) {
 				require.Error(t, err)
 				assert.Equal(t, ginternals.NullOid, oid)
 				if tc.expectedError != nil {
-					assert.True(t, xerrors.Is(err, ginternals.ErrInvalidOid), "invalid error returned: %s", err.Error())
+					assert.True(t, errors.Is(err, ginternals.ErrInvalidOid), "invalid error returned: %s", err.Error())
 				}
 				return
 			}
@@ -92,7 +92,7 @@ func TestNewOidFromChars(t *testing.T) {
 				require.Error(t, err)
 				assert.Equal(t, ginternals.NullOid, oid)
 				if tc.expectedError != nil {
-					assert.True(t, xerrors.Is(err, ginternals.ErrInvalidOid), "invalid error returned: %s", err.Error())
+					assert.True(t, errors.Is(err, ginternals.ErrInvalidOid), "invalid error returned: %s", err.Error())
 				}
 				return
 			}
@@ -135,7 +135,7 @@ func TestNewOidFromHex(t *testing.T) {
 				require.Error(t, err)
 				assert.Equal(t, ginternals.NullOid, oid)
 				if tc.expectedError != nil {
-					assert.True(t, xerrors.Is(err, ginternals.ErrInvalidOid), "invalid error returned: %s", err.Error())
+					assert.True(t, errors.Is(err, ginternals.ErrInvalidOid), "invalid error returned: %s", err.Error())
 				}
 				return
 			}

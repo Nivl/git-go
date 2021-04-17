@@ -10,7 +10,6 @@ import (
 
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/internal/readutil"
-	"golang.org/x/xerrors"
 )
 
 // ErrSignatureInvalid is an error thrown when the signature of a commit
@@ -57,29 +56,29 @@ func NewSignatureFromBytes(b []byte) (Signature, error) {
 	data := readutil.ReadTo(b, '<')
 	if len(data) == 0 {
 		if len(b) == 0 {
-			return sig, xerrors.Errorf("couldn't retrieve the name: %w", ErrSignatureInvalid)
+			return sig, fmt.Errorf("couldn't retrieve the name: %w", ErrSignatureInvalid)
 		}
-		return sig, xerrors.Errorf("signature stopped after the name: %w", ErrSignatureInvalid)
+		return sig, fmt.Errorf("signature stopped after the name: %w", ErrSignatureInvalid)
 	}
 	sig.Name = strings.TrimSpace(string(data))
 	offset := len(data) + 1 // +1 to skip the "<"
 	if offset >= len(b) {
 		if offset == len(b) {
-			return sig, xerrors.Errorf("couldn't retrieve the email: %w", ErrSignatureInvalid)
+			return sig, fmt.Errorf("couldn't retrieve the email: %w", ErrSignatureInvalid)
 		}
-		return sig, xerrors.Errorf("signature stopped after the name: %w", ErrSignatureInvalid)
+		return sig, fmt.Errorf("signature stopped after the name: %w", ErrSignatureInvalid)
 	}
 
 	// Now we get the email, which is between "<" and ">"
 	data = readutil.ReadTo(b[offset:], '>')
 	if len(data) == 0 {
-		return sig, xerrors.Errorf("couldn't retrieve the email: %w", ErrSignatureInvalid)
+		return sig, fmt.Errorf("couldn't retrieve the email: %w", ErrSignatureInvalid)
 	}
 	sig.Email = string(data)
 	// +2 to skip the "> "
 	offset += len(data) + 2
 	if offset >= len(b) {
-		return sig, xerrors.Errorf("signature stopped after the email: %w", ErrSignatureInvalid)
+		return sig, fmt.Errorf("signature stopped after the email: %w", ErrSignatureInvalid)
 	}
 
 	// Next is the timestamp and the timezone
@@ -88,16 +87,16 @@ func NewSignatureFromBytes(b []byte) (Signature, error) {
 		// this should never be triggers since it's getting caught by the
 		// previous check. Still leaving it to prevent introducing a bug
 		// in the future.
-		return sig, xerrors.Errorf("couldn't retrieve the timestamp: %w", ErrSignatureInvalid)
+		return sig, fmt.Errorf("couldn't retrieve the timestamp: %w", ErrSignatureInvalid)
 	}
 	offset += len(timestamp) + 1 // +1 to skip the " "
 	if offset >= len(b) {
-		return sig, xerrors.Errorf("signature stopped after the timestamp: %w", ErrSignatureInvalid)
+		return sig, fmt.Errorf("signature stopped after the timestamp: %w", ErrSignatureInvalid)
 	}
 
 	t, err := strconv.ParseInt(string(timestamp), 10, 64)
 	if err != nil {
-		return sig, xerrors.Errorf("invalid timestamp %s: %w", timestamp, err)
+		return sig, fmt.Errorf("invalid timestamp %s: %w", timestamp, err)
 	}
 	sig.Time = time.Unix(t, 0)
 
@@ -106,7 +105,7 @@ func NewSignatureFromBytes(b []byte) (Signature, error) {
 	timezone := b[offset:]
 	tz, err := time.Parse("-0700", string(timezone))
 	if err != nil {
-		return sig, xerrors.Errorf("invalid timezone format %s: %w", timezone, err)
+		return sig, fmt.Errorf("invalid timezone format %s: %w", timezone, err)
 	}
 	sig.Time = sig.Time.In(tz.Location())
 	return sig, nil
@@ -178,7 +177,7 @@ func NewCommit(treeID ginternals.Oid, author Signature, opts *CommitOptions) *Co
 // - The gpgsig is optional
 func NewCommitFromObject(o *Object) (*Commit, error) {
 	if o.typ != TypeCommit {
-		return nil, xerrors.Errorf("type %s is not a commit: %w", o.typ, ErrObjectInvalid)
+		return nil, fmt.Errorf("type %s is not a commit: %w", o.typ, ErrObjectInvalid)
 	}
 	ci := &Commit{
 		rawObject: o,
@@ -191,7 +190,7 @@ func NewCommitFromObject(o *Object) (*Commit, error) {
 
 		// If we didn't find anything then something is wrong
 		if len(line) == 0 && offset == 1 {
-			return nil, xerrors.Errorf("could not find commit first line: %w", ErrCommitInvalid)
+			return nil, fmt.Errorf("could not find commit first line: %w", ErrCommitInvalid)
 		}
 
 		// if we got an empty line, it means everything from now to the end
@@ -210,23 +209,23 @@ func NewCommitFromObject(o *Object) (*Commit, error) {
 		case "tree":
 			ci.treeID, err = ginternals.NewOidFromChars(kv[1])
 			if err != nil {
-				return nil, xerrors.Errorf("could not parse tree id %#v: %w", kv[1], err)
+				return nil, fmt.Errorf("could not parse tree id %#v: %w", kv[1], err)
 			}
 		case "parent":
 			oid, err := ginternals.NewOidFromChars(kv[1])
 			if err != nil {
-				return nil, xerrors.Errorf("could not parse parent id %#v: %w", kv[1], err)
+				return nil, fmt.Errorf("could not parse parent id %#v: %w", kv[1], err)
 			}
 			ci.parentIDs = append(ci.parentIDs, oid)
 		case "author":
 			ci.author, err = NewSignatureFromBytes(kv[1])
 			if err != nil {
-				return nil, xerrors.Errorf("could not parse author signature [%s]: %w", string(kv[1]), err)
+				return nil, fmt.Errorf("could not parse author signature [%s]: %w", string(kv[1]), err)
 			}
 		case "committer":
 			ci.committer, err = NewSignatureFromBytes(kv[1])
 			if err != nil {
-				return nil, xerrors.Errorf("could not parse committer signature [%s]: %w", string(kv[1]), err)
+				return nil, fmt.Errorf("could not parse committer signature [%s]: %w", string(kv[1]), err)
 			}
 		case "gpgsig":
 			begin := string(kv[1]) + "\n"
@@ -239,10 +238,10 @@ func NewCommitFromObject(o *Object) (*Commit, error) {
 
 	// validate the commit
 	if ci.author.IsZero() {
-		return nil, xerrors.Errorf("commit has no author: %w", ErrCommitInvalid)
+		return nil, fmt.Errorf("commit has no author: %w", ErrCommitInvalid)
 	}
 	if ci.treeID.IsZero() {
-		return nil, xerrors.Errorf("commit has no tree: %w", ErrCommitInvalid)
+		return nil, fmt.Errorf("commit has no tree: %w", ErrCommitInvalid)
 	}
 
 	return ci, nil

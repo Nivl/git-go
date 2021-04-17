@@ -2,11 +2,11 @@ package object
 
 import (
 	"bytes"
+	"fmt"
 	"strconv"
 
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/internal/readutil"
-	"golang.org/x/xerrors"
 )
 
 // TreeObjectMode represents the mode of an object inside a tree
@@ -86,7 +86,7 @@ func NewTree(entries []TreeEntry) *Tree {
 // - a Tree may have multiple entries
 func NewTreeFromObject(o *Object) (*Tree, error) {
 	if o.Type() != TypeTree {
-		return nil, xerrors.Errorf("type %s is not a tree: %w", o.typ, ErrObjectInvalid)
+		return nil, fmt.Errorf("type %s is not a tree: %w", o.typ, ErrObjectInvalid)
 	}
 
 	entries := []TreeEntry{}
@@ -100,30 +100,30 @@ func NewTreeFromObject(o *Object) (*Tree, error) {
 			entry := TreeEntry{}
 			data := readutil.ReadTo(objData[offset:], ' ')
 			if len(data) == 0 {
-				return nil, xerrors.Errorf("could not retrieve the mode of entry %d: %w", i, ErrTreeInvalid)
+				return nil, fmt.Errorf("could not retrieve the mode of entry %d: %w", i, ErrTreeInvalid)
 			}
 			offset += len(data) + 1 // +1 for the space
 			mode, err := strconv.ParseInt(string(data), 8, 32)
 			if err != nil {
-				return nil, xerrors.Errorf("could not parse mode of entry %d: %s: %w", i, err.Error(), ErrTreeInvalid)
+				return nil, fmt.Errorf("could not parse mode of entry %d: %s: %w", i, err.Error(), ErrTreeInvalid)
 			}
 			entry.Mode = TreeObjectMode(mode)
 
 			data = readutil.ReadTo(objData[offset:], 0)
 			if len(data) == 0 {
-				return nil, xerrors.Errorf("could not retrieve the path of entry %d: %w", i, ErrTreeInvalid)
+				return nil, fmt.Errorf("could not retrieve the path of entry %d: %w", i, ErrTreeInvalid)
 			}
 			offset += len(data) + 1 // +1 for the \0
 			entry.Path = string(data)
 
 			if offset+20 > len(objData) {
-				return nil, xerrors.Errorf("not enough space to retrieve the ID of entry %d: %w", i, ErrTreeInvalid)
+				return nil, fmt.Errorf("not enough space to retrieve the ID of entry %d: %w", i, ErrTreeInvalid)
 			}
 			entry.ID, err = ginternals.NewOidFromHex(objData[offset : offset+20])
 			if err != nil {
 				// should never fail since any value is valid as long as it
 				// is 20 chars
-				return nil, xerrors.Errorf("invalid SHA for entry %d (%s): %w", i, err.Error(), ErrTreeInvalid)
+				return nil, fmt.Errorf("invalid SHA for entry %d (%s): %w", i, err.Error(), ErrTreeInvalid)
 			}
 			offset += 20
 

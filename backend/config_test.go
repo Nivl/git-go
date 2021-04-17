@@ -1,6 +1,7 @@
 package backend_test
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -13,7 +14,6 @@ import (
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/xerrors"
 )
 
 func TestInit(t *testing.T) {
@@ -160,7 +160,7 @@ func TestInit(t *testing.T) {
 		err = b.Init()
 		require.Error(t, err)
 		var perror *os.PathError
-		require.True(t, xerrors.As(err, &perror), "error should be os.PathError")
+		require.True(t, errors.As(err, &perror), "error should be os.PathError")
 		assert.Equal(t, "permission denied", perror.Err.Error())
 	})
 
@@ -188,7 +188,7 @@ func TestInit(t *testing.T) {
 		err = b.Init()
 		require.Error(t, err)
 		var perror *os.PathError
-		require.True(t, xerrors.As(err, &perror), "error should be os.PathError")
+		require.True(t, errors.As(err, &perror), "error should be os.PathError")
 		assert.Contains(t, perror.Err.Error(), "denied")
 	})
 }

@@ -12,7 +12,6 @@ import (
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/spf13/cobra"
-	"golang.org/x/xerrors"
 )
 
 var errBadFile = errors.New("bad file")
@@ -103,12 +102,12 @@ func catFileCmd(out io.Writer, cfg *flags, p catFileParams) (err error) {
 
 			// if the ref doesn't exist we test the the next one
 			if !errors.Is(err, ginternals.ErrRefNotFound) {
-				return xerrors.Errorf("could not check if ref %s exists: %w", refName, err)
+				return fmt.Errorf("could not check if ref %s exists: %w", refName, err)
 			}
 		}
 
 		if oid.IsZero() {
-			return xerrors.Errorf("not a valid object name %s", p.objectName)
+			return fmt.Errorf("not a valid object name %s", p.objectName)
 		}
 	}
 
@@ -120,11 +119,11 @@ func catFileCmd(out io.Writer, cfg *flags, p catFileParams) (err error) {
 	if p.typ != "" {
 		_, err = object.NewTypeFromString(p.typ)
 		if err != nil {
-			return xerrors.Errorf("%s: %w", p.typ, err)
+			return fmt.Errorf("%s: %w", p.typ, err)
 		}
 
 		if o.Type().String() != p.typ {
-			return xerrors.Errorf("%s: %w", p.objectName, errBadFile)
+			return fmt.Errorf("%s: %w", p.objectName, errBadFile)
 		}
 	}
 
@@ -138,7 +137,7 @@ func catFileCmd(out io.Writer, cfg *flags, p catFileParams) (err error) {
 		case object.TypeCommit:
 			c, err := o.AsCommit()
 			if err != nil {
-				return xerrors.Errorf("could not get commit %w", err)
+				return fmt.Errorf("could not get commit %w", err)
 			}
 			fmt.Fprintf(out, "tree %s\n", c.TreeID().String())
 			for _, id := range c.ParentIDs() {
@@ -154,7 +153,7 @@ func catFileCmd(out io.Writer, cfg *flags, p catFileParams) (err error) {
 		case object.TypeTag:
 			tag, err := o.AsTag()
 			if err != nil {
-				return xerrors.Errorf("could not get tag %w", err)
+				return fmt.Errorf("could not get tag %w", err)
 			}
 			fmt.Fprintf(out, "object %s\n", tag.Target().String())
 			fmt.Fprintf(out, "type %s\n", tag.Type().String())
@@ -168,7 +167,7 @@ func catFileCmd(out io.Writer, cfg *flags, p catFileParams) (err error) {
 		case object.TypeTree:
 			tree, err := o.AsTree()
 			if err != nil {
-				return xerrors.Errorf("could not get tree %w", err)
+				return fmt.Errorf("could not get tree %w", err)
 			}
 			for _, e := range tree.Entries() {
 				fmt.Fprintf(out, "%06o %s %s\t%s\n", e.Mode, e.Mode.ObjectType().String(), e.ID.String(), e.Path)
@@ -178,7 +177,7 @@ func catFileCmd(out io.Writer, cfg *flags, p catFileParams) (err error) {
 		case object.ObjectDeltaOFS, object.ObjectDeltaRef:
 			fallthrough
 		default:
-			return xerrors.Errorf("pretty-print not supported for type %s", o.Type().String())
+			return fmt.Errorf("pretty-print not supported for type %s", o.Type().String())
 		}
 	default:
 		fmt.Fprint(out, string(o.Bytes()))

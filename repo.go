@@ -2,6 +2,7 @@ package git
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/spf13/afero"
-	"golang.org/x/xerrors"
 )
 
 // List of errors returned by the Repository struct
@@ -87,7 +87,7 @@ func InitRepositoryWithOptions(rootPath string, opts InitOptions) (r *Repository
 		IsBare:       opts.IsBare,
 	})
 	if err != nil {
-		return nil, xerrors.Errorf("could not get the repo params: %w", err)
+		return nil, fmt.Errorf("could not get the repo params: %w", err)
 	}
 	return InitRepositoryWithParams(params, opts)
 }
@@ -110,15 +110,15 @@ func InitRepositoryWithParams(params *config.GitParams, opts InitOptions) (r *Re
 		switch err { //nolint:errorlint // we only want nil or not nil
 		case nil:
 			if !info.IsDir() {
-				return nil, xerrors.Errorf("invalid path: not a directory")
+				return nil, fmt.Errorf("invalid path: not a directory")
 			}
 		default:
 			if !errors.Is(err, os.ErrNotExist) {
-				return nil, xerrors.Errorf("could not check %s: %w", params.WorkTreePath, err)
+				return nil, fmt.Errorf("could not check %s: %w", params.WorkTreePath, err)
 			}
 			err = os.MkdirAll(params.WorkTreePath, 0o755)
 			if err != nil {
-				return nil, xerrors.Errorf("could not create %s: %w", params.WorkTreePath, err)
+				return nil, fmt.Errorf("could not create %s: %w", params.WorkTreePath, err)
 			}
 		}
 
@@ -131,7 +131,7 @@ func InitRepositoryWithParams(params *config.GitParams, opts InitOptions) (r *Re
 	if opts.GitBackend == nil {
 		r.dotGit, err = backend.NewFS(params)
 		if err != nil {
-			return nil, xerrors.Errorf("could not create backend: %w", err)
+			return nil, fmt.Errorf("could not create backend: %w", err)
 		}
 		r.shouldCleanBackend = true
 		// we pass the repo by copy because in case of error the pointer
@@ -144,7 +144,7 @@ func InitRepositoryWithParams(params *config.GitParams, opts InitOptions) (r *Re
 	}
 
 	if err = r.dotGit.Init(); err != nil {
-		if xerrors.Is(err, ginternals.ErrRefExists) {
+		if errors.Is(err, ginternals.ErrRefExists) {
 			return nil, ErrRepositoryExists
 		}
 		return nil, err
@@ -202,7 +202,7 @@ func OpenRepositoryWithOptions(rootPath string, opts OpenOptions) (r *Repository
 		IsBare:       opts.IsBare,
 	})
 	if err != nil {
-		return nil, xerrors.Errorf("could not get the repo params: %w", err)
+		return nil, fmt.Errorf("could not get the repo params: %w", err)
 	}
 	return OpenRepositoryWithParams(params, opts)
 }
@@ -226,7 +226,7 @@ func OpenRepositoryWithParams(params *config.GitParams, opts OpenOptions) (r *Re
 	if opts.GitBackend == nil {
 		r.dotGit, err = backend.NewFS(params)
 		if err != nil {
-			return nil, xerrors.Errorf("could not create backend: %w", err)
+			return nil, fmt.Errorf("could not create backend: %w", err)
 		}
 		r.shouldCleanBackend = true
 		// we pass the repo by copy because in case of error the pointer
@@ -315,24 +315,24 @@ func (r *Repository) NewCommit(refname string, tree *object.Tree, author object.
 	for _, id := range opts.ParentsID {
 		parent, err := r.dotGit.Object(id)
 		if err != nil {
-			return nil, xerrors.Errorf("could not retrieve parent %s: %w", id.String(), err)
+			return nil, fmt.Errorf("could not retrieve parent %s: %w", id.String(), err)
 		}
 		if parent.Type() != object.TypeCommit {
-			return nil, xerrors.Errorf("invalid type for parent %s. got %d, expected %d", id.String(), parent.Type(), parent.Type())
+			return nil, fmt.Errorf("invalid type for parent %s. got %d, expected %d", id.String(), parent.Type(), parent.Type())
 		}
 	}
 
 	c := object.NewCommit(tree.ID(), author, opts)
 	o := c.ToObject()
 	if _, err := r.dotGit.WriteObject(o); err != nil {
-		return nil, xerrors.Errorf("could not write the object to the odb: %w", err)
+		return nil, fmt.Errorf("could not write the object to the odb: %w", err)
 	}
 
 	// If we have a refname then we update it
 	if refname != "" {
 		ref := ginternals.NewReference(refname, o.ID())
 		if err := r.dotGit.WriteReference(ref); err != nil {
-			return nil, xerrors.Errorf("could not update the HEAD of %s: %w", refname, err)
+			return nil, fmt.Errorf("could not update the HEAD of %s: %w", refname, err)
 		}
 	}
 
@@ -349,10 +349,10 @@ func (r *Repository) NewDetachedCommit(tree *object.Tree, author object.Signatur
 func (r *Repository) NewTag(p *object.TagParams) (*object.Tag, error) {
 	found, err := r.dotGit.HasObject(p.Target.ID())
 	if err != nil {
-		return nil, xerrors.Errorf("could not check if target exists: %w", err)
+		return nil, fmt.Errorf("could not check if target exists: %w", err)
 	}
 	if !found {
-		return nil, xerrors.Errorf("target doesn't exists: %w", object.ErrObjectInvalid)
+		return nil, fmt.Errorf("target doesn't exists: %w", object.ErrObjectInvalid)
 	}
 
 	// We first make sure the tag doesn't already exist
@@ -362,19 +362,19 @@ func (r *Repository) NewTag(p *object.TagParams) (*object.Tag, error) {
 		return nil, ErrTagExists
 	}
 	if !errors.Is(err, ginternals.ErrRefNotFound) {
-		return nil, xerrors.Errorf("could not check if tag already exists: %w", err)
+		return nil, fmt.Errorf("could not check if tag already exists: %w", err)
 	}
 
 	// We create the tag and persist it to the object database
 	o := object.NewTag(p).ToObject()
 	if _, err := r.dotGit.WriteObject(o); err != nil {
-		return nil, xerrors.Errorf("could not write the object to the odb: %w", err)
+		return nil, fmt.Errorf("could not write the object to the odb: %w", err)
 	}
 
 	// We create the reference for the tag
 	ref := ginternals.NewReference(refname, o.ID())
 	if err := r.dotGit.WriteReference(ref); err != nil {
-		return nil, xerrors.Errorf("could not write the ref at %s: %w", refname, err)
+		return nil, fmt.Errorf("could not write the ref at %s: %w", refname, err)
 	}
 
 	return o.AsTag()
@@ -385,10 +385,10 @@ func (r *Repository) NewLightweightTag(tag string, targetID ginternals.Oid) (*gi
 	// let's make sure the object exists
 	found, err := r.dotGit.HasObject(targetID)
 	if err != nil {
-		return nil, xerrors.Errorf("could not retrieve targeted object: %w", err)
+		return nil, fmt.Errorf("could not retrieve targeted object: %w", err)
 	}
 	if !found {
-		return nil, xerrors.Errorf("target : %w", object.ErrObjectInvalid)
+		return nil, fmt.Errorf("target : %w", object.ErrObjectInvalid)
 	}
 
 	refname := gitpath.LocalTag(tag)
@@ -397,12 +397,12 @@ func (r *Repository) NewLightweightTag(tag string, targetID ginternals.Oid) (*gi
 		return nil, ErrTagExists
 	}
 	if !errors.Is(err, ginternals.ErrRefNotFound) {
-		return nil, xerrors.Errorf("could not check if tag already exists: %w", err)
+		return nil, fmt.Errorf("could not check if tag already exists: %w", err)
 	}
 
 	ref := ginternals.NewReference(refname, targetID)
 	if err := r.dotGit.WriteReference(ref); err != nil {
-		return nil, xerrors.Errorf("could not write the ref at %s: %w", refname, err)
+		return nil, fmt.Errorf("could not write the ref at %s: %w", refname, err)
 	}
 	return ref, nil
 }

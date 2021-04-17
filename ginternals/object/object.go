@@ -11,7 +11,6 @@ import (
 
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/internal/errutil"
-	"golang.org/x/xerrors"
 )
 
 var (
@@ -187,7 +186,7 @@ func (o *Object) Compress() (data []byte, err error) {
 	defer errutil.Close(zw, &err)
 
 	if _, err = zw.Write(fileContent); err != nil {
-		return nil, xerrors.Errorf("could not zlib the object: %w", err)
+		return nil, fmt.Errorf("could not zlib the object: %w", err)
 	}
 	return compressedContent.Bytes(), nil
 }

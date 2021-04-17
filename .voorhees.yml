@@ -17,10 +17,6 @@ rules:
   # Link: https://github.com/golang/go/issues/26904#issuecomment-785234200
   github.com/spf13/pflag: 99 months
 
-  # No release since the last August 2020, nothing wrong. We probably
-  # don't need the package though.
-  golang.org/x/xerrors: 12 months
-
   # No release since the last October 2020.
   # Couple of PRs opened, a few issues as well, no activity from
   # maintainer. Nothing too worriying yet.

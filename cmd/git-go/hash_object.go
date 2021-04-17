@@ -7,7 +7,6 @@ import (
 
 	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/spf13/cobra"
-	"golang.org/x/xerrors"
 )
 
 func newHashObjectCmd() *cobra.Command {
@@ -40,18 +39,18 @@ func hashObjectCmd(out io.Writer, filePath, typ string) error {
 		o = object.New(object.TypeCommit, content)
 		_, err = o.AsCommit()
 		if err != nil {
-			return xerrors.Errorf("invalid commit file: %w", err)
+			return fmt.Errorf("invalid commit file: %w", err)
 		}
 	case object.TypeTree.String():
 		o = object.New(object.TypeTree, content)
 		_, err = o.AsTree()
 		if err != nil {
-			return xerrors.Errorf("invalid tree file: %w", err)
+			return fmt.Errorf("invalid tree file: %w", err)
 		}
 	case object.TypeTag.String():
 		fallthrough
 	default:
-		return xerrors.Errorf("unsupported object type %s", typ)
+		return fmt.Errorf("unsupported object type %s", typ)
 	}
 
 	_, err = o.Compress()

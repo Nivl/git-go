@@ -3,6 +3,7 @@ package backend
 import (
 	"compress/zlib"
 	"errors"
+	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -16,7 +17,6 @@ import (
 	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/readutil"
 	"github.com/spf13/afero"
-	"golang.org/x/xerrors"
 )
 
 // Object returns the object that has given oid
@@ -43,8 +43,8 @@ func (b *Backend) objectUnsafe(oid ginternals.Oid) (*object.Object, error) {
 	if err == nil {
 		return o, nil
 	}
-	if !xerrors.Is(err, os.ErrNotExist) {
-		return nil, xerrors.Errorf("failed looking for loose object: %w", err)
+	if !errors.Is(err, os.ErrNotExist) {
+		return nil, fmt.Errorf("failed looking for loose object: %w", err)
 	}
 
 	// Not found? Let's find it in a packfile
@@ -80,14 +80,14 @@ func (b *Backend) looseObject(oid ginternals.Oid) (o *object.Object, err error) 
 	p := b.looseObjectPath(strOid)
 	f, err := b.fs.Open(p)
 	if err != nil {
-		return nil, xerrors.Errorf("could not get object %s at path %s: %w", strOid, p, err)
+		return nil, fmt.Errorf("could not get object %s at path %s: %w", strOid, p, err)
 	}
 	defer errutil.Close(f, &err)
 
 	// Objects are zlib encoded
 	zlibReader, err := zlib.NewReader(f)
 	if err != nil {
-		return nil, xerrors.Errorf("could not decompress parts of object %s at path %s: %w", strOid, p, err)
+		return nil, fmt.Errorf("could not decompress parts of object %s at path %s: %w", strOid, p, err)
 	}
 	defer errutil.Close(zlibReader, &err)
 
@@ -95,7 +95,7 @@ func (b *Backend) looseObject(oid ginternals.Oid) (o *object.Object, err error) 
 	// need, this allows us to be able to easily store the object's content
 	buff, err := io.ReadAll(zlibReader)
 	if err != nil {
-		return nil, xerrors.Errorf("could not read object %s at path %s: %w", strOid, p, err)
+		return nil, fmt.Errorf("could not read object %s at path %s: %w", strOid, p, err)
 	}
 
 	// we keep track of where we're at in the buffer
@@ -105,12 +105,12 @@ func (b *Backend) looseObject(oid ginternals.Oid) (o *object.Object, err error) 
 	// space character that we'll need to trim
 	typ := readutil.ReadTo(buff, ' ')
 	if typ == nil {
-		return nil, xerrors.Errorf("could not find object type for %s at path %s: %w", strOid, p, err)
+		return nil, fmt.Errorf("could not find object type for %s at path %s: %w", strOid, p, err)
 	}
 
 	oType, err := object.NewTypeFromString(string(typ))
 	if err != nil {
-		return nil, xerrors.Errorf("unsupported type %s for object %s at path %s", string(typ), strOid, p)
+		return nil, fmt.Errorf("unsupported type %s for object %s at path %s", string(typ), strOid, p)
 	}
 	pointerPos += len(typ)
 	pointerPos++ // one more for the space
@@ -121,18 +121,18 @@ func (b *Backend) looseObject(oid ginternals.Oid) (o *object.Object, err error) 
 	// type "man ascii" in a terminal for more information
 	size := readutil.ReadTo(buff[pointerPos:], 0)
 	if size == nil {
-		return nil, xerrors.Errorf("could not find object size for %s at path %s: %w", strOid, p, err)
+		return nil, fmt.Errorf("could not find object size for %s at path %s: %w", strOid, p, err)
 	}
 	oSize, err := strconv.Atoi(string(size))
 	if err != nil {
-		return nil, xerrors.Errorf("invalid size %s for object %s at path %s: %w", size, strOid, p, err)
+		return nil, fmt.Errorf("invalid size %s for object %s at path %s: %w", size, strOid, p, err)
 	}
 	pointerPos += len(size)
 	pointerPos++                  // one more for the NULL char
 	oContent := buff[pointerPos:] // sugar
 
 	if len(oContent) != oSize {
-		return nil, xerrors.Errorf("object marked as size %d, but has %d at path %s: %w", oSize, len(oContent), p, err)
+		return nil, fmt.Errorf("object marked as size %d, but has %d at path %s: %w", oSize, len(oContent), p, err)
 	}
 
 	return object.New(oType, oContent), nil
@@ -167,7 +167,7 @@ func (b *Backend) loadPacks() error {
 		packFilePath := filepath.Join(p, info.Name())
 		pack, err := packfile.NewFromFile(b.fs, packFilePath)
 		if err != nil {
-			return xerrors.Errorf("could not parse packfile at %s: %w", packFilePath, err)
+			return fmt.Errorf("could not parse packfile at %s: %w", packFilePath, err)
 		}
 		b.packfiles[pack.ID()] = pack
 
@@ -208,10 +208,10 @@ func (b *Backend) hasObjectUnsafe(oid ginternals.Oid) (bool, error) {
 	if err == nil {
 		return true, nil
 	}
-	if xerrors.Is(err, ginternals.ErrObjectNotFound) {
+	if errors.Is(err, ginternals.ErrObjectNotFound) {
 		return false, nil
 	}
-	return false, xerrors.Errorf("could not get object: %w", err)
+	return false, fmt.Errorf("could not get object: %w", err)
 }
 
 // WriteObject adds an object to the odb
@@ -219,7 +219,7 @@ func (b *Backend) hasObjectUnsafe(oid ginternals.Oid) (bool, error) {
 func (b *Backend) WriteObject(o *object.Object) (ginternals.Oid, error) {
 	data, err := o.Compress()
 	if err != nil {
-		return ginternals.NullOid, xerrors.Errorf("could not compress object: %w", err)
+		return ginternals.NullOid, fmt.Errorf("could not compress object: %w", err)
 	}
 
 	oid := o.ID()
@@ -229,7 +229,7 @@ func (b *Backend) WriteObject(o *object.Object) (ginternals.Oid, error) {
 	// Make sure the object doesn't already exist anywhere
 	found, err := b.hasObjectUnsafe(o.ID())
 	if err != nil {
-		return ginternals.NullOid, xerrors.Errorf("could not check if object (%s) already exists: %w", o.ID().String(), err)
+		return ginternals.NullOid, fmt.Errorf("could not check if object (%s) already exists: %w", o.ID().String(), err)
 	}
 	if found {
 		return o.ID(), nil
@@ -242,12 +242,12 @@ func (b *Backend) WriteObject(o *object.Object) (ginternals.Oid, error) {
 	// We need to make sure the dest dir exists
 	dest := filepath.Dir(p)
 	if err = b.fs.MkdirAll(dest, 0o755); err != nil {
-		return ginternals.NullOid, xerrors.Errorf("could not create the destination directory %s: %w", dest, err)
+		return ginternals.NullOid, fmt.Errorf("could not create the destination directory %s: %w", dest, err)
 	}
 
 	// We use 444 because git object are read-only
 	if err = afero.WriteFile(b.fs, p, data, 0o444); err != nil {
-		return ginternals.NullOid, xerrors.Errorf("could not persist object %s at path %s: %w", sha, p, err)
+		return ginternals.NullOid, fmt.Errorf("could not persist object %s at path %s: %w", sha, p, err)
 	}
 
 	// add the object to the cache
@@ -305,7 +305,7 @@ func (b *Backend) loadLooseObject() error {
 		sha := prefix + info.Name()
 		oid, err := ginternals.NewOidFromStr(sha)
 		if err != nil {
-			return xerrors.Errorf("could not get oid from %s: %w", sha, err)
+			return fmt.Errorf("could not get oid from %s: %w", sha, err)
 		}
 		b.looseObjects.Store(oid, struct{}{})
 		return nil

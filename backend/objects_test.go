@@ -16,7 +16,6 @@ import (
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/xerrors"
 )
 
 func TestObject(t *testing.T) {
@@ -105,7 +104,7 @@ func TestObject(t *testing.T) {
 		obj, err := b.Object(oid)
 		require.Error(t, err)
 		require.Nil(t, obj)
-		require.True(t, xerrors.Is(err, ginternals.ErrObjectNotFound), "unexpected error received")
+		require.True(t, errors.Is(err, ginternals.ErrObjectNotFound), "unexpected error received")
 	})
 }
 

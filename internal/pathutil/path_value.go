@@ -1,11 +1,12 @@
 package pathutil
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/spf13/pflag"
-	"golang.org/x/xerrors"
 )
 
 // PathValueType represents the type of a path
@@ -84,31 +85,31 @@ func (v *PathValue) Set(value string) (err error) {
 	}
 	value, err = filepath.Abs(value)
 	if err != nil {
-		return xerrors.Errorf("could not find absolute path: %w", err)
+		return fmt.Errorf("could not find absolute path: %w", err)
 	}
 
 	info, err := os.Stat(value)
-	if err != nil && !xerrors.Is(err, os.ErrNotExist) {
-		return xerrors.Errorf("could not check path %s: %w", value, err)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("could not check path %s: %w", value, err)
 	}
 
-	if v.pathMustExist && xerrors.Is(err, os.ErrNotExist) {
-		return xerrors.Errorf("invalid path %s: %w", value, os.ErrNotExist)
+	if v.pathMustExist && errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("invalid path %s: %w", value, os.ErrNotExist)
 	}
 
 	if info != nil {
 		switch v.typ {
 		case PathValueTypeFile:
 			if info.IsDir() {
-				return xerrors.Errorf("invalid path %s: is a directory", value)
+				return fmt.Errorf("invalid path %s: is a directory", value)
 			}
 		case PathValueTypeDir:
 			if !info.IsDir() {
-				return xerrors.Errorf("invalid path %s: not a directory", value)
+				return fmt.Errorf("invalid path %s: not a directory", value)
 			}
 		case PathValueTypeAny:
 		default:
-			return xerrors.Errorf("invalid type: %d", v.typ)
+			return fmt.Errorf("invalid type: %d", v.typ)
 		}
 	}
 

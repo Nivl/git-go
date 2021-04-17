@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,7 +10,6 @@ import (
 	"github.com/Nivl/git-go/env"
 	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/pathutil"
-	"golang.org/x/xerrors"
 )
 
 // ErrNoWorkTreeAlone is thrown when a work tree path is given without
@@ -118,7 +118,7 @@ func NewGitOptionsSkipEnv(opts NewGitParamsOptions) (*GitParams, error) {
 func setGitParams(p *GitParams, opts NewGitParamsOptions) (err error) {
 	wd, err := os.Getwd()
 	if err != nil {
-		return xerrors.Errorf("could not get the current directory: %w", err)
+		return fmt.Errorf("could not get the current directory: %w", err)
 	}
 	if opts.WorkingDirectory == "" {
 		opts.WorkingDirectory = wd
@@ -154,7 +154,7 @@ func setGitParams(p *GitParams, opts NewGitParamsOptions) (err error) {
 		if !opts.SkipGitDirLookUp {
 			guessedWorkingTree, err = pathutil.WorkingTreeFromPath(opts.WorkingDirectory)
 			if err != nil {
-				return xerrors.Errorf("could not find working tree: %w", err)
+				return fmt.Errorf("could not find working tree: %w", err)
 			}
 		}
 		p.GitDirPath = filepath.Join(guessedWorkingTree, gitpath.DotGitPath)
