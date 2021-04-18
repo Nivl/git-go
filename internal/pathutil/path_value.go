@@ -1,11 +1,12 @@
 package pathutil
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/spf13/pflag"
-	"golang.org/x/xerrors"
 )
 
 // PathValueType represents the type of a path
@@ -18,6 +19,18 @@ const (
 	PathValueTypeDir
 	// PathValueTypeAny represent a either a file or a directory
 	PathValueTypeAny
+)
+
+var (
+	// ErrIsDirectory is an error returned when a path
+	// points to a directory instead of a file
+	ErrIsDirectory = errors.New("path is a directory")
+	// ErrIsNotDirectory is an error returned when a path
+	// is expected to points to a directory but isn't
+	ErrIsNotDirectory = errors.New("path is not a directory")
+	// ErrUnknownType is an error returned when an unknown PathValueType
+	// is provided to a method
+	ErrUnknownType = errors.New("type unknown")
 )
 
 // PathValue represents a Flag value to be parsed by spf13/pflag
@@ -84,31 +97,31 @@ func (v *PathValue) Set(value string) (err error) {
 	}
 	value, err = filepath.Abs(value)
 	if err != nil {
-		return xerrors.Errorf("could not find absolute path: %w", err)
+		return fmt.Errorf("could not find absolute path: %w", err)
 	}
 
 	info, err := os.Stat(value)
-	if err != nil && !xerrors.Is(err, os.ErrNotExist) {
-		return xerrors.Errorf("could not check path %s: %w", value, err)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("could not check path %s: %w", value, err)
 	}
 
-	if v.pathMustExist && xerrors.Is(err, os.ErrNotExist) {
-		return xerrors.Errorf("invalid path %s: %w", value, os.ErrNotExist)
+	if v.pathMustExist && errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("invalid path %s: %w", value, os.ErrNotExist)
 	}
 
 	if info != nil {
 		switch v.typ {
 		case PathValueTypeFile:
 			if info.IsDir() {
-				return xerrors.Errorf("invalid path %s: is a directory", value)
+				return fmt.Errorf("invalid path %s: %w", value, ErrIsDirectory)
 			}
 		case PathValueTypeDir:
 			if !info.IsDir() {
-				return xerrors.Errorf("invalid path %s: not a directory", value)
+				return fmt.Errorf("invalid path %s: %w", value, ErrIsNotDirectory)
 			}
 		case PathValueTypeAny:
 		default:
-			return xerrors.Errorf("invalid type: %d", v.typ)
+			return fmt.Errorf("type %d: %w", v.typ, ErrUnknownType)
 		}
 	}
 

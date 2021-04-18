@@ -1,9 +1,10 @@
 package main
 
 import (
+	"fmt"
+
 	git "github.com/Nivl/git-go"
 	"github.com/Nivl/git-go/ginternals/config"
-	"golang.org/x/xerrors"
 )
 
 func loadRepository(cfg *flags) (*git.Repository, error) {
@@ -14,7 +15,7 @@ func loadRepository(cfg *flags) (*git.Repository, error) {
 		IsBare:           cfg.Bare,
 	})
 	if err != nil {
-		return nil, xerrors.Errorf("could not create param: %w", err)
+		return nil, fmt.Errorf("could not create param: %w", err)
 	}
 
 	// run the command

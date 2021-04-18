@@ -2,10 +2,10 @@ package object
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/internal/readutil"
-	"golang.org/x/xerrors"
 )
 
 // TagParams represents all the data needed to create a Tag
@@ -64,7 +64,7 @@ func NewTag(p *TagParams) *Tag {
 // - The gpgsig is optional
 func NewTagFromObject(o *Object) (*Tag, error) {
 	if o.typ != TypeTag {
-		return nil, xerrors.Errorf("type %s is not a tag: %w", o.typ, ErrObjectInvalid)
+		return nil, fmt.Errorf("type %s is not a tag: %w", o.typ, ErrObjectInvalid)
 	}
 	tag := &Tag{
 		id:        o.ID(),
@@ -79,7 +79,7 @@ func NewTagFromObject(o *Object) (*Tag, error) {
 
 		// If we didn't find anything then something is wrong
 		if len(line) == 0 && offset == 1 {
-			return nil, xerrors.Errorf("could not find tag first line: %w", ErrTagInvalid)
+			return nil, fmt.Errorf("could not find tag first line: %w", ErrTagInvalid)
 		}
 
 		// if we got an empty line, it means everything from now to the end
@@ -97,17 +97,17 @@ func NewTagFromObject(o *Object) (*Tag, error) {
 		case "object":
 			tag.target, err = ginternals.NewOidFromChars(kv[1])
 			if err != nil {
-				return nil, xerrors.Errorf("could not parse target id %#v: %w", kv[1], err)
+				return nil, fmt.Errorf("could not parse target id %#v: %w", kv[1], err)
 			}
 		case "type":
 			tag.typ, err = NewTypeFromString(string(kv[1]))
 			if err != nil {
-				return nil, xerrors.Errorf("invalid object type %s: %w", string(kv[1]), err)
+				return nil, fmt.Errorf("invalid object type %s: %w", string(kv[1]), err)
 			}
 		case "tagger":
 			tag.tagger, err = NewSignatureFromBytes(kv[1])
 			if err != nil {
-				return nil, xerrors.Errorf("could not parse tagger [%s]: %w", string(kv[1]), err)
+				return nil, fmt.Errorf("could not parse tagger [%s]: %w", string(kv[1]), err)
 			}
 		case "tag":
 			tag.tag = string(kv[1])
@@ -122,13 +122,13 @@ func NewTagFromObject(o *Object) (*Tag, error) {
 
 	// validate the tag
 	if tag.tagger.IsZero() {
-		return nil, xerrors.Errorf("tag has no tagger: %w", ErrTagInvalid)
+		return nil, fmt.Errorf("tag has no tagger: %w", ErrTagInvalid)
 	}
 	if tag.target.IsZero() {
-		return nil, xerrors.Errorf("tag has no target: %w", ErrTagInvalid)
+		return nil, fmt.Errorf("tag has no target: %w", ErrTagInvalid)
 	}
 	if !tag.typ.IsValid() {
-		return nil, xerrors.Errorf("tag has no type: %w", ErrTagInvalid)
+		return nil, fmt.Errorf("tag has no type: %w", ErrTagInvalid)
 	}
 
 	return tag, nil

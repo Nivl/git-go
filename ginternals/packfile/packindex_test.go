@@ -2,6 +2,7 @@ package packfile_test
 
 import (
 	"bufio"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -12,7 +13,6 @@ import (
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/xerrors"
 )
 
 func TestNewIndex(t *testing.T) {
@@ -54,7 +54,7 @@ func TestNewIndex(t *testing.T) {
 		index, err := packfile.NewIndex(bufio.NewReader(f))
 		require.Error(t, err)
 		assert.Nil(t, index)
-		assert.True(t, xerrors.Is(err, packfile.ErrInvalidMagic))
+		assert.True(t, errors.Is(err, packfile.ErrInvalidMagic))
 	})
 }
 
@@ -96,7 +96,7 @@ func TestGetObjectOffset(t *testing.T) {
 			require.NoError(t, err)
 			_, err = index.GetObjectOffset(oid)
 			require.Error(t, err)
-			require.True(t, xerrors.Is(err, ginternals.ErrObjectNotFound), "invalid error returned: %s", err.Error())
+			require.True(t, errors.Is(err, ginternals.ErrObjectNotFound), "invalid error returned: %s", err.Error())
 		})
 	})
 }

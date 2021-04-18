@@ -13,7 +13,6 @@ import (
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/xerrors"
 )
 
 func TestNewFromFile(t *testing.T) {
@@ -46,7 +45,7 @@ func TestNewFromFile(t *testing.T) {
 		packFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPath, gitpath.ObjectsPackPath, packFileName)
 		pack, err := packfile.NewFromFile(afero.NewOsFs(), packFilePath)
 		require.Error(t, err)
-		assert.True(t, xerrors.Is(err, packfile.ErrInvalidMagic))
+		assert.True(t, errors.Is(err, packfile.ErrInvalidMagic))
 		assert.Nil(t, pack)
 	})
 }

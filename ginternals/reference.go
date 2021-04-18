@@ -3,9 +3,8 @@ package ginternals
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"strings"
-
-	"golang.org/x/xerrors"
 )
 
 // Common ref names
@@ -96,12 +95,12 @@ func resolveRefs(name string, finder RefContent, visited map[string]struct{}) (*
 	// Ex: refs/heads/master is a ref to refs/heads/a which is a ref to
 	// refs/heads/master
 	if _, ok := visited[name]; ok {
-		return nil, xerrors.Errorf("circular symbolic reference: %w", ErrRefInvalid)
+		return nil, fmt.Errorf("circular symbolic reference: %w", ErrRefInvalid)
 	}
 	visited[name] = struct{}{}
 
 	if !IsRefNameValid(name) {
-		return nil, xerrors.Errorf(`ref "%s": %w`, name, ErrRefNameInvalid)
+		return nil, fmt.Errorf(`ref "%s": %w`, name, ErrRefNameInvalid)
 	}
 
 	data, err := finder(name)

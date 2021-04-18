@@ -3,6 +3,7 @@
 package backend
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/Nivl/git-go/ginternals"
@@ -11,7 +12,6 @@ import (
 	"github.com/Nivl/git-go/internal/cache"
 	"github.com/Nivl/git-go/internal/syncutil"
 	"github.com/spf13/afero"
-	"golang.org/x/xerrors"
 )
 
 // Backend is a Backend implementation that uses the filesystem to store data
@@ -38,7 +38,7 @@ func NewFS(params *config.GitParams) (*Backend, error) {
 func New(params *config.GitParams, fs afero.Fs) (*Backend, error) {
 	c, err := cache.NewLRU(1000)
 	if err != nil {
-		return nil, xerrors.Errorf("could not create LRU cache: %w", err)
+		return nil, fmt.Errorf("could not create LRU cache: %w", err)
 	}
 	b := &Backend{
 		params:       params,
@@ -81,16 +81,16 @@ func New(params *config.GitParams, fs afero.Fs) (*Backend, error) {
 	wg.Wait()
 
 	if loadRefsErr != nil {
-		return nil, xerrors.Errorf("could not load references: %w", loadRefsErr)
+		return nil, fmt.Errorf("could not load references: %w", loadRefsErr)
 	}
 	if loadPackErr != nil {
-		return nil, xerrors.Errorf("could not load packs: %w", loadPackErr)
+		return nil, fmt.Errorf("could not load packs: %w", loadPackErr)
 	}
 	if loadLooseObjectErr != nil {
-		return nil, xerrors.Errorf("could not load loose objects: %w", loadLooseObjectErr)
+		return nil, fmt.Errorf("could not load loose objects: %w", loadLooseObjectErr)
 	}
 	if loadConfigErr != nil {
-		return nil, xerrors.Errorf("could not load config: %w", loadConfigErr)
+		return nil, fmt.Errorf("could not load config: %w", loadConfigErr)
 	}
 
 	return b, nil
@@ -103,7 +103,7 @@ func (b *Backend) Close() (err error) {
 		if e := pack.Close(); e != nil {
 			// we don't return directly because we still want to try to
 			// close the other packfiles
-			err = xerrors.Errorf("could not close packfile %s: %w", oid.String(), err)
+			err = fmt.Errorf("could not close packfile %s: %w", oid.String(), err)
 		}
 	}
 	b.packfiles = map[ginternals.Oid]*packfile.Pack{}

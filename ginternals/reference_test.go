@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/xerrors"
 )
 
 func TestIsRefNameValid(t *testing.T) {
@@ -197,7 +196,7 @@ func TestResolveReference(t *testing.T) {
 		ref, err := ResolveReference("HEAD", finder)
 		require.Error(t, err)
 		assert.Nil(t, ref)
-		assert.True(t, xerrors.Is(err, ErrRefInvalid), "invalid error returned")
+		assert.True(t, errors.Is(err, ErrRefInvalid), "invalid error returned")
 	})
 
 	t.Run("should fail op invalid name", func(t *testing.T) {
@@ -214,7 +213,7 @@ func TestResolveReference(t *testing.T) {
 		ref, err := ResolveReference("HEAD", finder)
 		require.Error(t, err)
 		assert.Nil(t, ref)
-		assert.True(t, xerrors.Is(err, ErrRefNameInvalid), "invalid error returned")
+		assert.True(t, errors.Is(err, ErrRefNameInvalid), "invalid error returned")
 	})
 
 	t.Run("should fail on invalid content", func(t *testing.T) {
@@ -231,7 +230,7 @@ func TestResolveReference(t *testing.T) {
 		ref, err := ResolveReference("HEAD", finder)
 		require.Error(t, err)
 		assert.Nil(t, ref)
-		assert.True(t, xerrors.Is(err, ErrRefInvalid), "invalid error returned")
+		assert.True(t, errors.Is(err, ErrRefInvalid), "invalid error returned")
 	})
 
 	t.Run("should fail on empty file", func(t *testing.T) {
@@ -248,7 +247,7 @@ func TestResolveReference(t *testing.T) {
 		ref, err := ResolveReference("HEAD", finder)
 		require.Error(t, err)
 		assert.Nil(t, ref)
-		assert.True(t, xerrors.Is(err, ErrRefInvalid), "invalid error returned")
+		assert.True(t, errors.Is(err, ErrRefInvalid), "invalid error returned")
 	})
 
 	t.Run("should pass error down from the finder", func(t *testing.T) {
@@ -261,7 +260,7 @@ func TestResolveReference(t *testing.T) {
 		ref, err := ResolveReference("HEAD", finder)
 		require.Error(t, err)
 		assert.Nil(t, ref)
-		assert.True(t, xerrors.Is(err, expectedErr), "invalid error returned")
+		assert.True(t, errors.Is(err, expectedErr), "invalid error returned")
 	})
 }
 

@@ -1,12 +1,12 @@
 package git
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/Nivl/git-go/backend"
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/object"
-	"golang.org/x/xerrors"
 )
 
 // TreeBuilder is used to build trees
@@ -39,18 +39,19 @@ func (r *Repository) NewTreeBuilderFromTree(t *object.Tree) *TreeBuilder {
 // Insert inserts a new object in a tree
 func (tb *TreeBuilder) Insert(path string, oid ginternals.Oid, mode object.TreeObjectMode) error {
 	if !mode.IsValid() {
-		return xerrors.Errorf("invalid mode %o", mode)
+		//nolint:goerr113 // no need to wrap the error, this would only be caused by a bug in the codebase
+		return fmt.Errorf("invalid mode %o", mode)
 	}
 
 	o, err := tb.Backend.Object(oid)
 	if err != nil {
-		return xerrors.Errorf("cannot verify object: %w", err)
+		return fmt.Errorf("cannot verify object: %w", err)
 	}
 
 	// TODO(melvin):
 	// 2. gitlink?
 	if o.Type() != object.TypeBlob && o.Type() != object.TypeTree {
-		return xerrors.Errorf("unexpected object %s: %w", o.Type().String(), object.ErrObjectInvalid)
+		return fmt.Errorf("unexpected object %s: %w", o.Type().String(), object.ErrObjectInvalid)
 	}
 
 	e := object.TreeEntry{
@@ -93,7 +94,7 @@ func (tb *TreeBuilder) Write() (*object.Tree, error) {
 	t := object.NewTree(entries)
 	o := t.ToObject()
 	if _, err := tb.Backend.WriteObject(o); err != nil {
-		return nil, xerrors.Errorf("could not write the object to the odb: %w", err)
+		return nil, fmt.Errorf("could not write the object to the odb: %w", err)
 	}
 	return o.AsTree()
 }

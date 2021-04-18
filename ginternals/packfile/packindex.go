@@ -3,13 +3,14 @@ package packfile
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"io"
+	"os"
 	"sort"
 	"sync"
 
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/internal/readutil"
-	"golang.org/x/xerrors"
 )
 
 const (
@@ -100,10 +101,10 @@ func NewIndex(r readutil.BufferedReader) (idx *PackIndex, err error) {
 	header := make([]byte, len(indexHeader()))
 	_, err = r.Read(header)
 	if err != nil {
-		return nil, xerrors.Errorf("could read header of index file: %w", err)
+		return nil, fmt.Errorf("could read header of index file: %w", err)
 	}
 	if !bytes.Equal(header, indexHeader()) {
-		return nil, xerrors.Errorf("invalid header: %w", ErrInvalidMagic)
+		return nil, fmt.Errorf("invalid header: %w", ErrInvalidMagic)
 	}
 
 	return &PackIndex{
@@ -115,7 +116,7 @@ func NewIndex(r readutil.BufferedReader) (idx *PackIndex, err error) {
 // If the object is not found ginternals.ErrObjectNotFound is returned
 func (idx *PackIndex) GetObjectOffset(oid ginternals.Oid) (uint64, error) {
 	if err := idx.parse(); err != nil {
-		return 0, xerrors.Errorf("could not parse the index file: %w", err)
+		return 0, fmt.Errorf("could not parse the index file: %w", err)
 	}
 	offset, exists := idx.hashOffset[oid]
 	if !exists {
@@ -158,12 +159,12 @@ func (idx *PackIndex) parse() (err error) {
 	// We move the pointer to the data we need
 	_, err = idx.r.Discard(lastEntryRelOffset)
 	if err != nil {
-		return xerrors.Errorf("could not move pointer to the last entry of layer1: %w", err)
+		return fmt.Errorf("could not move pointer to the last entry of layer1: %w", err)
 	}
 	// we now can read the count
 	_, err = io.ReadFull(idx.r, bufInt32)
 	if err != nil {
-		return xerrors.Errorf("couldn't get the total number of objects: %w", err)
+		return fmt.Errorf("couldn't get the total number of objects: %w", err)
 	}
 	objectCount := int(binary.BigEndian.Uint32(bufInt32))
 
@@ -182,16 +183,16 @@ func (idx *PackIndex) parse() (err error) {
 		// this should only happen if the indexfile is invalid and
 		// layer2 is smaller than it should
 		if currentOffset >= layer3offset {
-			return xerrors.Errorf("oid %d is out of bound in layer2", i)
+			return fmt.Errorf("oid %d is out of bound in layer2: %w", i, os.ErrNotExist)
 		}
 
 		_, err = io.ReadFull(idx.r, bufOid)
 		if err != nil {
-			return xerrors.Errorf("couldn't get the oid at offset %d: %w", currentOffset, err)
+			return fmt.Errorf("couldn't get the oid at offset %d: %w", currentOffset, err)
 		}
 		oid, err := ginternals.NewOidFromHex(bufOid)
 		if err != nil {
-			return xerrors.Errorf("invalid oid at offset %d: %w", currentOffset, err)
+			return fmt.Errorf("invalid oid at offset %d: %w", currentOffset, err)
 		}
 		oids = append(oids, oid)
 	}
@@ -202,7 +203,7 @@ func (idx *PackIndex) parse() (err error) {
 	layer3Size := objectCount * layer3EntrySize
 	_, err = idx.r.Discard(layer3Size)
 	if err != nil {
-		return xerrors.Errorf("could not skip layer3: %w", err)
+		return fmt.Errorf("could not skip layer3: %w", err)
 	}
 
 	// We can now allocate our final map (oid => offset) and fill it with the
@@ -229,11 +230,11 @@ func (idx *PackIndex) parse() (err error) {
 		// this should only happen if the indexfile is invalid and
 		// layer4 is smaller than it should
 		if currentOffset >= layer5Offset {
-			return xerrors.Errorf("oid %s is out of bound in layer4", oid.String())
+			return fmt.Errorf("oid %s is out of bound in layer4: %w", oid.String(), os.ErrNotExist)
 		}
 		_, err = io.ReadFull(idx.r, bufInt32)
 		if err != nil {
-			return xerrors.Errorf("couldn't read offset of oid %s at position %d (layer4): %w", oid.String(), currentOffset, err)
+			return fmt.Errorf("couldn't read offset of oid %s at position %d (layer4): %w", oid.String(), currentOffset, err)
 		}
 		entry := binary.BigEndian.Uint32(bufInt32)
 
@@ -276,13 +277,13 @@ func (idx *PackIndex) parse() (err error) {
 		// This should never happen since the offsert should be back-
 		// to-back, but it cost nothing to double check
 		if data.relativeOffset != currentRelativeOffset {
-			return xerrors.Errorf("expected oid %s to be at (relative) offset %d, but is at %d instead (in layer5 %d)", data.oid.String(), currentRelativeOffset, data.relativeOffset, layer5Offset)
+			return fmt.Errorf("expected oid %s to be at (relative) offset %d, but is at %d instead (in layer5 %d): %w", data.oid.String(), currentRelativeOffset, data.relativeOffset, layer5Offset, os.ErrNotExist)
 		}
 
 		entryOffset := layer5Offset + int64(data.relativeOffset)
 		_, err = io.ReadFull(idx.r, bufInt64)
 		if err != nil {
-			return xerrors.Errorf("couldn't read offset of oid %s at position %d (layer5): %w", data.oid.String(), entryOffset, err)
+			return fmt.Errorf("couldn't read offset of oid %s at position %d (layer5): %w", data.oid.String(), entryOffset, err)
 		}
 		offset := binary.BigEndian.Uint64(bufInt64)
 		idx.hashOffset[data.oid] = offset

@@ -12,7 +12,6 @@ import (
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/xerrors"
 )
 
 func TestReference(t *testing.T) {
@@ -37,7 +36,7 @@ func TestReference(t *testing.T) {
 		})
 		ref, err := b.Reference("refs/heads/doesnt_exists")
 		require.Error(t, err)
-		assert.True(t, xerrors.Is(ginternals.ErrRefNotFound, ginternals.ErrRefNotFound), "unexpected error returned")
+		assert.True(t, errors.Is(ginternals.ErrRefNotFound, ginternals.ErrRefNotFound), "unexpected error returned")
 		assert.Nil(t, ref)
 	})
 
@@ -162,7 +161,7 @@ func TestParsePackedRefs(t *testing.T) {
 
 		_, err = NewFS(opts)
 		require.Error(t, err)
-		assert.True(t, xerrors.Is(err, ginternals.ErrPackedRefInvalid), "unexpected error received")
+		assert.True(t, errors.Is(err, ginternals.ErrPackedRefInvalid), "unexpected error received")
 	})
 
 	t.Run("Should pass with comments and annotations", func(t *testing.T) {
@@ -317,7 +316,7 @@ func TestWriteReference(t *testing.T) {
 		ref := ginternals.NewSymbolicReference("H EAD", "refs/heads/master")
 		err = b.WriteReference(ref)
 		require.Error(t, err)
-		require.True(t, xerrors.Is(err, ginternals.ErrRefNameInvalid), "unexpected error")
+		require.True(t, errors.Is(err, ginternals.ErrRefNameInvalid), "unexpected error")
 	})
 
 	t.Run("should pass overwriting a symbolic reference", func(t *testing.T) {
@@ -472,7 +471,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 		ref := ginternals.NewSymbolicReference("H EAD", "refs/heads/master")
 		err = b.WriteReferenceSafe(ref)
 		require.Error(t, err)
-		require.True(t, xerrors.Is(err, ginternals.ErrRefNameInvalid), "unexpected error")
+		require.True(t, errors.Is(err, ginternals.ErrRefNameInvalid), "unexpected error")
 	})
 
 	t.Run("should fail overwritting a ref on disk", func(t *testing.T) {
@@ -501,7 +500,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 		ref := ginternals.NewSymbolicReference("HEAD", "refs/heads/master")
 		err = b.WriteReferenceSafe(ref)
 		require.Error(t, err)
-		require.True(t, xerrors.Is(err, ginternals.ErrRefExists), "unexpected error")
+		require.True(t, errors.Is(err, ginternals.ErrRefExists), "unexpected error")
 
 		// let's make sure the data have not changed
 		data, err = os.ReadFile(filepath.Join(b.Path(), "HEAD"))
@@ -534,7 +533,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 		ref := ginternals.NewSymbolicReference("refs/heads/master", "refs/heads/branch")
 		err = b.WriteReferenceSafe(ref)
 		require.Error(t, err)
-		require.True(t, xerrors.Is(err, ginternals.ErrRefExists), "unexpected error")
+		require.True(t, errors.Is(err, ginternals.ErrRefExists), "unexpected error")
 
 		// Let's make sure the data have not been persisted
 		_, err = os.ReadFile(filepath.Join(b.Path(), "refs", "heads", "master"))

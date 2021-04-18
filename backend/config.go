@@ -1,12 +1,12 @@
 package backend
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/internal/gitpath"
-	"golang.org/x/xerrors"
 	"gopkg.in/ini.v1"
 )
 
@@ -28,7 +28,7 @@ func (b *Backend) Init() error {
 	}
 	for _, d := range dirs {
 		if err := b.fs.MkdirAll(d, 0o750); err != nil {
-			return xerrors.Errorf("could not create directory %s: %w", d, err)
+			return fmt.Errorf("could not create directory %s: %w", d, err)
 		}
 	}
 
@@ -46,18 +46,18 @@ func (b *Backend) Init() error {
 	for _, f := range files {
 		fullPath := filepath.Join(b.Path(), f.path)
 		if err := os.WriteFile(fullPath, f.content, 0o644); err != nil {
-			return xerrors.Errorf("could not create file %s: %w", f, err)
+			return fmt.Errorf("could not create file %s: %w", f, err)
 		}
 	}
 
 	err := b.setDefaultCfg()
 	if err != nil {
-		return xerrors.Errorf("could not set the default config: %w", err)
+		return fmt.Errorf("could not set the default config: %w", err)
 	}
 
 	ref := ginternals.NewSymbolicReference(ginternals.Head, gitpath.LocalBranch(ginternals.Master))
 	if err := b.WriteReferenceSafe(ref); err != nil {
-		return xerrors.Errorf("could not write HEAD: %w", err)
+		return fmt.Errorf("could not write HEAD: %w", err)
 	}
 
 	return nil
@@ -71,7 +71,7 @@ func (b *Backend) setDefaultCfg() error {
 	// Core
 	core, err := cfg.NewSection(CfgCore)
 	if err != nil {
-		return xerrors.Errorf("could not create core section: %w", err)
+		return fmt.Errorf("could not create core section: %w", err)
 	}
 	coreCfg := map[string]string{
 		CfgCoreFormatVersion:     "0",
@@ -83,7 +83,7 @@ func (b *Backend) setDefaultCfg() error {
 	}
 	for k, v := range coreCfg {
 		if _, err := core.NewKey(k, v); err != nil {
-			return xerrors.Errorf("could not set %s: %w", k, err)
+			return fmt.Errorf("could not set %s: %w", k, err)
 		}
 	}
 	return cfg.SaveTo(filepath.Join(b.Path(), gitpath.ConfigPath))

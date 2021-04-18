@@ -1,6 +1,7 @@
 package git
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,7 +13,6 @@ import (
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/xerrors"
 )
 
 func TestTreeBuilderInsert(t *testing.T) {
@@ -67,7 +67,7 @@ func TestTreeBuilderInsert(t *testing.T) {
 				err = tb.Insert("somewhere", oid, object.ModeFile)
 				if tc.expectedError != nil {
 					require.Error(t, err)
-					assert.True(t, xerrors.Is(err, tc.expectedError))
+					assert.True(t, errors.Is(err, tc.expectedError))
 				} else {
 					require.NoError(t, err)
 					assert.Len(t, tb.entries, 1)

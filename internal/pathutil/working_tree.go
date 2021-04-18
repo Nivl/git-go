@@ -2,11 +2,11 @@ package pathutil
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/Nivl/git-go/internal/gitpath"
-	"golang.org/x/xerrors"
 )
 
 // ErrNoRepo is an error returned when no repo are found
@@ -16,7 +16,7 @@ var ErrNoRepo = errors.New("not a git repository (or any of the parent directori
 func WorkingTree() (path string, err error) {
 	wd, err := os.Getwd()
 	if err != nil {
-		return "", xerrors.Errorf("could not get current working directory: %w", err)
+		return "", fmt.Errorf("could not get current working directory: %w", err)
 	}
 	return WorkingTreeFromPath(wd)
 }
