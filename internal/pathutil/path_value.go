@@ -21,6 +21,18 @@ const (
 	PathValueTypeAny
 )
 
+var (
+	// ErrIsDirectory is an error returned when a path
+	// points to a directory instead of a file
+	ErrIsDirectory = errors.New("path is a directory")
+	// ErrIsNotDirectory is an error returned when a path
+	// is expected to points to a directory but isn't
+	ErrIsNotDirectory = errors.New("path is not a directory")
+	// ErrUnknownType is an error returned when an unknown PathValueType
+	// is provided to a method
+	ErrUnknownType = errors.New("type unknown")
+)
+
 // PathValue represents a Flag value to be parsed by spf13/pflag
 type PathValue struct {
 	defaultValue  string
@@ -101,15 +113,15 @@ func (v *PathValue) Set(value string) (err error) {
 		switch v.typ {
 		case PathValueTypeFile:
 			if info.IsDir() {
-				return fmt.Errorf("invalid path %s: is a directory", value)
+				return fmt.Errorf("invalid path %s: %w", value, ErrIsDirectory)
 			}
 		case PathValueTypeDir:
 			if !info.IsDir() {
-				return fmt.Errorf("invalid path %s: not a directory", value)
+				return fmt.Errorf("invalid path %s: %w", value, ErrIsNotDirectory)
 			}
 		case PathValueTypeAny:
 		default:
-			return fmt.Errorf("invalid type: %d", v.typ)
+			return fmt.Errorf("type %d: %w", v.typ, ErrUnknownType)
 		}
 	}
 

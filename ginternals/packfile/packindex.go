@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"os"
 	"sort"
 	"sync"
 
@@ -182,7 +183,7 @@ func (idx *PackIndex) parse() (err error) {
 		// this should only happen if the indexfile is invalid and
 		// layer2 is smaller than it should
 		if currentOffset >= layer3offset {
-			return fmt.Errorf("oid %d is out of bound in layer2", i)
+			return fmt.Errorf("oid %d is out of bound in layer2: %w", i, os.ErrNotExist)
 		}
 
 		_, err = io.ReadFull(idx.r, bufOid)
@@ -229,7 +230,7 @@ func (idx *PackIndex) parse() (err error) {
 		// this should only happen if the indexfile is invalid and
 		// layer4 is smaller than it should
 		if currentOffset >= layer5Offset {
-			return fmt.Errorf("oid %s is out of bound in layer4", oid.String())
+			return fmt.Errorf("oid %s is out of bound in layer4: %w", oid.String(), os.ErrNotExist)
 		}
 		_, err = io.ReadFull(idx.r, bufInt32)
 		if err != nil {
@@ -276,7 +277,7 @@ func (idx *PackIndex) parse() (err error) {
 		// This should never happen since the offsert should be back-
 		// to-back, but it cost nothing to double check
 		if data.relativeOffset != currentRelativeOffset {
-			return fmt.Errorf("expected oid %s to be at (relative) offset %d, but is at %d instead (in layer5 %d)", data.oid.String(), currentRelativeOffset, data.relativeOffset, layer5Offset)
+			return fmt.Errorf("expected oid %s to be at (relative) offset %d, but is at %d instead (in layer5 %d): %w", data.oid.String(), currentRelativeOffset, data.relativeOffset, layer5Offset, os.ErrNotExist)
 		}
 
 		entryOffset := layer5Offset + int64(data.relativeOffset)

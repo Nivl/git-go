@@ -179,6 +179,7 @@ func (b *Backend) WalkReferences(f RefWalkFunc) error {
 	b.refs.Range(func(key, value interface{}) bool {
 		name, ok := key.(string)
 		if !ok {
+			//nolint:goerr113 // no need to wrap the error, this would only be caused by a bug in the codebase
 			topError = fmt.Errorf("invalid key type for %s. expected string got %T", name, key)
 			return false
 		}

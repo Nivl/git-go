@@ -39,6 +39,7 @@ func (r *Repository) NewTreeBuilderFromTree(t *object.Tree) *TreeBuilder {
 // Insert inserts a new object in a tree
 func (tb *TreeBuilder) Insert(path string, oid ginternals.Oid, mode object.TreeObjectMode) error {
 	if !mode.IsValid() {
+		//nolint:goerr113 // no need to wrap the error, this would only be caused by a bug in the codebase
 		return fmt.Errorf("invalid mode %o", mode)
 	}
 

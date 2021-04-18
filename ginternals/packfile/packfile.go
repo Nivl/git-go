@@ -46,6 +46,9 @@ var (
 	// ErrInvalidVersion is an error thrown when a file has an
 	// unsupported version
 	ErrInvalidVersion = errors.New("invalid version")
+	// ErrInvalidObjectSize represents a object which size doesn't
+	// match the expected size
+	ErrInvalidObjectSize = errors.New("invalid object")
 )
 
 // Pack represents a Packfile
@@ -213,7 +216,7 @@ func (pck *Pack) getRawObjectAt(objectOffset uint64) (o *object.Object, deltaBas
 	// >> 4        : 0000_0TTT
 	objectType := object.Type((metadata[0] & 0b_0111_0000) >> 4)
 	if !objectType.IsValid() {
-		return nil, ginternals.NullOid, 0, fmt.Errorf("unknown object type %d", objectType)
+		return nil, ginternals.NullOid, 0, fmt.Errorf("object type %d: %w", objectType, object.ErrObjectUnknown)
 	}
 
 	// The first part of the size is on the last 4 bits of the byte.
@@ -302,7 +305,7 @@ func (pck *Pack) getRawObjectAt(objectOffset uint64) (o *object.Object, deltaBas
 	}
 
 	if objectData.Len() != int(objectSize) {
-		return nil, ginternals.NullOid, 0, fmt.Errorf("object size not valid. expecting %d, got %d", objectSize, objectData.Len())
+		return nil, ginternals.NullOid, 0, fmt.Errorf("object size not valid. expecting %d, got %d: %w", objectSize, objectData.Len(), ErrInvalidObjectSize)
 	}
 
 	return object.New(objectType, objectData.Bytes()), baseObjectOid, baseObjectOffset, nil

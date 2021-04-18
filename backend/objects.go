@@ -110,7 +110,7 @@ func (b *Backend) looseObject(oid ginternals.Oid) (o *object.Object, err error) 
 
 	oType, err := object.NewTypeFromString(string(typ))
 	if err != nil {
-		return nil, fmt.Errorf("unsupported type %s for object %s at path %s", string(typ), strOid, p)
+		return nil, fmt.Errorf("unsupported type %s for object %s at path %s: %w", string(typ), strOid, p, object.ErrObjectInvalid)
 	}
 	pointerPos += len(typ)
 	pointerPos++ // one more for the space

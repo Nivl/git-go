@@ -21,6 +21,7 @@ var (
 	ErrRepositoryExists             = errors.New("repository already exists")
 	ErrTagNotFound                  = errors.New("tag not found")
 	ErrTagExists                    = errors.New("tag already exists")
+	ErrNotADirectory                = errors.New("not a directory")
 )
 
 // Repository represent a git repository
@@ -110,7 +111,7 @@ func InitRepositoryWithParams(params *config.GitParams, opts InitOptions) (r *Re
 		switch err { //nolint:errorlint // we only want nil or not nil
 		case nil:
 			if !info.IsDir() {
-				return nil, fmt.Errorf("invalid path: not a directory")
+				return nil, fmt.Errorf("invalid path: %w", ErrNotADirectory)
 			}
 		default:
 			if !errors.Is(err, os.ErrNotExist) {
@@ -318,7 +319,7 @@ func (r *Repository) NewCommit(refname string, tree *object.Tree, author object.
 			return nil, fmt.Errorf("could not retrieve parent %s: %w", id.String(), err)
 		}
 		if parent.Type() != object.TypeCommit {
-			return nil, fmt.Errorf("invalid type for parent %s. got %d, expected %d", id.String(), parent.Type(), parent.Type())
+			return nil, fmt.Errorf("invalid type for parent %s. got %d, expected %d: %w", id.String(), parent.Type(), parent.Type(), object.ErrObjectInvalid)
 		}
 	}
 
