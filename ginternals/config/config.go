@@ -31,9 +31,9 @@ type Config struct {
 	// Defaults to the regular filesystem.
 	FS afero.Fs
 
-	// configFile contains a reference to the config values held in
+	// fromFiles contains a reference to the config values held in
 	// files
-	configFile *FileAggregate
+	fromFiles *FileAggregate
 
 	// GitDirPath represents the path to the .git directory
 	// Maps to $GIT_DIR if set
@@ -206,7 +206,7 @@ func setConfig(e *env.Env, p *Config, opts LoadConfigOptions) (err error) {
 		p.ObjectDirPath = filepath.Join(opts.WorkingDirectory, p.ObjectDirPath)
 	}
 
-	p.configFile, err = NewFileAggregate(e, p)
+	p.fromFiles, err = NewFileAggregate(e, p)
 	if err != nil {
 		return fmt.Errorf("could not load config files: %w", err)
 	}
@@ -227,7 +227,7 @@ func setConfig(e *env.Env, p *Config, opts LoadConfigOptions) (err error) {
 	//
 	// If any path are relative, they will be relative to the current
 	// working directory
-	if path, ok := p.configFile.WorkTree(); ok {
+	if path, ok := p.fromFiles.WorkTree(); ok {
 		p.WorkTreePath = path
 	}
 	if opts.WorkTreePath != "" {
