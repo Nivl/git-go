@@ -30,7 +30,7 @@ var (
 // building a history over time.
 // https://blog.axosoft.com/learning-git-repository/
 type Repository struct {
-	params   *config.GitParams
+	params   *config.Config
 	workTree afero.Fs
 	dotGit   *backend.Backend
 
@@ -82,7 +82,7 @@ func InitRepositoryWithOptions(rootPath string, opts InitOptions) (r *Repository
 		GitDirPath = rootPath
 	}
 
-	params, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+	params, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 		WorkTreePath: WorkTreePath,
 		GitDirPath:   GitDirPath,
 		IsBare:       opts.IsBare,
@@ -99,7 +99,7 @@ func InitRepositoryWithOptions(rootPath string, opts InitOptions) (r *Repository
 // https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain#ch10-git-internals
 //
 // This assumes methods makes no assumptions
-func InitRepositoryWithParams(params *config.GitParams, opts InitOptions) (r *Repository, err error) {
+func InitRepositoryWithParams(params *config.Config, opts InitOptions) (r *Repository, err error) {
 	r = &Repository{
 		params: params,
 	}
@@ -197,7 +197,7 @@ func OpenRepositoryWithOptions(rootPath string, opts OpenOptions) (r *Repository
 		GitDirPath = rootPath
 	}
 
-	params, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+	params, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 		WorkTreePath: WorkTreePath,
 		GitDirPath:   GitDirPath,
 		IsBare:       opts.IsBare,
@@ -212,7 +212,7 @@ func OpenRepositoryWithOptions(rootPath string, opts OpenOptions) (r *Repository
 // its config file, and returns a Repository instance
 //
 // This method makes no assumptions
-func OpenRepositoryWithParams(params *config.GitParams, opts OpenOptions) (r *Repository, err error) {
+func OpenRepositoryWithParams(params *config.Config, opts OpenOptions) (r *Repository, err error) {
 	r = &Repository{
 		params: params,
 	}

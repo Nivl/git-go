@@ -134,7 +134,7 @@ func setConfig(e *env.Env, p *Config, opts LoadConfigOptions) (err error) {
 	}
 	p.FS = opts.FS
 
-	// FIXME(melvin): Ultimately we should get this from afero, but
+	// FIXME(melvin): Ultimately we want to get this from afero, but
 	// there are no methods for that
 	wd, err := os.Getwd()
 	if err != nil {

@@ -48,13 +48,19 @@ func NewFileAggregate(e *env.Env, cfg *Config) (confFile *FileAggregate, err err
 	// We use []interface{} because "ini.Load" wants a slice of interfaces
 	files := make([]interface{}, 0, len(configPaths))
 	for _, p := range configPaths {
-		f, fErr := cfg.FS.Open(p)
-		if fErr != nil {
+		_, sErr := cfg.FS.Stat(p)
+		if sErr != nil {
 			// not every config files are expected to exists on disk
 			// so we skip all the one that doesn't
-			if errors.Is(fErr, os.ErrNotExist) {
+			if errors.Is(sErr, os.ErrNotExist) {
 				continue
 			}
+			err = fmt.Errorf("could not check file %s: %w", p, sErr)
+			break
+		}
+
+		f, fErr := cfg.FS.Open(p)
+		if fErr != nil {
 			err = fmt.Errorf("could not open file %s: %w", p, fErr)
 			break
 		}

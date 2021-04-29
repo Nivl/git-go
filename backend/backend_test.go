@@ -20,7 +20,7 @@ func TestPath(t *testing.T) {
 
 	dotGitPath := filepath.Join(dir, gitpath.DotGitPath)
 
-	opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+	opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 		WorkTreePath: dir,
 		GitDirPath:   dotGitPath,
 	})
@@ -45,7 +45,7 @@ func TestObjectPath(t *testing.T) {
 
 		dotGitPath := filepath.Join(dir, gitpath.DotGitPath)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 			WorkTreePath: dir,
 			GitDirPath:   dotGitPath,
 		})
@@ -72,7 +72,7 @@ func TestObjectPath(t *testing.T) {
 			"GIT_DIR=" + gitDirPath,
 			"GIT_OBJECT_DIRECTORY=" + objectDirPath,
 		})
-		p, err := config.NewGitParams(e, config.NewGitParamsOptions{
+		p, err := config.LoadConfig(e, config.LoadConfigOptions{
 			IsBare: true,
 		})
 		require.NoError(t, err)

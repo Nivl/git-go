@@ -175,7 +175,7 @@ func TestLoadConfig(t *testing.T) {
 				return
 			}
 			// We don't want to check for files or FS
-			out.configFile = nil
+			out.fromFiles = nil
 			out.FS = nil
 
 			require.NoError(t, err)
@@ -251,6 +251,11 @@ func TestNewGitOptionsSkipEnv(t *testing.T) {
 				require.Error(t, err)
 				return
 			}
+
+			// We remove some data to make the assertion easier
+			out.FS = nil
+			out.fromFiles = nil
+
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedParams, out)
 		})

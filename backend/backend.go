@@ -16,7 +16,7 @@ import (
 
 // Backend is a Backend implementation that uses the filesystem to store data
 type Backend struct {
-	params *config.GitParams
+	params *config.Config
 
 	objectMu     *syncutil.NamedMutex
 	cache        *cache.LRU
@@ -30,12 +30,12 @@ type Backend struct {
 }
 
 // NewFS returns a new Backend object using the local FileSystem
-func NewFS(params *config.GitParams) (*Backend, error) {
+func NewFS(params *config.Config) (*Backend, error) {
 	return New(params, afero.NewOsFs())
 }
 
 // New returns a new Backend object
-func New(params *config.GitParams, fs afero.Fs) (*Backend, error) {
+func New(params *config.Config, fs afero.Fs) (*Backend, error) {
 	c, err := cache.NewLRU(1000)
 	if err != nil {
 		return nil, fmt.Errorf("could not create LRU cache: %w", err)
