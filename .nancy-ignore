@@ -8,3 +8,7 @@ CVE-2020-15136
 # Affected package: github.com/gogo/protobuf < 1.3.2
 # see https://github.com/Nivl/git-go/pull/105
 CVE-2021-3121
+
+# Affected package: github.com/dgrijalva/jwt-go < 4.0.0-preview1
+# see https://github.com/Nivl/git-go/pull/113
+CVE-2020-26160
