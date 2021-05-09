@@ -99,6 +99,7 @@ func TestGetPaths(t *testing.T) {
 						"C:\\ProgramFiles(x86)\\Git\\etc\\gitconfig",
 						"C:\\ProgramFiles\\Git\\mingw64\\etc\\gitconfig",
 						"C:\\profiles\\user\\.gitconfig",
+						"C:\\local\\config",
 					},
 				},
 				{
@@ -113,8 +114,8 @@ func TestGetPaths(t *testing.T) {
 					},
 					expectedOut: []string{
 						"C\\prefix\\etc\\gitconfig",
-						"C:\\local\\config",
 						"C:\\home\\.gitconfig",
+						"C:\\local\\config",
 					},
 				},
 			}
