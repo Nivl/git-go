@@ -111,7 +111,7 @@ func getPaths(e *env.Env, cfg *Config) []string {
 	// Since we often don't have this value set, we'll do a
 	// system-specific brute-force later on if $PREFIX isn't set.
 	if !cfg.SkipSystemConfig && cfg.Prefix != "" {
-		configPaths = append(configPaths, filepath.Join(e.Get("PREFIX"), "etc", "gitconfig"))
+		configPaths = append(configPaths, filepath.Join(cfg.Prefix, "etc", "gitconfig"))
 	}
 
 	switch runtime.GOOS {
