@@ -29,6 +29,15 @@ type FileAggregate struct {
 }
 
 // WorkTree returns the path of the work-tree
+func (cfg *FileAggregate) RepoFormatVersion() (version int, ok bool) {
+	v, err := cfg.agg.Section("core").Key("repositoryformatversion").Int()
+	if err != nil {
+		return 0, false
+	}
+	return v, true
+}
+
+// WorkTree returns the path of the work-tree
 func (cfg *FileAggregate) WorkTree() (workTree string, ok bool) {
 	v := cfg.agg.Section("core").Key("worktree").String()
 	return v, v != ""

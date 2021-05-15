@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"runtime"
 	"testing"
 
@@ -53,27 +55,33 @@ func TestNewFileAggregate(t *testing.T) {
 func TestGetters(t *testing.T) {
 	t.Parallel()
 
-	// TODO(melvin): test files merging
-	// 1. create a new temp directory "tmp"
-	// 2. create the directory $tmp/etc/
-	// 3. create the config file $tmp/etc/gitconfig
-	// 4. set PREFIX to the path of tmp
-	// 5. test that the localFile overwrites this config file
-	// 6. test that this config file values are accessible
-
-	localFile, cleanup := testhelper.TempFile(t)
+	dirPath, cleanup := testhelper.TempDir(t)
 	t.Cleanup(cleanup)
-	_, err := localFile.WriteString(`
-[core]
-	worktree=dir
-`)
+
+	err := os.Mkdir(filepath.Join(dirPath, "etc"), 0o755)
+	require.NoError(t, err)
+
+	localConfigPath := filepath.Join(dirPath, "local_config")
+	globalConfigPath := filepath.Join(dirPath, "etc", "gitconfig")
+
+	err = os.WriteFile(globalConfigPath, []byte(`
+	[core]
+		repositoryformatversion = 0
+		worktree = root_dir
+	`), 0o644)
+	require.NoError(t, err)
+
+	err = os.WriteFile(localConfigPath, []byte(`
+	[core]
+		worktree = local_dir
+	`), 0o644)
 	require.NoError(t, err)
 
 	agg, err := NewFileAggregate(env.NewFromKVList([]string{}),
 		&Config{
-			SkipSystemConfig: true,
-			LocalConfig:      localFile.Name(),
-			FS:               afero.NewOsFs(),
+			LocalConfig: localConfigPath,
+			FS:          afero.NewOsFs(),
+			Prefix:      dirPath,
 		})
 	require.NoError(t, err)
 
@@ -81,7 +89,14 @@ func TestGetters(t *testing.T) {
 		t.Parallel()
 		wt, ok := agg.WorkTree()
 		assert.True(t, ok, "expected to find core.worktree")
-		assert.Equal(t, "dir", wt)
+		assert.Equal(t, "local_dir", wt)
+	})
+
+	t.Run("RepoFormatVersion", func(t *testing.T) {
+		t.Parallel()
+		v, ok := agg.RepoFormatVersion()
+		assert.True(t, ok, "expected to find core.repositoryformatversion")
+		assert.Equal(t, 0, v)
 	})
 }
 
