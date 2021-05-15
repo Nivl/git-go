@@ -15,12 +15,6 @@ import (
 func TestNewFileAggregate(t *testing.T) {
 	t.Parallel()
 
-	file, cleanup := testhelper.TempFile(t)
-	t.Cleanup(cleanup)
-	_, err := file.WriteString(`[core]
-	worktree=dir`)
-	require.NoError(t, err)
-
 	testCases := []struct {
 		desc          string
 		env           *env.Env
@@ -33,15 +27,6 @@ func TestNewFileAggregate(t *testing.T) {
 			env:  env.NewFromKVList([]string{}),
 			cfg: &Config{
 				SkipSystemConfig: true,
-				FS:               afero.NewOsFs(),
-			},
-		},
-		{
-			desc: "should load files content",
-			env:  env.NewFromKVList([]string{}),
-			cfg: &Config{
-				SkipSystemConfig: true,
-				LocalConfig:      file.Name(),
 				FS:               afero.NewOsFs(),
 			},
 		},
@@ -68,9 +53,17 @@ func TestNewFileAggregate(t *testing.T) {
 func TestGetters(t *testing.T) {
 	t.Parallel()
 
-	file, cleanup := testhelper.TempFile(t)
+	// TODO(melvin): test files merging
+	// 1. create a new temp directory "tmp"
+	// 2. create the directory $tmp/etc/
+	// 3. create the config file $tmp/etc/gitconfig
+	// 4. set PREFIX to the path of tmp
+	// 5. test that the localFile overwrites this config file
+	// 6. test that this config file values are accessible
+
+	localFile, cleanup := testhelper.TempFile(t)
 	t.Cleanup(cleanup)
-	_, err := file.WriteString(`
+	_, err := localFile.WriteString(`
 [core]
 	worktree=dir
 `)
@@ -79,7 +72,7 @@ func TestGetters(t *testing.T) {
 	agg, err := NewFileAggregate(env.NewFromKVList([]string{}),
 		&Config{
 			SkipSystemConfig: true,
-			LocalConfig:      file.Name(),
+			LocalConfig:      localFile.Name(),
 			FS:               afero.NewOsFs(),
 		})
 	require.NoError(t, err)
