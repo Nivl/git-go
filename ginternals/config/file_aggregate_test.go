@@ -6,13 +6,21 @@ import (
 	"testing"
 
 	"github.com/Nivl/git-go/env"
+	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/spf13/afero"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/ini.v1"
 )
 
 func TestNewFileAggregate(t *testing.T) {
 	t.Parallel()
+
+	file, cleanup := testhelper.TempFile(t)
+	t.Cleanup(cleanup)
+	_, err := file.WriteString(`[core]
+	worktree=dir`)
+	require.NoError(t, err)
+
 	testCases := []struct {
 		desc          string
 		env           *env.Env
@@ -27,8 +35,14 @@ func TestNewFileAggregate(t *testing.T) {
 				SkipSystemConfig: true,
 				FS:               afero.NewOsFs(),
 			},
-			expectedOut: &FileAggregate{
-				agg: ini.Empty(defaultLoadOption),
+		},
+		{
+			desc: "should load files content",
+			env:  env.NewFromKVList([]string{}),
+			cfg: &Config{
+				SkipSystemConfig: true,
+				LocalConfig:      file.Name(),
+				FS:               afero.NewOsFs(),
 			},
 		},
 	}
@@ -39,18 +53,43 @@ func TestNewFileAggregate(t *testing.T) {
 			t.Parallel()
 
 			f, err := NewFileAggregate(tc.env, tc.cfg)
-			switch tc.expectedError {
-			default:
+			if tc.expectedError != nil {
 				require.Error(t, err)
 				require.ErrorIs(t, err, tc.expectedError, "unexpected error")
 				require.Nil(t, f)
-			case nil:
-				tc.expectedOut.cfg = tc.cfg
+			} else {
 				require.NoError(t, err)
-				require.Equal(t, tc.expectedOut, f)
+				require.NotNil(t, f)
 			}
 		})
 	}
+}
+
+func TestGetters(t *testing.T) {
+	t.Parallel()
+
+	file, cleanup := testhelper.TempFile(t)
+	t.Cleanup(cleanup)
+	_, err := file.WriteString(`
+[core]
+	worktree=dir
+`)
+	require.NoError(t, err)
+
+	agg, err := NewFileAggregate(env.NewFromKVList([]string{}),
+		&Config{
+			SkipSystemConfig: true,
+			LocalConfig:      file.Name(),
+			FS:               afero.NewOsFs(),
+		})
+	require.NoError(t, err)
+
+	t.Run("WorkTree", func(t *testing.T) {
+		t.Parallel()
+		wt, ok := agg.WorkTree()
+		assert.True(t, ok, "expected to find core.worktree")
+		assert.Equal(t, "dir", wt)
+	})
 }
 
 func TestGetPaths(t *testing.T) {
