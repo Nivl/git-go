@@ -5,7 +5,7 @@ jobs:
     name: Go Code
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.4
 
       - name: Get Go version
         id: gover
@@ -17,13 +17,13 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2.5.2
         with:
-          version: v1.39
+          version: v1.40.1
 
   codecov:
     name: "Codecov.yml"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.4
 
       - name: Validate codecov.yml
         id: codecov

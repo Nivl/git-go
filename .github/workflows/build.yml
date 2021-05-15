@@ -8,7 +8,7 @@ jobs:
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.4
 
       - name: Get Go version
         id: gover
@@ -27,7 +27,7 @@ jobs:
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.4
 
       - name: Get Go version
         id: gover
@@ -39,7 +39,7 @@ jobs:
       - name: Test
         run: go test -race -timeout 3m -coverprofile coverage.txt ./...
 
-      - uses: codecov/codecov-action@v1
+      - uses: codecov/codecov-action@v1.5.0
         with:
           fail_ci_if_error: true
           verbose: true
