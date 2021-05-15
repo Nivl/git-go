@@ -28,7 +28,7 @@ type FileAggregate struct {
 	agg *ini.File
 }
 
-// WorkTree returns the path of the work-tree
+// RepoFormatVersion returns the version of the format of the repo
 func (cfg *FileAggregate) RepoFormatVersion() (version int, ok bool) {
 	v, err := cfg.agg.Section("core").Key("repositoryformatversion").Int()
 	if err != nil {
