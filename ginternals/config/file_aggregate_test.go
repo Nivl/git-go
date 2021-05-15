@@ -6,48 +6,52 @@ import (
 	"testing"
 
 	"github.com/Nivl/git-go/env"
+	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 )
 
-// func TestNewFileAggregate(t *testing.T) {
-// 	t.Parallel()
+func TestNewFileAggregate(t *testing.T) {
+	t.Parallel()
+	testCases := []struct {
+		desc          string
+		env           *env.Env
+		cfg           *Config
+		expectedOut   *FileAggregate
+		expectedError error
+	}{
+		{
+			desc: "should work with no files available",
+			env:  env.NewFromKVList([]string{}),
+			cfg: &Config{
+				SkipSystemConfig: true,
+				FS:               afero.NewOsFs(),
+			},
+			expectedOut: &FileAggregate{
+				agg: ini.Empty(defaultLoadOption),
+			},
+		},
+	}
+	for i, tc := range testCases {
+		tc := tc
+		i := i
+		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
+			t.Parallel()
 
-// 	t.Run("common os", func(t *testing.T) {
-// 		t.Parallel()
-// 		testCases := []struct {
-// 			desc          string
-// 			env           *env.Env
-// 			cfg           *Config
-// 			expectedOut   *FileAggregate
-// 			expectedError error
-// 		}{
-// 			{
-// 				desc:        "should work with no env set",
-// 				env:         env.NewFromKVList([]string{}),
-// 				cfg:         &Config{},
-// 				expectedOut: &FileAggregate{},
-// 			},
-// 		}
-// 		for i, tc := range testCases {
-// 			tc := tc
-// 			i := i
-// 			t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
-// 				t.Parallel()
-
-// 				f, err := NewFileAggregate(tc.env, tc.cfg)
-// 				switch tc.expectedError {
-// 				default:
-// 					require.Error(t, err)
-// 					require.ErrorIs(t, err, tc.expectedError, "unexpected error")
-// 					require.Nil(t, f)
-// 				case nil:
-// 					require.NoError(t, err)
-// 					require.NotNil(t, f)
-// 				}
-// 			})
-// 		}
-// 	})
-// }
+			f, err := NewFileAggregate(tc.env, tc.cfg)
+			switch tc.expectedError {
+			default:
+				require.Error(t, err)
+				require.ErrorIs(t, err, tc.expectedError, "unexpected error")
+				require.Nil(t, f)
+			case nil:
+				tc.expectedOut.cfg = tc.cfg
+				require.NoError(t, err)
+				require.Equal(t, tc.expectedOut, f)
+			}
+		})
+	}
+}
 
 func TestGetPaths(t *testing.T) {
 	t.Parallel()
