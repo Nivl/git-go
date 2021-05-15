@@ -299,7 +299,7 @@ func (pck *Pack) getRawObjectAt(objectOffset uint64) (o *object.Object, deltaBas
 	defer errutil.Close(zlibR, &err)
 
 	objectData := bytes.Buffer{}
-	_, err = io.Copy(&objectData, zlibR)
+	_, err = io.CopyN(&objectData, zlibR, int64(objectSize))
 	if err != nil {
 		return nil, ginternals.NullOid, 0, fmt.Errorf("could not decompress: %w", err)
 	}
