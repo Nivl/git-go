@@ -68,7 +68,7 @@ func TestInit(t *testing.T) {
 		d, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 			WorkTreePath: d,
 			GitDirPath:   filepath.Join(d, "dot-git"),
 		})
@@ -93,7 +93,7 @@ func TestInit(t *testing.T) {
 			"GIT_DIR=" + filepath.Join(d, "dot-git"),
 			"GIT_OBJECT_DIRECTORY=" + filepath.Join(d, "dot-git-objects"),
 		})
-		p, err := config.NewGitParams(e, config.NewGitParamsOptions{
+		p, err := config.LoadConfig(e, config.LoadConfigOptions{
 			IsBare: true,
 		})
 		require.NoError(t, err)
@@ -142,53 +142,6 @@ func TestInit(t *testing.T) {
 		require.ErrorIs(t, err, ErrRepositoryExists)
 	})
 
-	t.Run("should fail creating a repo if the target dir is a file", func(t *testing.T) {
-		t.Parallel()
-
-		file, cleanup := testhelper.TempFile(t)
-		t.Cleanup(cleanup)
-
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
-			WorkingDirectory: file.Name(),
-			SkipGitDirLookUp: true,
-		})
-		require.NoError(t, err)
-
-		// Run logic
-		_, err = InitRepositoryWithParams(opts, InitOptions{})
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "not a directory")
-	})
-
-	t.Run("should fail creating a repo if one of the parent dir is a file", func(t *testing.T) {
-		t.Parallel()
-
-		// Setup
-		file, cleanup := testhelper.TempFile(t)
-		t.Cleanup(cleanup)
-
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
-			WorkingDirectory: filepath.Join(file.Name(), "wt"),
-			SkipGitDirLookUp: true,
-		})
-		require.NoError(t, err)
-
-		// Run logic
-		_, err = InitRepositoryWithParams(opts, InitOptions{})
-		require.Error(t, err)
-
-		// Windows seems to be ok to run a stat on a path that
-		// contains a file as directory, but won't let you create
-		// directories in that path.
-		// UNIX will make the stat fail.
-		switch runtime.GOOS {
-		case "windows":
-			require.Contains(t, err.Error(), "could not create")
-		default:
-			require.Contains(t, err.Error(), "could not check")
-		}
-	})
-
 	// Windows deals with permission differently
 	if runtime.GOOS != "windows" {
 		t.Run("should fail creating a repo in a protected directory", func(t *testing.T) {
@@ -201,7 +154,7 @@ func TestInit(t *testing.T) {
 			err := os.MkdirAll(target, 0o100)
 			require.NoError(t, err)
 
-			opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+			opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 				WorkingDirectory: filepath.Join(target, "wt"),
 				SkipGitDirLookUp: true,
 			})
@@ -271,7 +224,7 @@ func TestOpen(t *testing.T) {
 		t.Cleanup(cleanup)
 		repoPath = filepath.Join(repoPath, gitpath.DotGitPath)
 
-		p, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+		p, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 			WorkTreePath: d,
 			GitDirPath:   repoPath,
 		})

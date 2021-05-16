@@ -30,7 +30,7 @@ func TestObject(t *testing.T) {
 		oid, err := ginternals.NewOidFromStr("b07e28976ac8972715598f390964d53cf4dbc1bd")
 		require.NoError(t, err)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 			WorkTreePath: repoPath,
 			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
 		})
@@ -60,7 +60,7 @@ func TestObject(t *testing.T) {
 		oid, err := ginternals.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
 		require.NoError(t, err)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 			WorkTreePath: repoPath,
 			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
 		})
@@ -89,7 +89,7 @@ func TestObject(t *testing.T) {
 		oid, err := ginternals.NewOidFromStr("2dcdadc2a420225783794fbffd51e2e137a69646")
 		require.NoError(t, err)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 			WorkTreePath: repoPath,
 			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
 		})
@@ -117,7 +117,7 @@ func TestHasObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 			WorkTreePath: repoPath,
 			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
 		})
@@ -143,7 +143,7 @@ func TestHasObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 			WorkTreePath: repoPath,
 			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
 		})
@@ -169,7 +169,7 @@ func TestHasObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 			WorkTreePath: repoPath,
 			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
 		})
@@ -206,7 +206,7 @@ func TestHasObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 			WorkTreePath: repoPath,
 			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
 		})
@@ -242,7 +242,7 @@ func TestWriteObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 			WorkTreePath: repoPath,
 			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
 		})
@@ -279,7 +279,7 @@ func TestWriteObject(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 			WorkTreePath: repoPath,
 			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
 		})
@@ -324,7 +324,7 @@ func TestWalkPackedObjectIDs(t *testing.T) {
 
 	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 	t.Cleanup(cleanup)
-	opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+	opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 		WorkTreePath: repoPath,
 		GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
 	})
@@ -386,7 +386,7 @@ func TestLoosePackedObjectIDs(t *testing.T) {
 
 	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 	t.Cleanup(cleanup)
-	opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+	opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 		WorkTreePath: repoPath,
 		GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
 	})
@@ -440,7 +440,7 @@ func TestIsLooseObjectDir(t *testing.T) {
 	dir, cleanup := testhelper.TempDir(t)
 	t.Cleanup(cleanup)
 
-	opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+	opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 		WorkTreePath: dir,
 		GitDirPath:   filepath.Join(dir, gitpath.DotGitPath),
 	})

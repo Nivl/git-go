@@ -25,7 +25,7 @@ func TestInit(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 			WorkTreePath: dir,
 			GitDirPath:   filepath.Join(dir, gitpath.DotGitPath),
 		})
@@ -52,7 +52,7 @@ func TestInit(t *testing.T) {
 			"GIT_DIR=" + gitDirPath,
 			"GIT_OBJECT_DIRECTORY=" + objectDirPath,
 		})
-		p, err := config.NewGitParams(e, config.NewGitParamsOptions{
+		p, err := config.LoadConfig(e, config.LoadConfigOptions{
 			IsBare: true,
 		})
 		require.NoError(t, err)
@@ -87,7 +87,7 @@ func TestInit(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 			GitDirPath: dir,
 			IsBare:     true,
 		})
@@ -116,7 +116,7 @@ func TestInit(t *testing.T) {
 		err = os.WriteFile(filepath.Join(dir, gitpath.DescriptionPath), []byte{}, 0o644)
 		require.NoError(t, err)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 			GitDirPath: dir,
 			IsBare:     true,
 		})
@@ -146,7 +146,7 @@ func TestInit(t *testing.T) {
 		err := os.MkdirAll(filepath.Join(dir, gitpath.ObjectsPath), 0o550)
 		require.NoError(t, err)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 			GitDirPath: dir,
 			IsBare:     true,
 		})
@@ -174,7 +174,7 @@ func TestInit(t *testing.T) {
 		err := os.WriteFile(filepath.Join(dir, gitpath.DescriptionPath), []byte{}, 0o444)
 		require.NoError(t, err)
 
-		opts, err := config.NewGitOptionsSkipEnv(config.NewGitParamsOptions{
+		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 			GitDirPath: dir,
 			IsBare:     true,
 		})

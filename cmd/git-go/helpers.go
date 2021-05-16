@@ -8,7 +8,7 @@ import (
 )
 
 func loadRepository(cfg *flags) (*git.Repository, error) {
-	p, err := config.NewGitParams(cfg.env, config.NewGitParamsOptions{
+	p, err := config.LoadConfig(cfg.env, config.LoadConfigOptions{
 		WorkingDirectory: cfg.C.String(),
 		GitDirPath:       cfg.GitDir,
 		WorkTreePath:     cfg.WorkTree,
