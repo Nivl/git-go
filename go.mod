@@ -3,7 +3,7 @@ module github.com/Nivl/git-go
 go 1.16
 
 require (
-	github.com/gogf/gf v1.15.7
+	github.com/gogf/gf v1.16.1
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/spf13/afero v1.6.0
 	github.com/spf13/cobra v1.1.3
