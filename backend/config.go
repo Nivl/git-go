@@ -3,10 +3,8 @@ package backend
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/Nivl/git-go/ginternals"
-	"github.com/Nivl/git-go/internal/gitpath"
 	"gopkg.in/ini.v1"
 )
 
@@ -20,11 +18,12 @@ func (b *Backend) Init() error {
 	// Create the directories
 	dirs := []string{
 		b.Path(),
-		filepath.Join(b.Path(), gitpath.RefsTagsPath),
-		filepath.Join(b.Path(), gitpath.RefsHeadsPath),
-		b.ObjectsPath(),
-		filepath.Join(b.ObjectsPath(), gitpath.ObjectsInfoPath),
-		filepath.Join(b.ObjectsPath(), gitpath.ObjectsPackPath),
+		ginternals.TagsPath(b.config),
+		ginternals.DotGitPath(b.config),
+		ginternals.LocalBranchesPath(b.config),
+		ginternals.ObjectsPath(b.config),
+		ginternals.ObjectsInfoPath(b.config),
+		ginternals.ObjectsPacksPath(b.config),
 	}
 	for _, d := range dirs {
 		if err := b.fs.MkdirAll(d, 0o750); err != nil {
@@ -39,14 +38,13 @@ func (b *Backend) Init() error {
 		content []byte
 	}{
 		{
-			path:    gitpath.DescriptionPath,
+			path:    ginternals.DescriptionFilePath(b.config),
 			content: []byte("Unnamed repository; edit this file 'description' to name the repository.\n"),
 		},
 	}
 	for _, f := range files {
-		fullPath := filepath.Join(b.Path(), f.path)
-		if err := os.WriteFile(fullPath, f.content, 0o644); err != nil {
-			return fmt.Errorf("could not create file %s: %w", f, err)
+		if err := os.WriteFile(f.path, f.content, 0o644); err != nil {
+			return fmt.Errorf("could not create file %s: %w", f.path, err)
 		}
 	}
 
@@ -55,7 +53,7 @@ func (b *Backend) Init() error {
 		return fmt.Errorf("could not set the default config: %w", err)
 	}
 
-	ref := ginternals.NewSymbolicReference(ginternals.Head, gitpath.LocalBranch(ginternals.Master))
+	ref := ginternals.NewSymbolicReference(ginternals.Head, ginternals.LocalBranchFullName(ginternals.Master))
 	if err := b.WriteReferenceSafe(ref); err != nil {
 		return fmt.Errorf("could not write HEAD: %w", err)
 	}
@@ -86,5 +84,5 @@ func (b *Backend) setDefaultCfg() error {
 			return fmt.Errorf("could not set %s: %w", k, err)
 		}
 	}
-	return cfg.SaveTo(filepath.Join(b.Path(), gitpath.ConfigPath))
+	return cfg.SaveTo(b.config.LocalConfig)
 }

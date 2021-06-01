@@ -12,7 +12,6 @@ import (
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/config"
 	"github.com/Nivl/git-go/ginternals/object"
-	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -36,7 +35,7 @@ func TestInit(t *testing.T) {
 		})
 
 		// assert returned repository
-		assert.Equal(t, d, r.params.WorkTreePath)
+		assert.Equal(t, d, r.Config.WorkTreePath)
 		assert.Equal(t, filepath.Join(d, gitpath.DotGitPath), r.dotGit.Path())
 		assert.NotNil(t, r.workTree)
 		assert.False(t, r.IsBare(), "repos should not be bare")
@@ -56,7 +55,7 @@ func TestInit(t *testing.T) {
 		require.NoError(t, err, "failed creating a repo")
 
 		// assert returned repository
-		require.Empty(t, r.params.WorkTreePath)
+		require.Empty(t, r.Config.WorkTreePath)
 		require.Equal(t, d, r.dotGit.Path())
 		assert.Nil(t, r.workTree)
 		assert.True(t, r.IsBare(), "repos should be bare")
@@ -106,7 +105,7 @@ func TestInit(t *testing.T) {
 
 		// assert returned repository
 		require.Equal(t, filepath.Join(d, "dot-git"), r.dotGit.Path())
-		require.Equal(t, filepath.Join(d, "dot-git-objects"), r.dotGit.ObjectsPath())
+		require.Equal(t, filepath.Join(d, "dot-git-objects"), ginternals.ObjectsPath(r.Config))
 	})
 
 	t.Run("should fail with a path that points to a file", func(t *testing.T) {
@@ -185,7 +184,7 @@ func TestOpen(t *testing.T) {
 		})
 
 		// assert returned repository
-		assert.Equal(t, repoPath, r.params.WorkTreePath)
+		assert.Equal(t, repoPath, r.Config.WorkTreePath)
 		assert.Equal(t, filepath.Join(repoPath, gitpath.DotGitPath), r.dotGit.Path())
 		assert.NotNil(t, r.workTree)
 		assert.False(t, r.IsBare(), "repos should not be bare")
@@ -208,7 +207,7 @@ func TestOpen(t *testing.T) {
 		})
 
 		// assert returned repository
-		require.Empty(t, r.params.WorkTreePath)
+		require.Empty(t, r.Config.WorkTreePath)
 		require.Equal(t, repoPath, r.dotGit.Path())
 		assert.Nil(t, r.workTree)
 		assert.True(t, r.IsBare(), "repos should be bare")
@@ -449,7 +448,7 @@ func TestRepositoryNewCommit(t *testing.T) {
 			require.NoError(t, r.Close(), "failed closing repo")
 		})
 
-		ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
+		ref, err := r.dotGit.Reference(ginternals.LocalBranchFullName(r.Config, ginternals.Master))
 		require.NoError(t, err)
 
 		headCommit, err := r.GetCommit(ref.Target())
@@ -459,7 +458,7 @@ func TestRepositoryNewCommit(t *testing.T) {
 		require.NoError(t, err)
 
 		sig := object.NewSignature("author", "author@domain.tld")
-		c, err := r.NewCommit(gitpath.LocalBranch(ginternals.Master), headTree, sig, &object.CommitOptions{
+		c, err := r.NewCommit(ginternals.LocalBranchFullName(r.Config, ginternals.Master), headTree, sig, &object.CommitOptions{
 			ParentsID: []ginternals.Oid{headCommit.ID()},
 			Message:   "new commit that doesn't do anything",
 		})
@@ -470,7 +469,7 @@ func TestRepositoryNewCommit(t *testing.T) {
 		require.NoError(t, err)
 
 		// We update the ref since it should have changed
-		ref, err = r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
+		ref, err = r.dotGit.Reference(ginternals.LocalBranchFullName(r.Config, ginternals.Master))
 		require.NoError(t, err)
 		assert.Equal(t, c.ID(), ref.Target())
 	})
@@ -487,7 +486,7 @@ func TestRepositoryNewCommit(t *testing.T) {
 			require.NoError(t, r.Close(), "failed closing repo")
 		})
 
-		ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
+		ref, err := r.dotGit.Reference(ginternals.LocalBranchFullName(r.Config, ginternals.Master))
 		require.NoError(t, err)
 
 		headCommit, err := r.GetCommit(ref.Target())
@@ -497,7 +496,7 @@ func TestRepositoryNewCommit(t *testing.T) {
 		require.NoError(t, err)
 
 		sig := object.NewSignature("author", "author@domain.tld")
-		_, err = r.NewCommit(gitpath.LocalBranch(ginternals.Master), headTree, sig, &object.CommitOptions{
+		_, err = r.NewCommit(ginternals.LocalBranchFullName(r.Config, ginternals.Master), headTree, sig, &object.CommitOptions{
 			ParentsID: []ginternals.Oid{headTree.ID()},
 		})
 		require.Error(t, err)
@@ -517,7 +516,7 @@ func TestRepositoryNewDetachedCommit(t *testing.T) {
 		require.NoError(t, r.Close(), "failed closing repo")
 	})
 
-	ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
+	ref, err := r.dotGit.Reference(ginternals.LocalBranchFullName(r.Config, ginternals.Master))
 	require.NoError(t, err)
 
 	headCommit, err := r.GetCommit(ref.Target())
@@ -538,7 +537,7 @@ func TestRepositoryNewDetachedCommit(t *testing.T) {
 	require.NoError(t, err)
 
 	// We update the ref to make sure it's not updated
-	updateddRef, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
+	updateddRef, err := r.dotGit.Reference(ginternals.LocalBranchFullName(r.Config, ginternals.Master))
 	require.NoError(t, err)
 	assert.Equal(t, ref.Target(), updateddRef.Target())
 }
@@ -638,7 +637,7 @@ func TestRepositoryNewTag(t *testing.T) {
 			require.NoError(t, r.Close(), "failed closing repo")
 		})
 
-		ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
+		ref, err := r.dotGit.Reference(ginternals.LocalBranchFullName(r.Config, ginternals.Master))
 		require.NoError(t, err)
 
 		headCommit, err := r.GetCommit(ref.Target())
@@ -684,7 +683,7 @@ func TestRepositoryNewTag(t *testing.T) {
 			require.NoError(t, r.Close(), "failed closing repo")
 		})
 
-		ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
+		ref, err := r.dotGit.Reference(ginternals.LocalBranchFullName(r.Config, ginternals.Master))
 		require.NoError(t, err)
 
 		headCommit, err := r.GetCommit(ref.Target())
@@ -744,7 +743,7 @@ func TestRepositoryNewLightweightTag(t *testing.T) {
 			require.NoError(t, r.Close(), "failed closing repo")
 		})
 
-		ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
+		ref, err := r.dotGit.Reference(ginternals.LocalBranchFullName(r.Config, ginternals.Master))
 		require.NoError(t, err)
 
 		// Create the tag
@@ -766,7 +765,7 @@ func TestRepositoryNewLightweightTag(t *testing.T) {
 			require.NoError(t, r.Close(), "failed closing repo")
 		})
 
-		ref, err := r.dotGit.Reference(gitpath.LocalBranch(ginternals.Master))
+		ref, err := r.dotGit.Reference(ginternals.LocalBranchFullName(r.Config, ginternals.Master))
 		require.NoError(t, err)
 
 		// Create the tag

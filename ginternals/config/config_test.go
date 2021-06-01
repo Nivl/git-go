@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/Nivl/git-go/env"
-	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -42,9 +41,9 @@ func TestLoadConfig(t *testing.T) {
 			e:    env.NewFromKVList([]string{}),
 			expectedParams: &Config{
 				WorkTreePath:     currentRepoRoot,
-				GitDirPath:       filepath.Join(currentRepoRoot, gitpath.DotGitPath),
-				LocalConfig:      filepath.Join(currentRepoRoot, gitpath.DotGitPath, gitpath.ConfigPath),
-				ObjectDirPath:    filepath.Join(currentRepoRoot, gitpath.DotGitPath, gitpath.ObjectsPath),
+				GitDirPath:       filepath.Join(currentRepoRoot, DefaultDotGitDirName),
+				LocalConfig:      filepath.Join(currentRepoRoot, DefaultDotGitDirName, defaultConfigDirName),
+				ObjectDirPath:    filepath.Join(currentRepoRoot, DefaultDotGitDirName, defaultObjectsDirName),
 				Prefix:           "",
 				SkipSystemConfig: false,
 			},
@@ -118,9 +117,9 @@ func TestLoadConfig(t *testing.T) {
 			e: env.NewFromKVList([]string{}),
 			expectedParams: &Config{
 				WorkTreePath:     filepath.Join(validRepoRoot),
-				GitDirPath:       filepath.Join(validRepoRoot, gitpath.DotGitPath),
-				LocalConfig:      filepath.Join(validRepoRoot, gitpath.DotGitPath, gitpath.ConfigPath),
-				ObjectDirPath:    filepath.Join(validRepoRoot, gitpath.DotGitPath, gitpath.ObjectsPath),
+				GitDirPath:       filepath.Join(validRepoRoot, DefaultDotGitDirName),
+				LocalConfig:      filepath.Join(validRepoRoot, DefaultDotGitDirName, defaultConfigDirName),
+				ObjectDirPath:    filepath.Join(validRepoRoot, DefaultDotGitDirName, defaultObjectsDirName),
 				Prefix:           "",
 				SkipSystemConfig: false,
 			},
@@ -205,7 +204,7 @@ func TestLoadConfigWithFile(t *testing.T) {
 		"GIT_CONFIG=" + f.Name(),
 	})
 	opts := LoadConfigOptions{
-		GitDirPath: filepath.Join(root, ".git"),
+		GitDirPath: filepath.Join(root, DefaultDotGitDirName),
 	}
 	out, err := LoadConfig(e, opts)
 
@@ -231,9 +230,9 @@ func TestNewGitOptionsSkipEnv(t *testing.T) {
 			cfg:  LoadConfigOptions{},
 			expectedParams: &Config{
 				WorkTreePath:     currentRepoRoot,
-				GitDirPath:       filepath.Join(currentRepoRoot, gitpath.DotGitPath),
-				LocalConfig:      filepath.Join(currentRepoRoot, gitpath.DotGitPath, gitpath.ConfigPath),
-				ObjectDirPath:    filepath.Join(currentRepoRoot, gitpath.DotGitPath, gitpath.ObjectsPath),
+				GitDirPath:       filepath.Join(currentRepoRoot, DefaultDotGitDirName),
+				LocalConfig:      filepath.Join(currentRepoRoot, DefaultDotGitDirName, defaultConfigDirName),
+				ObjectDirPath:    filepath.Join(currentRepoRoot, DefaultDotGitDirName, defaultObjectsDirName),
 				Prefix:           "",
 				SkipSystemConfig: false,
 			},

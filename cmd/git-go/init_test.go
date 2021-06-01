@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/Nivl/git-go/env"
+	"github.com/Nivl/git-go/ginternals/config"
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -62,7 +63,7 @@ func TestInit(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		info, err := os.Stat(filepath.Join(dirPath, ".git"))
+		info, err := os.Stat(filepath.Join(dirPath, config.DefaultDotGitDirName))
 		require.NoError(t, err)
 		assert.True(t, info.IsDir(), "expected .git to be a dir")
 	})
