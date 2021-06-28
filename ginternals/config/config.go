@@ -211,10 +211,10 @@ func setConfig(e *env.Env, p *Config, opts LoadConfigOptions) error {
 		}
 	}
 	if p.GitCommonDirPath == "" {
-		p.GitCommonDirPath = opts.GitDirPath
+		p.GitCommonDirPath = p.GitDirPath
 	}
 	if !filepath.IsAbs(p.GitCommonDirPath) {
-		p.LocalConfig = filepath.Join(opts.GitDirPath, p.GitCommonDirPath)
+		p.GitCommonDirPath = filepath.Join(p.GitDirPath, p.GitCommonDirPath)
 	}
 
 	// LocalConfig rules:

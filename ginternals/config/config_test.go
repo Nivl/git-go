@@ -42,6 +42,7 @@ func TestLoadConfig(t *testing.T) {
 			expectedParams: &Config{
 				WorkTreePath:     currentRepoRoot,
 				GitDirPath:       filepath.Join(currentRepoRoot, DefaultDotGitDirName),
+				GitCommonDirPath: filepath.Join(currentRepoRoot, DefaultDotGitDirName),
 				LocalConfig:      filepath.Join(currentRepoRoot, DefaultDotGitDirName, defaultConfigDirName),
 				ObjectDirPath:    filepath.Join(currentRepoRoot, DefaultDotGitDirName, defaultObjectsDirName),
 				Prefix:           "",
@@ -79,6 +80,7 @@ func TestLoadConfig(t *testing.T) {
 			expectedParams: &Config{
 				WorkTreePath:     filepath.Join(root, "wt"),
 				GitDirPath:       filepath.Join(root, "git"),
+				GitCommonDirPath: filepath.Join(root, "git"),
 				LocalConfig:      filepath.Join(root, "gitconfig"),
 				ObjectDirPath:    filepath.Join(root, "objects"),
 				Prefix:           filepath.Join(root, "sysconf"),
@@ -102,6 +104,7 @@ func TestLoadConfig(t *testing.T) {
 			expectedParams: &Config{
 				WorkTreePath:     filepath.Join(root, "custom", "wt"),
 				GitDirPath:       filepath.Join(root, "custom", "git"),
+				GitCommonDirPath: filepath.Join(root, "custom", "git"),
 				LocalConfig:      filepath.Join(root, "gitconfig"),
 				ObjectDirPath:    filepath.Join(root, "objects"),
 				Prefix:           filepath.Join(root, "sysconf"),
@@ -118,6 +121,7 @@ func TestLoadConfig(t *testing.T) {
 			expectedParams: &Config{
 				WorkTreePath:     filepath.Join(validRepoRoot),
 				GitDirPath:       filepath.Join(validRepoRoot, DefaultDotGitDirName),
+				GitCommonDirPath: filepath.Join(validRepoRoot, DefaultDotGitDirName),
 				LocalConfig:      filepath.Join(validRepoRoot, DefaultDotGitDirName, defaultConfigDirName),
 				ObjectDirPath:    filepath.Join(validRepoRoot, DefaultDotGitDirName, defaultObjectsDirName),
 				Prefix:           "",
@@ -135,10 +139,11 @@ func TestLoadConfig(t *testing.T) {
 				"GIT_CONFIG=gitconfig",
 			}),
 			expectedParams: &Config{
-				WorkTreePath:  filepath.Join(cwd, "wt"),
-				GitDirPath:    filepath.Join(cwd, "git"),
-				LocalConfig:   filepath.Join(cwd, "gitconfig"),
-				ObjectDirPath: filepath.Join(cwd, "objects"),
+				WorkTreePath:     filepath.Join(cwd, "wt"),
+				GitDirPath:       filepath.Join(cwd, "git"),
+				GitCommonDirPath: filepath.Join(cwd, "git"),
+				LocalConfig:      filepath.Join(cwd, "gitconfig"),
+				ObjectDirPath:    filepath.Join(cwd, "objects"),
 			},
 			expectedError: nil,
 		},
@@ -154,10 +159,31 @@ func TestLoadConfig(t *testing.T) {
 				"GIT_CONFIG=gitconfig",
 			}),
 			expectedParams: &Config{
-				WorkTreePath:  filepath.Join(cwd, "wd", "wt"),
-				GitDirPath:    filepath.Join(cwd, "wd", "git"),
-				LocalConfig:   filepath.Join(cwd, "wd", "gitconfig"),
-				ObjectDirPath: filepath.Join(cwd, "wd", "objects"),
+				WorkTreePath:     filepath.Join(cwd, "wd", "wt"),
+				GitDirPath:       filepath.Join(cwd, "wd", "git"),
+				GitCommonDirPath: filepath.Join(cwd, "wd", "git"),
+				LocalConfig:      filepath.Join(cwd, "wd", "gitconfig"),
+				ObjectDirPath:    filepath.Join(cwd, "wd", "objects"),
+			},
+			expectedError: nil,
+		},
+		{
+			desc: "Custom common dir",
+			cfg: LoadConfigOptions{
+				WorkTreePath: filepath.Join(root),
+				GitDirPath:   filepath.Join(root, DefaultDotGitDirName),
+			},
+			e: env.NewFromKVList([]string{
+				"GIT_COMMON_DIR=" + filepath.Join(root, "common"),
+			}),
+			expectedParams: &Config{
+				WorkTreePath:     filepath.Join(root),
+				GitDirPath:       filepath.Join(root, DefaultDotGitDirName),
+				GitCommonDirPath: filepath.Join(root, "common"),
+				LocalConfig:      filepath.Join(root, "common", defaultConfigDirName),
+				ObjectDirPath:    filepath.Join(root, "common", defaultObjectsDirName),
+				Prefix:           "",
+				SkipSystemConfig: false,
 			},
 			expectedError: nil,
 		},
@@ -173,11 +199,12 @@ func TestLoadConfig(t *testing.T) {
 				require.Error(t, err)
 				return
 			}
+			require.NoError(t, err)
+
 			// We don't want to check for files or FS
 			out.fromFiles = nil
 			out.FS = nil
 
-			require.NoError(t, err)
 			assert.Equal(t, tc.expectedParams, out)
 		})
 	}
@@ -231,6 +258,7 @@ func TestNewGitOptionsSkipEnv(t *testing.T) {
 			expectedParams: &Config{
 				WorkTreePath:     currentRepoRoot,
 				GitDirPath:       filepath.Join(currentRepoRoot, DefaultDotGitDirName),
+				GitCommonDirPath: filepath.Join(currentRepoRoot, DefaultDotGitDirName),
 				LocalConfig:      filepath.Join(currentRepoRoot, DefaultDotGitDirName, defaultConfigDirName),
 				ObjectDirPath:    filepath.Join(currentRepoRoot, DefaultDotGitDirName, defaultObjectsDirName),
 				Prefix:           "",
