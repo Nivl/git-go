@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// NewCommonConfig creates a new basic config object using the most common options
 func NewCommonConfig(t *testing.T, workingTreePath string) *config.Config {
 	cfg, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 		WorkTreePath: workingTreePath,
@@ -19,6 +20,8 @@ func NewCommonConfig(t *testing.T, workingTreePath string) *config.Config {
 	return cfg
 }
 
+// NewCommonConfigBare creates a new basic config object using the most common options
+// for a bare repository
 func NewCommonConfigBare(t *testing.T, workingTreePath string) *config.Config {
 	cfg, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 		IsBare:     true,

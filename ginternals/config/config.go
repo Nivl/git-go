@@ -19,6 +19,8 @@ import (
 var ErrNoWorkTreeAlone = errors.New("cannot specify a work tree without also specifying a git dir")
 
 const (
+	// DefaultDotGitDirName corresponds to the default name of the git
+	// directory
 	DefaultDotGitDirName  = ".git"
 	defaultConfigDirName  = "config"
 	defaultObjectsDirName = "objects"
