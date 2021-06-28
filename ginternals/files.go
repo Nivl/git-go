@@ -49,17 +49,17 @@ func RefFullName(shortName string) string {
 
 // RefsPath return the path to the directory that contains all the refs
 func RefsPath(cfg *config.Config) string {
-	return filepath.Join(cfg.GitCommonDirPath, "refs")
+	return filepath.Join(cfg.CommonDirPath, "refs")
 }
 
 // RefPath return the path of a reference
 func RefPath(cfg *config.Config, name string) string {
-	return filepath.Join(cfg.GitCommonDirPath, "refs")
+	return filepath.Join(cfg.CommonDirPath, "refs")
 }
 
 // PackedRefsPath return the local path of a the packed-refs file
 func PackedRefsPath(cfg *config.Config) string {
-	return filepath.Join(cfg.GitCommonDirPath, "packed-refs")
+	return filepath.Join(cfg.CommonDirPath, "packed-refs")
 }
 
 // TagsPath returns the path to the directory that contains the tags
