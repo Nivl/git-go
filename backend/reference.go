@@ -11,7 +11,6 @@ import (
 
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/internal/errutil"
-	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/spf13/afero"
 )
 
@@ -42,9 +41,10 @@ func (b *Backend) loadRefs() (err error) {
 	// and may or may not contain outdated information
 	// (outdated information will be overwritten once we parse the
 	// on-disk references).
-	f, err := b.fs.Open(filepath.Join(b.Path(), gitpath.PackedRefsPath))
+	packedRefPath := ginternals.PackedRefsPath(b.config)
+	f, err := b.fs.Open(packedRefPath)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("could not open %s: %w", gitpath.PackedRefsPath, err)
+		return fmt.Errorf("could not open %s: %w", packedRefPath, err)
 	}
 	// if the file doesn't exist then there's nothing to do
 	if err == nil {
@@ -62,20 +62,20 @@ func (b *Backend) loadRefs() (err error) {
 			// "oid ref-name"
 			parts := strings.Split(line, " ")
 			if len(parts) != 2 {
-				return fmt.Errorf("could not parse %s, unexpected data line %d: %w", gitpath.PackedRefsPath, i, ginternals.ErrPackedRefInvalid)
+				return fmt.Errorf("could not parse %s, unexpected data line %d: %w", packedRefPath, i, ginternals.ErrPackedRefInvalid)
 			}
 			// the name of the ref is its UNIX path
 			b.refs.Store(filepath.ToSlash(parts[1]), []byte(parts[0]))
 		}
 
 		if sc.Err() != nil {
-			return fmt.Errorf("could not parse %s: %w", gitpath.PackedRefsPath, err)
+			return fmt.Errorf("could not parse %s: %w", packedRefPath, err)
 		}
 	}
 
 	// Now we browse all the references on disk
 	// TODO(melvin): Do we really want to stop if we cannot parse one file?
-	refsPath := filepath.Join(b.Path(), gitpath.RefsPath)
+	refsPath := ginternals.RefsPath(b.config)
 	err = afero.Walk(b.fs, refsPath, func(path string, info fs.FileInfo, e error) error {
 		// if refsPath doesn't exists this will return nil and skip the error
 		// this is useful in case where the repo is empty and has no

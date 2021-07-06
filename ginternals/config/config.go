@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/Nivl/git-go/env"
-	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/pathutil"
 	"github.com/spf13/afero"
 )
@@ -18,6 +17,14 @@ import (
 // ErrNoWorkTreeAlone is thrown when a work tree path is given without
 // a git path
 var ErrNoWorkTreeAlone = errors.New("cannot specify a work tree without also specifying a git dir")
+
+const (
+	// DefaultDotGitDirName corresponds to the default name of the git
+	// directory
+	DefaultDotGitDirName  = ".git"
+	defaultConfigDirName  = "config"
+	defaultObjectsDirName = "objects"
+)
 
 // Config represents the config of a repository, whether it's from
 // the various config files or from the options that can be set using
@@ -40,6 +47,12 @@ type Config struct {
 	// Defaults to finding a ".git" folder in the current directory,
 	// going up in the tree until reaching /
 	GitDirPath string
+	// CommonDirPath represents the root path of the non-worktree-related
+	// files that are in the .git directory.
+	// https://git-scm.com/docs/git#Documentation/git.txt-codeGITCOMMONDIRcode
+	// Maps to $GIT_COMMON_DIR
+	// Defaults to $GitDirPath
+	CommonDirPath string
 	// WorkTreePath represents the path to the .git directory
 	// Maps to $GIT_WORK_TREE
 	// Defaults to $(GitDirPath)/.. or $(current-dir) depending on if
@@ -47,7 +60,7 @@ type Config struct {
 	WorkTreePath string
 	// ObjectDirPath represents the path to the .git/objects directory
 	// Maps to $GIT_OBJECT_DIRECTORY
-	// Defaults to $(GitDirPath)/.git/objects
+	// Defaults to $(CommonDirPath)/.git/objects
 	ObjectDirPath string
 	// LocalConfig represents the config file to load
 	// Maps to $GIT_CONFIG
@@ -109,6 +122,7 @@ func LoadConfig(e *env.Env, p LoadConfigOptions) (*Config, error) {
 
 	opts := &Config{
 		GitDirPath:       e.Get("GIT_DIR"),
+		CommonDirPath:    e.Get("GIT_COMMON_DIR"),
 		WorkTreePath:     e.Get("GIT_WORK_TREE"),
 		ObjectDirPath:    e.Get("GIT_OBJECT_DIRECTORY"),
 		SkipSystemConfig: SkipSystemConfig,
@@ -128,7 +142,7 @@ func LoadConfigSkipEnv(opts LoadConfigOptions) (*Config, error) {
 	return LoadConfig(env.NewFromKVList([]string{}), opts)
 }
 
-func setConfig(e *env.Env, p *Config, opts LoadConfigOptions) (err error) {
+func setConfig(e *env.Env, p *Config, opts LoadConfigOptions) error {
 	if opts.FS == nil {
 		opts.FS = afero.NewOsFs()
 	}
@@ -172,22 +186,47 @@ func setConfig(e *env.Env, p *Config, opts LoadConfigOptions) (err error) {
 		}
 	case "":
 		if !opts.SkipGitDirLookUp {
-			guessedWorkingTree, err = pathutil.WorkingTreeFromPath(opts.WorkingDirectory)
+			guessedWorkingTree, err = pathutil.WorkingTreeFromPath(opts.WorkingDirectory, DefaultDotGitDirName)
 			if err != nil {
 				return fmt.Errorf("could not find working tree: %w", err)
 			}
 		}
-		p.GitDirPath = filepath.Join(guessedWorkingTree, gitpath.DotGitPath)
+		p.GitDirPath = filepath.Join(guessedWorkingTree, DefaultDotGitDirName)
+	}
+
+	// GitCommonDir riles:
+	// - p.CommonDirPath contains either nothing or $GIT_COMMON_DIR
+	// - If nothing set, will defaults to the path stored in p.GitDirPath/commondir
+	// - If still nothing set, will defaults to p.GitDirPath
+	// - If relative, the path will be appended to p.GitDirPath
+	if p.CommonDirPath == "" {
+		commonDirFilePath := filepath.Join(p.GitDirPath, "commondir")
+		// TODO(melvin): for security reasons we may just want to
+		// read an arbitrary amount of bytes
+		rawCommonDirPath, err := os.ReadFile(commonDirFilePath)
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("could not check the content of %s: %w", commonDirFilePath, err)
+		}
+		commonDirPath := string(rawCommonDirPath)
+		if commonDirPath != "" {
+			p.CommonDirPath = commonDirPath
+		}
+	}
+	if p.CommonDirPath == "" {
+		p.CommonDirPath = p.GitDirPath
+	}
+	if !filepath.IsAbs(p.CommonDirPath) {
+		p.CommonDirPath = filepath.Join(p.GitDirPath, p.CommonDirPath)
 	}
 
 	// LocalConfig rules:
 	// - p.LocalConfig contains either nothing or a path to the .git/config
-	// - Fallback to $(GitDirPath)/config
+	// - Fallback to $(CommonDirPath)/config
 	//
 	// If relative, the path will be appended to the current working
 	// directory.
 	if p.LocalConfig == "" {
-		p.LocalConfig = filepath.Join(p.GitDirPath, gitpath.ConfigPath)
+		p.LocalConfig = filepath.Join(p.CommonDirPath, defaultConfigDirName)
 	}
 	if !filepath.IsAbs(p.LocalConfig) {
 		p.LocalConfig = filepath.Join(opts.WorkingDirectory, p.LocalConfig)
@@ -195,12 +234,12 @@ func setConfig(e *env.Env, p *Config, opts LoadConfigOptions) (err error) {
 
 	// ObjectDirPath rules:
 	// - p.ObjectDirPath contains either nothing or a path to the .git/objects
-	// - Fallback to $(GitDirPath)/objects
+	// - Fallback to $(CommonDirPath)/objects
 	//
 	// If relative, the path will be appended to the current working
 	// directory.
 	if p.ObjectDirPath == "" {
-		p.ObjectDirPath = filepath.Join(p.GitDirPath, gitpath.ObjectsPath)
+		p.ObjectDirPath = filepath.Join(p.CommonDirPath, defaultObjectsDirName)
 	}
 	if !filepath.IsAbs(p.ObjectDirPath) {
 		p.ObjectDirPath = filepath.Join(opts.WorkingDirectory, p.ObjectDirPath)

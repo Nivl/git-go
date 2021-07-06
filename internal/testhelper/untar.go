@@ -33,7 +33,7 @@ func UnTar(t *testing.T, repoName RepoName) (repoPath string, cleanup func()) {
 
 // TestdataPath returns the absolute path to the testdata directory
 func TestdataPath(t *testing.T) string {
-	root, err := pathutil.WorkingTree()
+	root, err := pathutil.WorkingTree(".git")
 	require.NoError(t, err)
 	return filepath.Join(root, "internal", "testdata")
 }

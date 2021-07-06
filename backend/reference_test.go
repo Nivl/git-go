@@ -7,9 +7,8 @@ import (
 	"testing"
 
 	"github.com/Nivl/git-go/ginternals"
-	"github.com/Nivl/git-go/ginternals/config"
-	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/testhelper"
+	"github.com/Nivl/git-go/internal/testhelper/confutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,13 +22,8 @@ func TestReference(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			WorkTreePath: repoPath,
-			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
-		})
-		require.NoError(t, err)
-
-		b, err := NewFS(opts)
+		cfg := confutil.NewCommonConfig(t, repoPath)
+		b, err := NewFS(cfg)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -46,13 +40,8 @@ func TestReference(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			WorkTreePath: repoPath,
-			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
-		})
-		require.NoError(t, err)
-
-		b, err := NewFS(opts)
+		cfg := confutil.NewCommonConfig(t, repoPath)
+		b, err := NewFS(cfg)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -74,24 +63,19 @@ func TestReference(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			WorkTreePath: repoPath,
-			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
-		})
-		require.NoError(t, err)
-
-		b, err := NewFS(opts)
+		cfg := confutil.NewCommonConfig(t, repoPath)
+		b, err := NewFS(cfg)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
-		ref, err := b.Reference(gitpath.LocalBranch(ginternals.Master))
+		ref, err := b.Reference(ginternals.LocalBranchFullName(ginternals.Master))
 		require.NoError(t, err)
 		require.NotNil(t, ref)
 
 		expectedTarget, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
 		require.NoError(t, err)
-		assert.Equal(t, gitpath.LocalBranch(ginternals.Master), ref.Name())
+		assert.Equal(t, ginternals.LocalBranchFullName(ginternals.Master), ref.Name())
 		assert.Empty(t, ref.SymbolicTarget())
 		assert.Equal(t, expectedTarget, ref.Target())
 	})
@@ -103,13 +87,8 @@ func TestParsePackedRefs(t *testing.T) {
 	createRepo := func(t *testing.T) (dir string, cleanup func()) {
 		dir, cleanup = testhelper.TempDir(t)
 
-		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			GitDirPath: dir,
-			IsBare:     true,
-		})
-		require.NoError(t, err)
-
-		b, err := NewFS(opts)
+		cfg := confutil.NewCommonConfig(t, dir)
+		b, err := NewFS(cfg)
 		require.NoError(t, err)
 
 		defer require.NoError(t, b.Close())
@@ -123,13 +102,8 @@ func TestParsePackedRefs(t *testing.T) {
 		dir, cleanup := createRepo(t)
 		t.Cleanup(cleanup)
 
-		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			GitDirPath: dir,
-			IsBare:     true,
-		})
-		require.NoError(t, err)
-
-		b, err := NewFS(opts)
+		cfg := confutil.NewCommonConfig(t, dir)
+		b, err := NewFS(cfg)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -149,17 +123,12 @@ func TestParsePackedRefs(t *testing.T) {
 		dir, cleanup := createRepo(t)
 		t.Cleanup(cleanup)
 
-		fPath := filepath.Join(dir, gitpath.PackedRefsPath)
+		fPath := filepath.Join(dir, ".git", "packed-refs")
 		err := os.WriteFile(fPath, []byte("not valid data"), 0o644)
 		require.NoError(t, err)
 
-		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			GitDirPath: dir,
-			IsBare:     true,
-		})
-		require.NoError(t, err)
-
-		_, err = NewFS(opts)
+		cfg := confutil.NewCommonConfig(t, dir)
+		_, err = NewFS(cfg)
 		require.Error(t, err)
 		assert.True(t, errors.Is(err, ginternals.ErrPackedRefInvalid), "unexpected error received")
 	})
@@ -170,17 +139,12 @@ func TestParsePackedRefs(t *testing.T) {
 		dir, cleanup := createRepo(t)
 		t.Cleanup(cleanup)
 
-		fPath := filepath.Join(dir, gitpath.PackedRefsPath)
+		fPath := filepath.Join(dir, ".git", "packed-refs")
 		err := os.WriteFile(fPath, []byte("^de111c003b5661db802f17ac69419dcb9f4f3137\n# this is a comment"), 0o644)
 		require.NoError(t, err)
 
-		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			GitDirPath: dir,
-			IsBare:     true,
-		})
-		require.NoError(t, err)
-
-		_, err = NewFS(opts)
+		cfg := confutil.NewCommonConfig(t, dir)
+		_, err = NewFS(cfg)
 		require.NoError(t, err)
 	})
 
@@ -190,13 +154,8 @@ func TestParsePackedRefs(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			WorkTreePath: repoPath,
-			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
-		})
-		require.NoError(t, err)
-
-		b, err := NewFS(opts)
+		cfg := confutil.NewCommonConfig(t, repoPath)
+		b, err := NewFS(cfg)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -242,13 +201,8 @@ func TestWriteReference(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			WorkTreePath: dir,
-			GitDirPath:   filepath.Join(dir, gitpath.DotGitPath),
-		})
-		require.NoError(t, err)
-
-		b, err := NewFS(opts)
+		cfg := confutil.NewCommonConfig(t, dir)
+		b, err := NewFS(cfg)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -270,13 +224,8 @@ func TestWriteReference(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			WorkTreePath: dir,
-			GitDirPath:   filepath.Join(dir, gitpath.DotGitPath),
-		})
-		require.NoError(t, err)
-
-		b, err := NewFS(opts)
+		cfg := confutil.NewCommonConfig(t, dir)
+		b, err := NewFS(cfg)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -300,13 +249,8 @@ func TestWriteReference(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			WorkTreePath: dir,
-			GitDirPath:   filepath.Join(dir, gitpath.DotGitPath),
-		})
-		require.NoError(t, err)
-
-		b, err := NewFS(opts)
+		cfg := confutil.NewCommonConfig(t, dir)
+		b, err := NewFS(cfg)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -325,13 +269,8 @@ func TestWriteReference(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			WorkTreePath: repoPath,
-			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
-		})
-		require.NoError(t, err)
-
-		b, err := NewFS(opts)
+		cfg := confutil.NewCommonConfig(t, repoPath)
+		b, err := NewFS(cfg)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -357,13 +296,8 @@ func TestWriteReference(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			WorkTreePath: repoPath,
-			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
-		})
-		require.NoError(t, err)
-
-		b, err := NewFS(opts)
+		cfg := confutil.NewCommonConfig(t, repoPath)
+		b, err := NewFS(cfg)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -395,13 +329,8 @@ func TestWriteReferenceSafe(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			WorkTreePath: dir,
-			GitDirPath:   filepath.Join(dir, gitpath.DotGitPath),
-		})
-		require.NoError(t, err)
-
-		b, err := NewFS(opts)
+		cfg := confutil.NewCommonConfig(t, dir)
+		b, err := NewFS(cfg)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -424,13 +353,8 @@ func TestWriteReferenceSafe(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			WorkTreePath: dir,
-			GitDirPath:   filepath.Join(dir, gitpath.DotGitPath),
-		})
-		require.NoError(t, err)
-
-		b, err := NewFS(opts)
+		cfg := confutil.NewCommonConfig(t, dir)
+		b, err := NewFS(cfg)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -455,13 +379,8 @@ func TestWriteReferenceSafe(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			WorkTreePath: dir,
-			GitDirPath:   filepath.Join(dir, gitpath.DotGitPath),
-		})
-		require.NoError(t, err)
-
-		b, err := NewFS(opts)
+		cfg := confutil.NewCommonConfig(t, dir)
+		b, err := NewFS(cfg)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -480,13 +399,8 @@ func TestWriteReferenceSafe(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			WorkTreePath: repoPath,
-			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
-		})
-		require.NoError(t, err)
-
-		b, err := NewFS(opts)
+		cfg := confutil.NewCommonConfig(t, repoPath)
+		b, err := NewFS(cfg)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -514,13 +428,8 @@ func TestWriteReferenceSafe(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			WorkTreePath: repoPath,
-			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
-		})
-		require.NoError(t, err)
-
-		b, err := NewFS(opts)
+		cfg := confutil.NewCommonConfig(t, repoPath)
+		b, err := NewFS(cfg)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -550,13 +459,8 @@ func TestWalkReferences(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			WorkTreePath: repoPath,
-			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
-		})
-		require.NoError(t, err)
-
-		b, err := NewFS(opts)
+		cfg := confutil.NewCommonConfig(t, repoPath)
+		b, err := NewFS(cfg)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -577,13 +481,8 @@ func TestWalkReferences(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			WorkTreePath: repoPath,
-			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
-		})
-		require.NoError(t, err)
-
-		b, err := NewFS(opts)
+		cfg := confutil.NewCommonConfig(t, repoPath)
+		b, err := NewFS(cfg)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -607,13 +506,8 @@ func TestWalkReferences(t *testing.T) {
 		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
 		t.Cleanup(cleanup)
 
-		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			WorkTreePath: repoPath,
-			GitDirPath:   filepath.Join(repoPath, gitpath.DotGitPath),
-		})
-		require.NoError(t, err)
-
-		b, err := NewFS(opts)
+		cfg := confutil.NewCommonConfig(t, repoPath)
+		b, err := NewFS(cfg)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
