@@ -1,7 +1,6 @@
 package ginternals
 
 import (
-	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -28,7 +27,7 @@ func LocalTagFullName(shortName string) string {
 // LocalTagShortName returns the short name of a tag
 // ex. for refs/tags/my-tag returns my-tag
 func LocalTagShortName(fullName string) string {
-	return strings.TrimPrefix(fullName, refsTagsRelPath+string(os.PathSeparator))
+	return strings.TrimPrefix(fullName, refsTagsRelPath+"/")
 }
 
 // LocalBranchFullName returns the full name of branch
@@ -40,7 +39,7 @@ func LocalBranchFullName(shortName string) string {
 // LocalBranchShortName returns the short name of a branch
 // ex. for `refs/heads/main` returns `main`
 func LocalBranchShortName(fullName string) string {
-	return strings.TrimPrefix(fullName, refsHeadsRelPath+string(os.PathSeparator))
+	return strings.TrimPrefix(fullName, refsHeadsRelPath+"/")
 }
 
 // RefFullName returns the UNIX path of a ref
