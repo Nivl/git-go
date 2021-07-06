@@ -39,7 +39,7 @@ jobs:
       - name: Test
         run: go test -race -timeout 3m -coverprofile coverage.txt ./...
 
-      - uses: codecov/codecov-action@v1.5.0
+      - uses: codecov/codecov-action@v1.5.2
         with:
           fail_ci_if_error: true
           verbose: true
