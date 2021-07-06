@@ -4,12 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/object"
-	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -283,7 +281,7 @@ func TestTreeBuilderWrite(t *testing.T) {
 		require.NoError(t, err)
 		assert.Len(t, tb.entries, 2)
 
-		p := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPath, tree.ID().String()[0:2], tree.ID().String()[2:])
+		p := ginternals.LooseObjectPath(r.Config, tree.ID().String())
 		_, err = os.Stat(p)
 		require.NoError(t, err)
 	})

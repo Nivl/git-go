@@ -10,7 +10,6 @@ import (
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/config"
 	"github.com/Nivl/git-go/ginternals/object"
-	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/spf13/afero"
 )
 
@@ -30,7 +29,7 @@ var (
 // building a history over time.
 // https://blog.axosoft.com/learning-git-repository/
 type Repository struct {
-	params   *config.Config
+	Config   *config.Config
 	workTree afero.Fs
 	dotGit   *backend.Backend
 
@@ -76,7 +75,7 @@ func InitRepository(workTreePath string) (*Repository, error) {
 // - The git dir is in the working tree under .git
 func InitRepositoryWithOptions(rootPath string, opts InitOptions) (r *Repository, err error) {
 	WorkTreePath := rootPath
-	GitDirPath := filepath.Join(rootPath, gitpath.DotGitPath)
+	GitDirPath := filepath.Join(rootPath, config.DefaultDotGitDirName)
 	if opts.IsBare {
 		WorkTreePath = ""
 		GitDirPath = rootPath
@@ -99,15 +98,15 @@ func InitRepositoryWithOptions(rootPath string, opts InitOptions) (r *Repository
 // https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain#ch10-git-internals
 //
 // This assumes methods makes no assumptions
-func InitRepositoryWithParams(params *config.Config, opts InitOptions) (r *Repository, err error) {
+func InitRepositoryWithParams(cfg *config.Config, opts InitOptions) (r *Repository, err error) {
 	r = &Repository{
-		params: params,
+		Config: cfg,
 	}
 
 	// if the repo is not bare, then we need to make sure to create
 	// the working tree
 	if !opts.IsBare {
-		info, err := os.Stat(params.WorkTreePath)
+		info, err := os.Stat(cfg.WorkTreePath)
 		switch err { //nolint:errorlint // we only want nil or not nil
 		case nil:
 			if !info.IsDir() {
@@ -115,11 +114,11 @@ func InitRepositoryWithParams(params *config.Config, opts InitOptions) (r *Repos
 			}
 		default:
 			if !errors.Is(err, os.ErrNotExist) {
-				return nil, fmt.Errorf("could not check %s: %w", params.WorkTreePath, err)
+				return nil, fmt.Errorf("could not check %s: %w", cfg.WorkTreePath, err)
 			}
-			err = os.MkdirAll(params.WorkTreePath, 0o755)
+			err = os.MkdirAll(cfg.WorkTreePath, 0o755)
 			if err != nil {
-				return nil, fmt.Errorf("could not create %s: %w", params.WorkTreePath, err)
+				return nil, fmt.Errorf("could not create %s: %w", cfg.WorkTreePath, err)
 			}
 		}
 
@@ -130,7 +129,7 @@ func InitRepositoryWithParams(params *config.Config, opts InitOptions) (r *Repos
 	}
 
 	if opts.GitBackend == nil {
-		r.dotGit, err = backend.NewFS(params)
+		r.dotGit, err = backend.NewFS(cfg)
 		if err != nil {
 			return nil, fmt.Errorf("could not create backend: %w", err)
 		}
@@ -191,7 +190,7 @@ func OpenRepository(workTreePath string) (*Repository, error) {
 // - The git dir is in the working tree under .git
 func OpenRepositoryWithOptions(rootPath string, opts OpenOptions) (r *Repository, err error) {
 	WorkTreePath := rootPath
-	GitDirPath := filepath.Join(rootPath, gitpath.DotGitPath)
+	GitDirPath := filepath.Join(rootPath, config.DefaultDotGitDirName)
 	if opts.IsBare {
 		WorkTreePath = ""
 		GitDirPath = rootPath
@@ -212,9 +211,9 @@ func OpenRepositoryWithOptions(rootPath string, opts OpenOptions) (r *Repository
 // its config file, and returns a Repository instance
 //
 // This method makes no assumptions
-func OpenRepositoryWithParams(params *config.Config, opts OpenOptions) (r *Repository, err error) {
+func OpenRepositoryWithParams(cfg *config.Config, opts OpenOptions) (r *Repository, err error) {
 	r = &Repository{
-		params: params,
+		Config: cfg,
 	}
 
 	if !opts.IsBare {
@@ -225,7 +224,7 @@ func OpenRepositoryWithParams(params *config.Config, opts OpenOptions) (r *Repos
 	}
 
 	if opts.GitBackend == nil {
-		r.dotGit, err = backend.NewFS(params)
+		r.dotGit, err = backend.NewFS(cfg)
 		if err != nil {
 			return nil, fmt.Errorf("could not create backend: %w", err)
 		}
@@ -285,7 +284,7 @@ func (r *Repository) GetTree(oid ginternals.Oid) (*object.Tree, error) {
 // not a tag with the same name (note that it's technically possible for
 // a tag to target another tag)
 func (r *Repository) GetTag(name string) (*ginternals.Reference, error) {
-	ref, err := r.dotGit.Reference(gitpath.LocalTag(name))
+	ref, err := r.dotGit.Reference(ginternals.LocalTagFullName(name))
 	if err != nil {
 		return nil, ErrTagNotFound
 	}
@@ -357,7 +356,7 @@ func (r *Repository) NewTag(p *object.TagParams) (*object.Tag, error) {
 	}
 
 	// We first make sure the tag doesn't already exist
-	refname := gitpath.LocalTag(p.Name)
+	refname := ginternals.LocalTagFullName(p.Name)
 	_, err = r.dotGit.Reference(refname)
 	if err == nil {
 		return nil, ErrTagExists
@@ -392,7 +391,7 @@ func (r *Repository) NewLightweightTag(tag string, targetID ginternals.Oid) (*gi
 		return nil, fmt.Errorf("target : %w", object.ErrObjectInvalid)
 	}
 
-	refname := gitpath.LocalTag(tag)
+	refname := ginternals.LocalTagFullName(tag)
 	_, err = r.dotGit.Reference(refname)
 	if err == nil {
 		return nil, ErrTagExists

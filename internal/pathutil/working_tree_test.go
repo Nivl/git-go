@@ -27,7 +27,7 @@ func TestWorkingTreeFromPath(t *testing.T) {
 		err = os.MkdirAll(finalPath, 0o755)
 		require.NoError(t, err)
 
-		p, err := pathutil.WorkingTreeFromPath(finalPath)
+		p, err := pathutil.WorkingTreeFromPath(finalPath, ".git")
 		require.NoError(t, err)
 		assert.Equal(t, path, p)
 	})
@@ -42,7 +42,7 @@ func TestWorkingTreeFromPath(t *testing.T) {
 		err := os.MkdirAll(finalPath, 0o755)
 		require.NoError(t, err)
 
-		_, err = pathutil.WorkingTreeFromPath(finalPath)
+		_, err = pathutil.WorkingTreeFromPath(finalPath, ".git")
 		require.Error(t, err)
 		assert.ErrorIs(t, err, pathutil.ErrNoRepo)
 	})
@@ -54,7 +54,7 @@ func TestWorkingTree(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := pathutil.WorkingTree()
+		_, err := pathutil.WorkingTree(".git")
 		require.NoError(t, err)
 	})
 }

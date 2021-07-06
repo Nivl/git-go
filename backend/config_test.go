@@ -9,9 +9,10 @@ import (
 
 	"github.com/Nivl/git-go/backend"
 	"github.com/Nivl/git-go/env"
+	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/config"
-	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/testhelper"
+	"github.com/Nivl/git-go/internal/testhelper/confutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,12 +26,8 @@ func TestInit(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			WorkTreePath: dir,
-			GitDirPath:   filepath.Join(dir, gitpath.DotGitPath),
-		})
-		require.NoError(t, err)
-		b, err := backend.NewFS(opts)
+		cfg := confutil.NewCommonConfig(t, dir)
+		b, err := backend.NewFS(cfg)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -45,19 +42,19 @@ func TestInit(t *testing.T) {
 		repo, cleanupRepo := testhelper.TempDir(t)
 		t.Cleanup(cleanupRepo)
 
-		gitDirPath := filepath.Join(repo, gitpath.DotGitPath)
+		gitDirPath := filepath.Join(repo, ".git")
 		objectDirPath := filepath.Join(repo, "git-objects")
 
 		e := env.NewFromKVList([]string{
 			"GIT_DIR=" + gitDirPath,
 			"GIT_OBJECT_DIRECTORY=" + objectDirPath,
 		})
-		p, err := config.LoadConfig(e, config.LoadConfigOptions{
+		cfg, err := config.LoadConfig(e, config.LoadConfigOptions{
 			IsBare: true,
 		})
 		require.NoError(t, err)
 
-		b, err := backend.NewFS(p)
+		b, err := backend.NewFS(cfg)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -65,19 +62,16 @@ func TestInit(t *testing.T) {
 
 		require.NoError(t, b.Init())
 
-		_, err = os.Stat(gitDirPath)
-		assert.NoError(t, err)
-
 		// Check the directories that should exists
 		_, err = os.Stat(gitDirPath)
 		assert.NoError(t, err)
 		_, err = os.Stat(objectDirPath)
 		assert.NoError(t, err)
-		_, err = os.Stat(filepath.Join(objectDirPath, gitpath.ObjectsInfoPath))
+		_, err = os.Stat(ginternals.ObjectsInfoPath(cfg))
 		assert.NoError(t, err)
 
 		// Check the directories that should NOT exists
-		_, err = os.Stat(filepath.Join(gitDirPath, gitpath.ObjectsPath))
+		_, err = os.Stat(filepath.Join(gitDirPath, "objects"))
 		assert.Error(t, err)
 	})
 
@@ -87,13 +81,8 @@ func TestInit(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			GitDirPath: dir,
-			IsBare:     true,
-		})
-		require.NoError(t, err)
-
-		b, err := backend.NewFS(opts)
+		cfg := confutil.NewCommonConfig(t, dir)
+		b, err := backend.NewFS(cfg)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -109,20 +98,15 @@ func TestInit(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		// create a directory
-		err := os.MkdirAll(filepath.Join(dir, gitpath.ObjectsPath), 0o750)
+		err := os.MkdirAll(filepath.Join(dir, "objects"), 0o750)
 		require.NoError(t, err)
 
 		// create a file
-		err = os.WriteFile(filepath.Join(dir, gitpath.DescriptionPath), []byte{}, 0o644)
+		err = os.WriteFile(filepath.Join(dir, "description"), []byte{}, 0o644)
 		require.NoError(t, err)
 
-		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			GitDirPath: dir,
-			IsBare:     true,
-		})
-		require.NoError(t, err)
-
-		b, err := backend.NewFS(opts)
+		cfg := confutil.NewCommonConfig(t, dir)
+		b, err := backend.NewFS(cfg)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -143,16 +127,11 @@ func TestInit(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		// create a directory
-		err := os.MkdirAll(filepath.Join(dir, gitpath.ObjectsPath), 0o550)
+		err := os.MkdirAll(filepath.Join(dir, "objects"), 0o550)
 		require.NoError(t, err)
 
-		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			GitDirPath: dir,
-			IsBare:     true,
-		})
-		require.NoError(t, err)
-
-		b, err := backend.NewFS(opts)
+		cfg := confutil.NewCommonConfigBare(t, dir)
+		b, err := backend.NewFS(cfg)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
@@ -171,16 +150,11 @@ func TestInit(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		// create a file
-		err := os.WriteFile(filepath.Join(dir, gitpath.DescriptionPath), []byte{}, 0o444)
+		err := os.WriteFile(filepath.Join(dir, "description"), []byte{}, 0o444)
 		require.NoError(t, err)
 
-		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			GitDirPath: dir,
-			IsBare:     true,
-		})
-		require.NoError(t, err)
-
-		b, err := backend.NewFS(opts)
+		cfg := confutil.NewCommonConfigBare(t, dir)
+		b, err := backend.NewFS(cfg)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())

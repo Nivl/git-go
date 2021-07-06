@@ -4,13 +4,12 @@ import (
 	"bufio"
 	"errors"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/packfile"
-	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/testhelper"
+	"github.com/Nivl/git-go/internal/testhelper/confutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,7 +24,9 @@ func TestNewIndex(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		indexFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.idx"
-		indexFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPath, gitpath.ObjectsPackPath, indexFileName)
+		cfg := confutil.NewCommonConfig(t, repoPath)
+		indexFilePath := ginternals.PackfilePath(cfg, indexFileName)
+
 		f, err := os.Open(indexFilePath)
 		require.NoError(t, err)
 		t.Cleanup(func() {
@@ -44,7 +45,9 @@ func TestNewIndex(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		indexFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.pack"
-		indexFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPath, gitpath.ObjectsPackPath, indexFileName)
+		cfg := confutil.NewCommonConfig(t, repoPath)
+		indexFilePath := ginternals.PackfilePath(cfg, indexFileName)
+
 		f, err := os.Open(indexFilePath)
 		require.NoError(t, err)
 		t.Cleanup(func() {
@@ -68,7 +71,9 @@ func TestGetObjectOffset(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		indexFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.idx"
-		indexFilePath := filepath.Join(repoPath, gitpath.DotGitPath, gitpath.ObjectsPath, gitpath.ObjectsPackPath, indexFileName)
+		cfg := confutil.NewCommonConfig(t, repoPath)
+		indexFilePath := ginternals.PackfilePath(cfg, indexFileName)
+
 		f, err := os.Open(indexFilePath)
 		require.NoError(t, err)
 		t.Cleanup(func() {

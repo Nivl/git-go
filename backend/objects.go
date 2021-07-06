@@ -14,7 +14,6 @@ import (
 	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/Nivl/git-go/ginternals/packfile"
 	"github.com/Nivl/git-go/internal/errutil"
-	"github.com/Nivl/git-go/internal/gitpath"
 	"github.com/Nivl/git-go/internal/readutil"
 	"github.com/spf13/afero"
 )
@@ -58,14 +57,6 @@ func (b *Backend) objectUnsafe(oid ginternals.Oid) (*object.Object, error) {
 	return o, nil
 }
 
-// looseObjectPath returns the absolute path of an object
-// .git/object/first_2_chars_of_sha/remaining_chars_of_sha
-// Ex. path of fcfe68a0e44e04bd7fd564fc0b75f1ae457e18b3 is:
-// .git/objects/fc/fe68a0e44e04bd7fd564fc0b75f1ae457e18b3
-func (b *Backend) looseObjectPath(sha string) string {
-	return filepath.Join(b.Path(), gitpath.ObjectsPath, sha[:2], sha[2:])
-}
-
 // looseObject returns the object matching the given OID
 // The format of an object is an ascii encoded type, an ascii encoded
 // space, then an ascii encoded length of the object, then a null
@@ -77,7 +68,7 @@ func (b *Backend) looseObject(oid ginternals.Oid) (o *object.Object, err error) 
 	}
 
 	strOid := oid.String()
-	p := b.looseObjectPath(strOid)
+	p := ginternals.LooseObjectPath(b.config, strOid)
 	f, err := b.fs.Open(p)
 	if err != nil {
 		return nil, fmt.Errorf("could not get object %s at path %s: %w", strOid, p, err)
@@ -140,7 +131,7 @@ func (b *Backend) looseObject(oid ginternals.Oid) (o *object.Object, err error) 
 
 // loadPacks loads the packfiles in memory
 func (b *Backend) loadPacks() error {
-	p := filepath.Join(b.ObjectsPath(), gitpath.ObjectsPackPath)
+	p := ginternals.ObjectsPacksPath(b.config)
 	return afero.Walk(b.fs, p, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			//nolint:nilerr // in case of error we just skip it and move on.
@@ -237,7 +228,7 @@ func (b *Backend) WriteObject(o *object.Object) (ginternals.Oid, error) {
 
 	// Persist the data on disk
 	sha := o.ID().String()
-	p := b.looseObjectPath(sha)
+	p := ginternals.LooseObjectPath(b.config, sha)
 
 	// We need to make sure the dest dir exists
 	dest := filepath.Dir(p)
@@ -271,14 +262,15 @@ func (b *Backend) WalkPackedObjectIDs(f packfile.OidWalkFunc) error {
 
 // loadLooseObject loads the loose object in memory
 func (b *Backend) loadLooseObject() error {
-	return afero.Walk(b.fs, b.ObjectsPath(), func(path string, info fs.FileInfo, err error) error {
+	objectsPath := ginternals.ObjectsPath(b.config)
+	return afero.Walk(b.fs, objectsPath, func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			//nolint:nilerr // in case of error we just skip it and move on.
 			// this will happen if the repo is empty and the ./objects
 			// folder doesn't exists
 			return nil
 		}
-		if path == b.ObjectsPath() {
+		if path == objectsPath {
 			return nil
 		}
 

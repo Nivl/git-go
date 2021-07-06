@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/Nivl/git-go/internal/errutil"
-	"github.com/Nivl/git-go/internal/gitpath"
 
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/object"
@@ -86,11 +85,11 @@ func catFileCmd(out io.Writer, cfg *flags, p catFileParams) (err error) {
 			// catches stuff like HEADS or refs/heads/master
 			p.objectName,
 			// catches heads/master
-			gitpath.Ref(p.objectName),
+			ginternals.RefFullName(p.objectName),
 			// catches local branch names
-			gitpath.LocalBranch(p.objectName),
+			ginternals.LocalBranchFullName(p.objectName),
 			// catches local tag names
-			gitpath.LocalTag(p.objectName),
+			ginternals.LocalTagFullName(p.objectName),
 		}
 
 		for _, refName := range toTry {
