@@ -15,11 +15,23 @@ import (
 func TestLoadConfig(t *testing.T) {
 	t.Parallel()
 
+	dir, cleanup := testhelper.TempDir(t)
+	t.Cleanup(cleanup)
+
 	// To be able to build an absolute path on Windows we need to know
 	// the Volume name
-	dir, err := os.Getwd()
+	// dir, err := os.Getwd()
+	// require.NoError(t, err)
+	// root := filepath.VolumeName(dir) + string(os.PathSeparator)
+
+	// the common dir can be set by creating a file with a path in it
+	// we create a `with_commondir` directory to be able to run test in this
+	// context
+	withCommonDir := filepath.Join(dir, "with_commondir")
+	err := os.Mkdir(withCommonDir, 0o755)
 	require.NoError(t, err)
-	root := filepath.VolumeName(dir) + string(os.PathSeparator)
+	err = os.WriteFile(filepath.Join(withCommonDir, "commondir"), []byte(filepath.Join(dir, "common")), 0o644)
+	require.NoError(t, err)
 
 	cwd, err := os.Getwd()
 	require.NoError(t, err)
@@ -70,20 +82,20 @@ func TestLoadConfig(t *testing.T) {
 			desc: "Env should be used when available",
 			cfg:  LoadConfigOptions{},
 			e: env.NewFromKVList([]string{
-				"GIT_WORK_TREE=" + filepath.Join(root, "wt"),
-				"GIT_DIR=" + filepath.Join(root, "git"),
-				"GIT_OBJECT_DIRECTORY=" + filepath.Join(root, "objects"),
-				"GIT_CONFIG=" + filepath.Join(root, "gitconfig"),
-				"PREFIX=" + filepath.Join(root, "sysconf"),
+				"GIT_WORK_TREE=" + filepath.Join(dir, "wt"),
+				"GIT_DIR=" + filepath.Join(dir, "git"),
+				"GIT_OBJECT_DIRECTORY=" + filepath.Join(dir, "objects"),
+				"GIT_CONFIG=" + filepath.Join(dir, "gitconfig"),
+				"PREFIX=" + filepath.Join(dir, "sysconf"),
 				"GIT_CONFIG_NOSYSTEM=1",
 			}),
 			expectedParams: &Config{
-				WorkTreePath:     filepath.Join(root, "wt"),
-				GitDirPath:       filepath.Join(root, "git"),
-				CommonDirPath:    filepath.Join(root, "git"),
-				LocalConfig:      filepath.Join(root, "gitconfig"),
-				ObjectDirPath:    filepath.Join(root, "objects"),
-				Prefix:           filepath.Join(root, "sysconf"),
+				WorkTreePath:     filepath.Join(dir, "wt"),
+				GitDirPath:       filepath.Join(dir, "git"),
+				CommonDirPath:    filepath.Join(dir, "git"),
+				LocalConfig:      filepath.Join(dir, "gitconfig"),
+				ObjectDirPath:    filepath.Join(dir, "objects"),
+				Prefix:           filepath.Join(dir, "sysconf"),
 				SkipSystemConfig: true,
 			},
 			expectedError: nil,
@@ -91,23 +103,23 @@ func TestLoadConfig(t *testing.T) {
 		{
 			desc: "options should override everything",
 			cfg: LoadConfigOptions{
-				WorkTreePath: filepath.Join(root, "custom", "wt"),
-				GitDirPath:   filepath.Join(root, "custom", "git"),
+				WorkTreePath: filepath.Join(dir, "custom", "wt"),
+				GitDirPath:   filepath.Join(dir, "custom", "git"),
 			},
 			e: env.NewFromKVList([]string{
-				"GIT_WORK_TREE=" + filepath.Join(root, "wt"),
-				"GIT_DIR=" + filepath.Join(root, "git"),
-				"GIT_OBJECT_DIRECTORY=" + filepath.Join(root, "objects"),
-				"GIT_CONFIG=" + filepath.Join(root, "gitconfig"),
-				"PREFIX=" + filepath.Join(root, "sysconf"),
+				"GIT_WORK_TREE=" + filepath.Join(dir, "wt"),
+				"GIT_DIR=" + filepath.Join(dir, "git"),
+				"GIT_OBJECT_DIRECTORY=" + filepath.Join(dir, "objects"),
+				"GIT_CONFIG=" + filepath.Join(dir, "gitconfig"),
+				"PREFIX=" + filepath.Join(dir, "sysconf"),
 			}),
 			expectedParams: &Config{
-				WorkTreePath:     filepath.Join(root, "custom", "wt"),
-				GitDirPath:       filepath.Join(root, "custom", "git"),
-				CommonDirPath:    filepath.Join(root, "custom", "git"),
-				LocalConfig:      filepath.Join(root, "gitconfig"),
-				ObjectDirPath:    filepath.Join(root, "objects"),
-				Prefix:           filepath.Join(root, "sysconf"),
+				WorkTreePath:     filepath.Join(dir, "custom", "wt"),
+				GitDirPath:       filepath.Join(dir, "custom", "git"),
+				CommonDirPath:    filepath.Join(dir, "custom", "git"),
+				LocalConfig:      filepath.Join(dir, "gitconfig"),
+				ObjectDirPath:    filepath.Join(dir, "objects"),
+				Prefix:           filepath.Join(dir, "sysconf"),
 				SkipSystemConfig: false,
 			},
 			expectedError: nil,
@@ -170,18 +182,56 @@ func TestLoadConfig(t *testing.T) {
 		{
 			desc: "Custom common dir",
 			cfg: LoadConfigOptions{
-				WorkTreePath: filepath.Join(root),
-				GitDirPath:   filepath.Join(root, DefaultDotGitDirName),
+				WorkTreePath: dir,
+				GitDirPath:   filepath.Join(dir, DefaultDotGitDirName),
 			},
 			e: env.NewFromKVList([]string{
-				"GIT_COMMON_DIR=" + filepath.Join(root, "common"),
+				"GIT_COMMON_DIR=" + filepath.Join(dir, "common"),
 			}),
 			expectedParams: &Config{
-				WorkTreePath:     filepath.Join(root),
-				GitDirPath:       filepath.Join(root, DefaultDotGitDirName),
-				CommonDirPath:    filepath.Join(root, "common"),
-				LocalConfig:      filepath.Join(root, "common", defaultConfigDirName),
-				ObjectDirPath:    filepath.Join(root, "common", defaultObjectsDirName),
+				WorkTreePath:     dir,
+				GitDirPath:       filepath.Join(dir, DefaultDotGitDirName),
+				CommonDirPath:    filepath.Join(dir, "common"),
+				LocalConfig:      filepath.Join(dir, "common", defaultConfigDirName),
+				ObjectDirPath:    filepath.Join(dir, "common", defaultObjectsDirName),
+				Prefix:           "",
+				SkipSystemConfig: false,
+			},
+			expectedError: nil,
+		},
+		{
+			desc: "common dir from file",
+			cfg: LoadConfigOptions{
+				WorkTreePath: dir,
+				GitDirPath:   filepath.Join(dir, "with_commondir"),
+			},
+			e: env.NewFromKVList([]string{}),
+			expectedParams: &Config{
+				WorkTreePath:     dir,
+				GitDirPath:       withCommonDir,
+				CommonDirPath:    filepath.Join(dir, "common"),
+				LocalConfig:      filepath.Join(dir, "common", defaultConfigDirName),
+				ObjectDirPath:    filepath.Join(dir, "common", defaultObjectsDirName),
+				Prefix:           "",
+				SkipSystemConfig: false,
+			},
+			expectedError: nil,
+		},
+		{
+			desc: "Custom relative common dir",
+			cfg: LoadConfigOptions{
+				WorkTreePath: dir,
+				GitDirPath:   filepath.Join(dir, DefaultDotGitDirName),
+			},
+			e: env.NewFromKVList([]string{
+				"GIT_COMMON_DIR=" + "common",
+			}),
+			expectedParams: &Config{
+				WorkTreePath:     dir,
+				GitDirPath:       filepath.Join(dir, DefaultDotGitDirName),
+				CommonDirPath:    filepath.Join(dir, DefaultDotGitDirName, "common"),
+				LocalConfig:      filepath.Join(dir, DefaultDotGitDirName, "common", defaultConfigDirName),
+				ObjectDirPath:    filepath.Join(dir, DefaultDotGitDirName, "common", defaultObjectsDirName),
 				Prefix:           "",
 				SkipSystemConfig: false,
 			},
