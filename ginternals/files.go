@@ -1,6 +1,7 @@
 package ginternals
 
 import (
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -27,7 +28,7 @@ func LocalTagFullName(shortName string) string {
 // LocalTagShortName returns the short name of a tag
 // ex. for refs/tags/my-tag returns my-tag
 func LocalTagShortName(fullName string) string {
-	return strings.TrimPrefix(fullName, refsTagsRelPath)
+	return strings.TrimPrefix(fullName, refsTagsRelPath+string(os.PathSeparator))
 }
 
 // LocalBranchFullName returns the full name of branch
@@ -39,7 +40,7 @@ func LocalBranchFullName(shortName string) string {
 // LocalBranchShortName returns the short name of a branch
 // ex. for `refs/heads/main` returns `main`
 func LocalBranchShortName(fullName string) string {
-	return strings.TrimPrefix(fullName, refsHeadsRelPath)
+	return strings.TrimPrefix(fullName, refsHeadsRelPath+string(os.PathSeparator))
 }
 
 // RefFullName returns the UNIX path of a ref
@@ -54,7 +55,7 @@ func RefsPath(cfg *config.Config) string {
 
 // RefPath return the path of a reference
 func RefPath(cfg *config.Config, name string) string {
-	return filepath.Join(cfg.CommonDirPath, "refs")
+	return filepath.Join(cfg.CommonDirPath, "refs", filepath.FromSlash(name))
 }
 
 // PackedRefsPath return the local path of a the packed-refs file
@@ -102,7 +103,7 @@ func PackfilePath(cfg *config.Config, name string) string {
 }
 
 // ConfigPath returns the path to the local config file
-func ConfigPath(cfg *config.Config, name string) string {
+func ConfigPath(cfg *config.Config) string {
 	return cfg.LocalConfig
 }
 
