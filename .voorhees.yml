@@ -4,7 +4,7 @@ default:
 rules:
   # No release since Jan 2020 but still has some activity on Master
   # mainteners are actively commenting on issues and PRs.
-  github.com/hashicorp/golang-lru: 18 months
+  github.com/hashicorp/golang-lru: 24 months
 
   # No release since Q3 2019 but still has some activity on Master.
   # Mainteners are NOT actively commenting on issues and PRs. Forks
@@ -21,3 +21,7 @@ rules:
   # Couple of PRs opened, a few issues as well, no activity from
   # maintainer. Nothing too worriying yet.
   gopkg.in/ini.v1: 12 months
+
+  # No release since January 2021, but still has some activity on Master
+  # mainteners are actively commenting on issues and PRs.
+  github.com/stretchr/testify: 12 months
