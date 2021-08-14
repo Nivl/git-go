@@ -95,7 +95,7 @@ linters-settings:
       - opinionated
 
     disabled-checks:
-      - sloppyReassign
-      - emptyFallthrough
-      - octalLiteral
-      - hugeParam # disabled because we pass option objects by copy
+      - sloppyReassign # conflicts with no shadow
+      - emptyFallthrough # we use fallthrough to force a case to go to default while being explicit
+      - octalLiteral # we use raw octal everywhere
+      - hugeParam # disabled because we pass Option objects by copy

@@ -213,6 +213,29 @@ func TestInit(t *testing.T) {
 		require.Error(t, err)
 		require.Equal(t, err, ErrInvalidBranchName)
 	})
+
+	t.Run("Bare repo", func(t *testing.T) {
+		t.Parallel()
+
+		// Setup
+		d, cleanup := testhelper.TempDir(t)
+		t.Cleanup(cleanup)
+
+		// Run logic
+		r, err := InitRepositoryWithOptions(d, InitOptions{
+			IsBare: true,
+		})
+		require.NoError(t, err, "failed creating a repo")
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
+		_, err = os.Stat(filepath.Join(d, config.DefaultDotGitDirName))
+		require.Error(t, err, "expected .git to not exists")
+		assert.True(t, errors.Is(err, os.ErrNotExist), "invalid error returned")
+
+		_, err = os.Stat(filepath.Join(d, ginternals.Head))
+		require.NoError(t, err, "expected the HEAD to be at the root of the repo")
+	})
 }
 
 func TestOpen(t *testing.T) {
