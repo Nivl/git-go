@@ -85,7 +85,7 @@ func TestInit(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		cfg := confutil.NewCommonConfig(t, dir)
+		cfg := confutil.NewCommonConfigBare(t, dir)
 		b, err := backend.NewFS(cfg)
 		require.NoError(t, err)
 		t.Cleanup(func() {
@@ -93,6 +93,13 @@ func TestInit(t *testing.T) {
 		})
 
 		require.NoError(t, b.Init(ginternals.Master))
+
+		_, err = os.Stat(filepath.Join(dir, config.DefaultDotGitDirName))
+		require.Error(t, err, "expected .git to not exists")
+		assert.True(t, errors.Is(err, os.ErrNotExist), "invalid error returned")
+
+		_, err = os.Stat(filepath.Join(dir, ginternals.Head))
+		require.NoError(t, err, "expected the HEAD to be at the root of the repo")
 	})
 
 	t.Run("repo with existing data should work", func(t *testing.T) {

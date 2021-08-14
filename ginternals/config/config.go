@@ -101,8 +101,8 @@ type LoadConfigOptions struct {
 	// Set this value to change the default behavior and overwrite
 	// $GIT_DIR.
 	GitDirPath string
-	// IsBare defines if the repo is base. It means that the repo ha no
-	// work tree
+	// IsBare defines if the repo is bare. It means that the repo and the
+	// work tree are separated
 	IsBare bool
 	// SkipGitDirLookUp will disable automatic lookup of the .git directory.
 	// Defaults to false which means that if no path is provided
@@ -169,7 +169,7 @@ func setConfig(e *env.Env, p *Config, opts LoadConfigOptions) error {
 
 	// $GIT_WORK_TREE and --work-tree cannot be set if $GIT_DIR or
 	// --git-dir isn't set. core.worktree isn't affected
-	if opts.GitDirPath == "" && p.GitDirPath == "" && (opts.WorkTreePath != "" || p.WorkTreePath != "") {
+	if (opts.IsBare || (opts.GitDirPath == "" && p.GitDirPath == "")) && (opts.WorkTreePath != "" || p.WorkTreePath != "") {
 		return ErrNoWorkTreeAlone
 	}
 
@@ -178,7 +178,8 @@ func setConfig(e *env.Env, p *Config, opts LoadConfigOptions) error {
 	// - opts.GitDirPath contains either nothing or a value used to override
 	//   p.GitDirPath.
 	// - If nothing set, a .git directory will looked for by walking up the
-	//   current directory.
+	//   current directory IF bare is not set. Otherwise the current
+	//   directory is used
 	// - If relative, the path will be appended to the current working
 	//   directory.
 	if opts.GitDirPath != "" {
@@ -191,13 +192,17 @@ func setConfig(e *env.Env, p *Config, opts LoadConfigOptions) error {
 			p.GitDirPath = filepath.Join(opts.WorkingDirectory, p.GitDirPath)
 		}
 	case "":
-		if !opts.SkipGitDirLookUp {
-			guessedWorkingTree, err = pathutil.WorkingTreeFromPath(opts.WorkingDirectory, DefaultDotGitDirName)
-			if err != nil {
-				return fmt.Errorf("could not find working tree: %w", err)
+		// In the case of a bare directory, we'll assume that we're at the root
+		p.GitDirPath = opts.WorkingDirectory
+		if !opts.IsBare {
+			if !opts.SkipGitDirLookUp {
+				guessedWorkingTree, err = pathutil.WorkingTreeFromPath(opts.WorkingDirectory, DefaultDotGitDirName)
+				if err != nil {
+					return fmt.Errorf("could not find working tree: %w", err)
+				}
 			}
+			p.GitDirPath = filepath.Join(guessedWorkingTree, DefaultDotGitDirName)
 		}
-		p.GitDirPath = filepath.Join(guessedWorkingTree, DefaultDotGitDirName)
 	}
 
 	// GitCommonDir riles:

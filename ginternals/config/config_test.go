@@ -231,6 +231,22 @@ func TestLoadConfig(t *testing.T) {
 			},
 			expectedError: nil,
 		},
+		{
+			desc: "bare repo should not point to a .git",
+			cfg: LoadConfigOptions{
+				WorkingDirectory: "wd",
+				IsBare:           true,
+			},
+			e: env.NewFromKVList([]string{}),
+			expectedParams: &Config{
+				WorkTreePath:  "",
+				GitDirPath:    filepath.Join(cwd, "wd"),
+				CommonDirPath: filepath.Join(cwd, "wd"),
+				LocalConfig:   filepath.Join(cwd, "wd", "config"),
+				ObjectDirPath: filepath.Join(cwd, "wd", "objects"),
+			},
+			expectedError: nil,
+		},
 	}
 	for i, tc := range testCases {
 		tc := tc
