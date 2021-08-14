@@ -133,7 +133,7 @@ func TestInit(t *testing.T) {
 		}
 	})
 
-	t.Run("should fail with a repo that already exists", func(t *testing.T) {
+	t.Run("should NOT fail with a repo that already exists", func(t *testing.T) {
 		t.Parallel()
 
 		// Setup
@@ -141,9 +141,9 @@ func TestInit(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		// Run logic
-		_, err := InitRepository(repoPath)
-		require.Error(t, err)
-		require.ErrorIs(t, err, ErrRepositoryExists)
+		r, err := InitRepository(repoPath)
+		require.NoError(t, err)
+		require.NoError(t, r.Close())
 	})
 
 	// Windows deals with permission differently

@@ -17,7 +17,6 @@ import (
 var (
 	ErrRepositoryNotExist           = errors.New("repository does not exist")
 	ErrRepositoryUnsupportedVersion = errors.New("repository nor supported")
-	ErrRepositoryExists             = errors.New("repository already exists")
 	ErrTagNotFound                  = errors.New("tag not found")
 	ErrTagExists                    = errors.New("tag already exists")
 	ErrNotADirectory                = errors.New("not a directory")
@@ -101,7 +100,7 @@ func InitRepositoryWithOptions(rootPath string, opts InitOptions) (r *Repository
 // Git stores and manipulates is located.
 // https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain#ch10-git-internals
 //
-// This assumes methods makes no assumptions
+// This method makes no assumptions
 func InitRepositoryWithParams(cfg *config.Config, opts InitOptions) (r *Repository, err error) {
 	r = &Repository{
 		Config: cfg,
@@ -160,9 +159,6 @@ func InitRepositoryWithParams(cfg *config.Config, opts InitOptions) (r *Reposito
 	}
 
 	if err = r.dotGit.Init(branchName); err != nil {
-		if errors.Is(err, ginternals.ErrRefExists) {
-			return nil, ErrRepositoryExists
-		}
 		return nil, err
 	}
 

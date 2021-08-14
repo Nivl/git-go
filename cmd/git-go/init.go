@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 
 	git "github.com/Nivl/git-go"
 	"github.com/Nivl/git-go/ginternals"
@@ -45,6 +47,14 @@ func initCmd(out io.Writer, cfg *globalFlags, flags initCmdFlags) error {
 		return fmt.Errorf("could not create param: %w", err)
 	}
 
+	// Let's check if the repo already exists by cheking is a HEAD is
+	// in there
+	newRepo := true
+	_, err = os.Stat(filepath.Join(ginternals.DotGitPath(p), ginternals.Head))
+	if err == nil {
+		newRepo = false
+	}
+
 	r, err := git.InitRepositoryWithParams(p, git.InitOptions{
 		IsBare:            cfg.Bare,
 		InitialBranchName: flags.initialBranch,
@@ -54,7 +64,12 @@ func initCmd(out io.Writer, cfg *globalFlags, flags initCmdFlags) error {
 	}
 
 	if !flags.quiet {
-		fmt.Fprintln(out, "Initialized empty Git repository in", ginternals.DotGitPath(r.Config))
+		switch newRepo {
+		case true:
+			fmt.Fprintln(out, "Initialized empty Git repository in", ginternals.DotGitPath(r.Config))
+		case false:
+			fmt.Fprintln(out, "Reinitialized existing Git repository in", ginternals.DotGitPath(r.Config))
+		}
 	}
 
 	return r.Close()

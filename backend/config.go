@@ -1,10 +1,12 @@
 package backend
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
 	"github.com/Nivl/git-go/ginternals"
+	"github.com/spf13/afero"
 	"gopkg.in/ini.v1"
 )
 
@@ -12,10 +14,12 @@ func (b *Backend) loadConfig() error {
 	return nil
 }
 
-// Init initializes a repository
-// This method cannot be called concurrently with other methods
+// Init initializes a repository.
+// This method cannot be called concurrently with other methods.
+// Calling this method on an existing repository is safe. It will not
+// overwrite things that are already there, but will add what's missing.
 func (b *Backend) Init(branchName string) error {
-	// Create the directories
+	// Create the directories if they don't already exist
 	dirs := []string{
 		b.Path(),
 		ginternals.TagsPath(b.config),
@@ -31,7 +35,7 @@ func (b *Backend) Init(branchName string) error {
 		}
 	}
 
-	// Create the files with the default content
+	// Create the files with the default content if they don't already exist
 	// (taken from a repo created on github)
 	files := []struct {
 		path    string
@@ -43,18 +47,24 @@ func (b *Backend) Init(branchName string) error {
 		},
 	}
 	for _, f := range files {
-		if err := os.WriteFile(f.path, f.content, 0o644); err != nil {
+		err := afero.WriteFile(b.fs, f.path, f.content, 0o644)
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			return fmt.Errorf("could not create file %s: %w", f.path, err)
 		}
 	}
 
-	err := b.setDefaultCfg()
-	if err != nil {
-		return fmt.Errorf("could not set the default config: %w", err)
+	// We only create a config file if we don't already have one
+	_, err := b.fs.Stat(b.config.LocalConfig)
+	if errors.Is(err, os.ErrNotExist) {
+		if err = b.setDefaultCfg(); err != nil {
+			return fmt.Errorf("could not set the default config: %w", err)
+		}
 	}
 
+	// Create HEAD if it doesn't exist yet
 	ref := ginternals.NewSymbolicReference(ginternals.Head, ginternals.LocalBranchFullName(branchName))
-	if err := b.WriteReferenceSafe(ref); err != nil {
+	err = b.WriteReferenceSafe(ref)
+	if err != nil && !errors.Is(err, ginternals.ErrRefExists) {
 		return fmt.Errorf("could not write HEAD: %w", err)
 	}
 
