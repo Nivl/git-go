@@ -7,7 +7,7 @@ import (
 	"github.com/Nivl/git-go/ginternals/config"
 )
 
-func loadRepository(cfg *flags) (*git.Repository, error) {
+func loadRepository(cfg *globalFlags) (*git.Repository, error) {
 	p, err := config.LoadConfig(cfg.env, config.LoadConfigOptions{
 		WorkingDirectory: cfg.C.String(),
 		GitDirPath:       cfg.GitDir,

@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newInitCmd(cfg *flags) *cobra.Command {
+func newInitCmd(cfg *globalFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "init a new git repository",
@@ -21,7 +21,7 @@ func newInitCmd(cfg *flags) *cobra.Command {
 	return cmd
 }
 
-func initCmd(cfg *flags) error {
+func initCmd(cfg *globalFlags) error {
 	p, err := config.LoadConfig(cfg.env, config.LoadConfigOptions{
 		WorkingDirectory: cfg.C.String(),
 		GitDirPath:       cfg.GitDir,
