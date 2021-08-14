@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -58,15 +60,21 @@ func TestInit(t *testing.T) {
 		dirPath, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		err := initCmd(&globalFlags{
+		sdtout := bytes.NewBufferString("")
+
+		err := initCmd(sdtout, &globalFlags{
 			env: env.NewFromKVList([]string{}),
 			C:   &testhelper.StringValue{Value: dirPath},
 		}, initCmdFlags{})
 		require.NoError(t, err)
 
-		info, err := os.Stat(filepath.Join(dirPath, config.DefaultDotGitDirName))
+		gitDir := filepath.Join(dirPath, config.DefaultDotGitDirName)
+		info, err := os.Stat(gitDir)
 		require.NoError(t, err)
 		assert.True(t, info.IsDir(), "expected .git to be a dir")
+
+		expectedOut := fmt.Sprintf("Initialized empty Git repository in %s\n", gitDir)
+		assert.Equal(t, expectedOut, sdtout.String())
 	})
 
 	t.Run("should create un-existing path", func(t *testing.T) {
@@ -75,7 +83,7 @@ func TestInit(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		err := initCmd(&globalFlags{
+		err := initCmd(io.Discard, &globalFlags{
 			env: env.NewFromKVList([]string{}),
 			C:   &testhelper.StringValue{Value: filepath.Join(dir, "this", "path", "is", "fake")},
 		}, initCmdFlags{})
@@ -88,7 +96,7 @@ func TestInit(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		err := initCmd(
+		err := initCmd(io.Discard,
 			&globalFlags{
 				env: env.NewFromKVList([]string{}),
 				C:   &testhelper.StringValue{Value: dir},
@@ -101,5 +109,30 @@ func TestInit(t *testing.T) {
 		data, err := os.ReadFile(filepath.Join(dir, config.DefaultDotGitDirName, ginternals.Head))
 		require.NoError(t, err)
 		require.Equal(t, "ref: refs/heads/main\n", string(data))
+	})
+
+	t.Run("Quiet should prevent writing data to stdout", func(t *testing.T) {
+		t.Parallel()
+
+		dir, cleanup := testhelper.TempDir(t)
+		t.Cleanup(cleanup)
+
+		sdtout := bytes.NewBufferString("")
+
+		err := initCmd(sdtout,
+			&globalFlags{
+				env: env.NewFromKVList([]string{}),
+				C:   &testhelper.StringValue{Value: dir},
+			},
+			initCmdFlags{
+				quiet: true,
+			})
+		require.NoError(t, err)
+
+		data, err := os.ReadFile(filepath.Join(dir, config.DefaultDotGitDirName, ginternals.Head))
+		require.NoError(t, err)
+		assert.Equal(t, "ref: refs/heads/master\n", string(data))
+
+		assert.Empty(t, sdtout.String(), "no output was expected")
 	})
 }
