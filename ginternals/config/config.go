@@ -42,38 +42,38 @@ type Config struct {
 	// files
 	fromFiles *FileAggregate
 
-	// GitDirPath represents the path to the .git directory
-	// Maps to $GIT_DIR if set
+	// GitDirPath represents the path to the .git directory.
+	// Maps to $GIT_DIR if set.
 	// Defaults to finding a ".git" folder in the current directory,
-	// going up in the tree until reaching /
+	// going up in the tree until reaching /.
 	GitDirPath string
 	// CommonDirPath represents the root path of the non-worktree-related
 	// files that are in the .git directory.
 	// https://git-scm.com/docs/git#Documentation/git.txt-codeGITCOMMONDIRcode
-	// Maps to $GIT_COMMON_DIR
-	// Defaults to $GitDirPath
+	// Maps to $GIT_COMMON_DIR.
+	// Defaults to $GitDirPath.
 	CommonDirPath string
-	// WorkTreePath represents the path to the .git directory
-	// Maps to $GIT_WORK_TREE
+	// WorkTreePath represents the path to the .git directory.
+	// Maps to $GIT_WORK_TREE.
 	// Defaults to $(GitDirPath)/.. or $(current-dir) depending on if
 	// GitDirPath was set or not.
 	WorkTreePath string
-	// ObjectDirPath represents the path to the .git/objects directory
-	// Maps to $GIT_OBJECT_DIRECTORY
-	// Defaults to $(CommonDirPath)/.git/objects
+	// ObjectDirPath represents the path to the .git/objects directory.
+	// Maps to $GIT_OBJECT_DIRECTORY.
+	// Defaults to $(CommonDirPath)/.git/objects.
 	ObjectDirPath string
-	// LocalConfig represents the config file to load
-	// Maps to $GIT_CONFIG
-	// Defaults to $(GitDirPath)/config if not sets
+	// LocalConfig represents the config file to load.
+	// Maps to $GIT_CONFIG.
+	// Defaults to $(GitDirPath)/config if not sets.
 	LocalConfig string
 	// Prefix contains the base for finding the system configuration file.
-	// $(prefix)/etc/gitconfig
-	// Maps to $PREFIX
-	// Defaults to an empty string
+	// $(prefix)/etc/gitconfig.
+	// Maps to $PREFIX.
+	// Defaults to an empty string.
 	Prefix string
-	// SkipSystemConfig states whether we should use the system config or not
-	// Maps to $GIT_CONFIG_NOSYSTEM
-	// Defaults to false
+	// SkipSystemConfig states whether we should use the system config or not.
+	// Maps to $GIT_CONFIG_NOSYSTEM.
+	// Defaults to false.
 	SkipSystemConfig bool
 }
 
@@ -86,12 +86,12 @@ func (cfg *Config) FromFile() *FileAggregate {
 // LoadConfigOptions represents all the params used to set the default
 // values of a Config object
 type LoadConfigOptions struct {
-	// FS represents the file system implementation to use to look for
+	// FS represents the file system implementation to use to look for.
 	// files and directories.
 	// Defaults to the regular filesystem.
 	FS afero.Fs
-	// WorkingDirectory represents the current working directory
-	// Defaults to the current working directory
+	// WorkingDirectory represents the current working directory.
+	// Defaults to the current working directory.
 	WorkingDirectory string
 	// WorkTreePath corresponds to the directory that should contain the .git.
 	// Set this value to change the default behavior and overwrite

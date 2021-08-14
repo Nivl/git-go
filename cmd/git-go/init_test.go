@@ -77,6 +77,31 @@ func TestInit(t *testing.T) {
 		assert.Equal(t, expectedOut, sdtout.String())
 	})
 
+	t.Run("init an existing repo should change the output message", func(t *testing.T) {
+		t.Parallel()
+
+		dirPath, cleanup := testhelper.TempDir(t)
+		t.Cleanup(cleanup)
+
+		// Running once
+		err := initCmd(io.Discard, &globalFlags{
+			env: env.NewFromKVList([]string{}),
+			C:   &testhelper.StringValue{Value: dirPath},
+		}, initCmdFlags{})
+		require.NoError(t, err)
+		// Running twice
+		sdtout := bytes.NewBufferString("")
+		err = initCmd(sdtout, &globalFlags{
+			env: env.NewFromKVList([]string{}),
+			C:   &testhelper.StringValue{Value: dirPath},
+		}, initCmdFlags{})
+		require.NoError(t, err)
+
+		gitDir := filepath.Join(dirPath, config.DefaultDotGitDirName)
+		expectedOut := fmt.Sprintf("Reinitialized existing Git repository in %s\n", gitDir)
+		assert.Equal(t, expectedOut, sdtout.String())
+	})
+
 	t.Run("should create un-existing path", func(t *testing.T) {
 		t.Parallel()
 
