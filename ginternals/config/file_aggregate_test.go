@@ -55,6 +55,7 @@ func TestNewFileAggregate(t *testing.T) {
 func TestGetters(t *testing.T) {
 	t.Parallel()
 
+	// Setup a few config files, a global one and a local one
 	dirPath, cleanup := testhelper.TempDir(t)
 	t.Cleanup(cleanup)
 
@@ -66,7 +67,6 @@ func TestGetters(t *testing.T) {
 
 	err = os.WriteFile(globalConfigPath, []byte(`
 	[core]
-		repositoryformatversion = 0
 		worktree = root_dir
 	`), 0o644)
 	require.NoError(t, err)
@@ -74,12 +74,26 @@ func TestGetters(t *testing.T) {
 	err = os.WriteFile(localConfigPath, []byte(`
 	[core]
 		worktree = local_dir
+		repositoryformatversion = 0
+	[init]
+		defaultBranch = main
 	`), 0o644)
 	require.NoError(t, err)
 
+	// Agg contains the config of both files. The local data should
+	// override the global ones
 	agg, err := NewFileAggregate(env.NewFromKVList([]string{}),
 		&Config{
 			LocalConfig: localConfigPath,
+			FS:          afero.NewOsFs(),
+			Prefix:      dirPath,
+		})
+	require.NoError(t, err)
+
+	// global only contains the global config
+	global, err := NewFileAggregate(env.NewFromKVList([]string{}),
+		&Config{
+			LocalConfig: globalConfigPath,
 			FS:          afero.NewOsFs(),
 			Prefix:      dirPath,
 		})
@@ -94,9 +108,38 @@ func TestGetters(t *testing.T) {
 
 	t.Run("RepoFormatVersion", func(t *testing.T) {
 		t.Parallel()
-		v, ok := agg.RepoFormatVersion()
-		assert.True(t, ok, "expected to find core.repositoryformatversion")
-		assert.Equal(t, 0, v)
+
+		t.Run("Default", func(t *testing.T) {
+			t.Parallel()
+			v, ok := global.RepoFormatVersion()
+			assert.False(t, ok, "expected to NOT find core.repositoryformatversion")
+			assert.Equal(t, 0, v)
+		})
+
+		t.Run("With value", func(t *testing.T) {
+			t.Parallel()
+			v, ok := agg.RepoFormatVersion()
+			assert.True(t, ok, "expected to find core.repositoryformatversion")
+			assert.Equal(t, 0, v)
+		})
+	})
+
+	t.Run("defaultBranch", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Default", func(t *testing.T) {
+			t.Parallel()
+			v, ok := global.DefaultBranch()
+			assert.False(t, ok, "expected to NOT find init.defaultBranch")
+			assert.Equal(t, "", v)
+		})
+
+		t.Run("With value", func(t *testing.T) {
+			t.Parallel()
+			v, ok := agg.DefaultBranch()
+			assert.True(t, ok, "expected to find init.defaultBranch")
+			assert.Equal(t, "main", v)
+		})
 	})
 }
 

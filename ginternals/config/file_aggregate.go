@@ -37,6 +37,17 @@ func (cfg *FileAggregate) RepoFormatVersion() (version int, ok bool) {
 	return v, true
 }
 
+// DefaultBranch returns the branch name to use when creating a new
+// repository.
+// The branch name isn't checked and may be an invalid value
+func (cfg *FileAggregate) DefaultBranch() (name string, ok bool) {
+	v := cfg.agg.Section("init").Key("defaultBranch").String()
+	if v == "" {
+		return "", false
+	}
+	return v, true
+}
+
 // WorkTree returns the path of the work-tree
 func (cfg *FileAggregate) WorkTree() (workTree string, ok bool) {
 	v := cfg.agg.Section("core").Key("worktree").String()

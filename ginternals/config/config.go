@@ -77,6 +77,12 @@ type Config struct {
 	SkipSystemConfig bool
 }
 
+// FromFile returns a FileAggregate containing all the config values
+// set in the gitconfig files
+func (cfg *Config) FromFile() *FileAggregate {
+	return cfg.fromFiles
+}
+
 // LoadConfigOptions represents all the params used to set the default
 // values of a Config object
 type LoadConfigOptions struct {
