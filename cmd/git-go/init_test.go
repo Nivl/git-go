@@ -57,7 +57,7 @@ func TestInit(t *testing.T) {
 		dirPath, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		err := initCmd(&flags{
+		err := initCmd(&globalFlags{
 			env: env.NewFromKVList([]string{}),
 			C:   &testhelper.StringValue{Value: dirPath},
 		})
@@ -74,7 +74,7 @@ func TestInit(t *testing.T) {
 		dir, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
-		err := initCmd(&flags{
+		err := initCmd(&globalFlags{
 			env: env.NewFromKVList([]string{}),
 			C:   &testhelper.StringValue{Value: filepath.Join(dir, "this", "path", "is", "fake")},
 		})

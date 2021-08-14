@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/pflag"
 )
 
-type flags struct {
+type globalFlags struct {
 	env *env.Env
 
 	C        pflag.Value // simpler version of git's -C: https://git-scm.com/docs/git#Documentation/git.txt--Cltpathgt
@@ -24,7 +24,7 @@ func newRootCmd(cwd string, e *env.Env) *cobra.Command {
 		SilenceUsage:  true,
 	}
 
-	cfg := &flags{
+	cfg := &globalFlags{
 		env: e,
 	}
 	cfg.C = pathutil.NewDirPathFlagWithDefault(cwd)

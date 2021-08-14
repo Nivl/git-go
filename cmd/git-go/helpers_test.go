@@ -40,7 +40,7 @@ func TestLoadRepository(t *testing.T) {
 		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
 			t.Parallel()
 
-			cfg := &flags{
+			cfg := &globalFlags{
 				env: env.NewFromKVList([]string{}),
 				C:   testhelper.NewStringValue(tc.C),
 			}
