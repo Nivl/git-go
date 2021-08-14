@@ -33,7 +33,11 @@ func TestInit(t *testing.T) {
 			require.NoError(t, b.Close())
 		})
 
-		require.NoError(t, b.Init())
+		require.NoError(t, b.Init(ginternals.Master))
+
+		data, err := os.ReadFile(filepath.Join(ginternals.DotGitPath(cfg), ginternals.Head))
+		require.NoError(t, err)
+		require.Equal(t, "ref: refs/heads/master\n", string(data))
 	})
 
 	t.Run("repo with separated object dir", func(t *testing.T) {
@@ -60,7 +64,7 @@ func TestInit(t *testing.T) {
 			require.NoError(t, b.Close())
 		})
 
-		require.NoError(t, b.Init())
+		require.NoError(t, b.Init(ginternals.Master))
 
 		// Check the directories that should exists
 		_, err = os.Stat(gitDirPath)
@@ -88,7 +92,7 @@ func TestInit(t *testing.T) {
 			require.NoError(t, b.Close())
 		})
 
-		require.NoError(t, b.Init())
+		require.NoError(t, b.Init(ginternals.Master))
 	})
 
 	t.Run("repo with existing data should work", func(t *testing.T) {
@@ -112,7 +116,7 @@ func TestInit(t *testing.T) {
 			require.NoError(t, b.Close())
 		})
 
-		require.NoError(t, b.Init())
+		require.NoError(t, b.Init(ginternals.Master))
 	})
 
 	t.Run("should fail if directory exists without write perm", func(t *testing.T) {
@@ -136,7 +140,7 @@ func TestInit(t *testing.T) {
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
-		err = b.Init()
+		err = b.Init(ginternals.Master)
 		require.Error(t, err)
 		var perror *os.PathError
 		require.True(t, errors.As(err, &perror), "error should be os.PathError")
@@ -159,7 +163,7 @@ func TestInit(t *testing.T) {
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
-		err = b.Init()
+		err = b.Init(ginternals.Master)
 		require.Error(t, err)
 		var perror *os.PathError
 		require.True(t, errors.As(err, &perror), "error should be os.PathError")

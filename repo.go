@@ -21,6 +21,7 @@ var (
 	ErrTagNotFound                  = errors.New("tag not found")
 	ErrTagExists                    = errors.New("tag already exists")
 	ErrNotADirectory                = errors.New("not a directory")
+	ErrInvalidBranchName            = errors.New("invalid branch name")
 )
 
 // Repository represent a git repository
@@ -48,6 +49,9 @@ type InitOptions struct {
 	// By default the filesystem will be used
 	// Setting this is useless if IsBare is set to true
 	WorkingTreeBackend afero.Fs
+	// InitialBranchName represents the name of the default branch to use
+	// Defaults to master
+	InitialBranchName string
 	// IsBare represents whether a bare repository will be created or not
 	IsBare bool
 }
@@ -103,6 +107,18 @@ func InitRepositoryWithParams(cfg *config.Config, opts InitOptions) (r *Reposito
 		Config: cfg,
 	}
 
+	// Validate the branch name
+	branchName := opts.InitialBranchName
+	if branchName == "" {
+		branchName, _ = cfg.FromFile().DefaultBranch()
+		if branchName == "" {
+			branchName = ginternals.Master
+		}
+	}
+	if !ginternals.IsRefNameValid(branchName) {
+		return nil, ErrInvalidBranchName
+	}
+
 	// if the repo is not bare, then we need to make sure to create
 	// the working tree
 	if !opts.IsBare {
@@ -143,7 +159,7 @@ func InitRepositoryWithParams(cfg *config.Config, opts InitOptions) (r *Reposito
 		}(r)
 	}
 
-	if err = r.dotGit.Init(); err != nil {
+	if err = r.dotGit.Init(branchName); err != nil {
 		if errors.Is(err, ginternals.ErrRefExists) {
 			return nil, ErrRepositoryExists
 		}

@@ -14,7 +14,7 @@ func (b *Backend) loadConfig() error {
 
 // Init initializes a repository
 // This method cannot be called concurrently with other methods
-func (b *Backend) Init() error {
+func (b *Backend) Init(branchName string) error {
 	// Create the directories
 	dirs := []string{
 		b.Path(),
@@ -53,7 +53,7 @@ func (b *Backend) Init() error {
 		return fmt.Errorf("could not set the default config: %w", err)
 	}
 
-	ref := ginternals.NewSymbolicReference(ginternals.Head, ginternals.LocalBranchFullName(ginternals.Master))
+	ref := ginternals.NewSymbolicReference(ginternals.Head, ginternals.LocalBranchFullName(branchName))
 	if err := b.WriteReferenceSafe(ref); err != nil {
 		return fmt.Errorf("could not write HEAD: %w", err)
 	}

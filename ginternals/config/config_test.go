@@ -18,12 +18,6 @@ func TestLoadConfig(t *testing.T) {
 	dir, cleanup := testhelper.TempDir(t)
 	t.Cleanup(cleanup)
 
-	// To be able to build an absolute path on Windows we need to know
-	// the Volume name
-	// dir, err := os.Getwd()
-	// require.NoError(t, err)
-	// root := filepath.VolumeName(dir) + string(os.PathSeparator)
-
 	// the common dir can be set by creating a file with a path in it
 	// we create a `with_commondir` directory to be able to run test in this
 	// context
@@ -260,35 +254,6 @@ func TestLoadConfig(t *testing.T) {
 	}
 }
 
-func TestLoadConfigWithFile(t *testing.T) {
-	t.Parallel()
-
-	dir, err := os.Getwd()
-	require.NoError(t, err)
-	root := filepath.VolumeName(dir) + string(os.PathSeparator)
-
-	expectedWorktreePath := filepath.Join(root, "some", "path")
-
-	// create the config file
-	f, cleanup := testhelper.TempFile(t)
-	t.Cleanup(cleanup)
-	_, err = f.WriteString("[core]\nworktree = " + expectedWorktreePath)
-	require.NoError(t, err)
-	err = f.Sync()
-	require.NoError(t, err)
-
-	e := env.NewFromKVList([]string{
-		"GIT_CONFIG=" + f.Name(),
-	})
-	opts := LoadConfigOptions{
-		GitDirPath: filepath.Join(root, DefaultDotGitDirName),
-	}
-	out, err := LoadConfig(e, opts)
-
-	require.NoError(t, err)
-	assert.Equal(t, expectedWorktreePath, out.WorkTreePath)
-}
-
 func TestNewGitOptionsSkipEnv(t *testing.T) {
 	t.Parallel()
 
@@ -337,4 +302,41 @@ func TestNewGitOptionsSkipEnv(t *testing.T) {
 			assert.Equal(t, tc.expectedParams, out)
 		})
 	}
+}
+
+func TestWrapper(t *testing.T) {
+	t.Parallel()
+
+	// First we setup a config file and we make sure it's loaded
+	dir, err := os.Getwd()
+	require.NoError(t, err)
+	root := filepath.VolumeName(dir) + string(os.PathSeparator)
+
+	expectedWorktreePath := filepath.Join(root, "some", "path")
+
+	// create the config file
+	f, cleanup := testhelper.TempFile(t)
+	t.Cleanup(cleanup)
+	_, err = f.WriteString("[core]\nworktree = " + expectedWorktreePath)
+	require.NoError(t, err)
+	err = f.Sync()
+	require.NoError(t, err)
+
+	e := env.NewFromKVList([]string{
+		"GIT_CONFIG=" + f.Name(),
+	})
+	opts := LoadConfigOptions{
+		GitDirPath: filepath.Join(root, DefaultDotGitDirName),
+	}
+	out, err := LoadConfig(e, opts)
+
+	require.NoError(t, err)
+	require.Equal(t, expectedWorktreePath, out.WorkTreePath)
+
+	// All good, we can run our other tests that requires a config
+
+	t.Run("FromFile", func(t *testing.T) {
+		t.Parallel()
+		require.NotNil(t, out.FromFile(), "expected FromFile() to return an object")
+	})
 }

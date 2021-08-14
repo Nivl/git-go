@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/Nivl/git-go/env"
+	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/config"
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/stretchr/testify/assert"
@@ -60,7 +61,7 @@ func TestInit(t *testing.T) {
 		err := initCmd(&globalFlags{
 			env: env.NewFromKVList([]string{}),
 			C:   &testhelper.StringValue{Value: dirPath},
-		})
+		}, initCmdFlags{})
 		require.NoError(t, err)
 
 		info, err := os.Stat(filepath.Join(dirPath, config.DefaultDotGitDirName))
@@ -77,7 +78,28 @@ func TestInit(t *testing.T) {
 		err := initCmd(&globalFlags{
 			env: env.NewFromKVList([]string{}),
 			C:   &testhelper.StringValue{Value: filepath.Join(dir, "this", "path", "is", "fake")},
-		})
+		}, initCmdFlags{})
 		require.NoError(t, err)
+	})
+
+	t.Run("should allow a branch name", func(t *testing.T) {
+		t.Parallel()
+
+		dir, cleanup := testhelper.TempDir(t)
+		t.Cleanup(cleanup)
+
+		err := initCmd(
+			&globalFlags{
+				env: env.NewFromKVList([]string{}),
+				C:   &testhelper.StringValue{Value: dir},
+			},
+			initCmdFlags{
+				initialBranch: "main",
+			})
+		require.NoError(t, err)
+
+		data, err := os.ReadFile(filepath.Join(dir, config.DefaultDotGitDirName, ginternals.Head))
+		require.NoError(t, err)
+		require.Equal(t, "ref: refs/heads/main\n", string(data))
 	})
 }

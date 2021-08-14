@@ -39,6 +39,11 @@ func TestInit(t *testing.T) {
 		assert.Equal(t, ginternals.DotGitPath(r.Config), r.dotGit.Path())
 		assert.NotNil(t, r.workTree)
 		assert.False(t, r.IsBare(), "repos should not be bare")
+
+		// Default branch should be master
+		data, err := os.ReadFile(filepath.Join(ginternals.DotGitPath(r.Config), ginternals.Head))
+		require.NoError(t, err)
+		require.Equal(t, "ref: refs/heads/master\n", string(data))
 	})
 
 	t.Run("bare repo", func(t *testing.T) {
@@ -165,6 +170,49 @@ func TestInit(t *testing.T) {
 			require.Contains(t, err.Error(), "could not create")
 		})
 	}
+
+	t.Run("should use provided branch", func(t *testing.T) {
+		t.Parallel()
+
+		// Setup
+		d, cleanup := testhelper.TempDir(t)
+		t.Cleanup(cleanup)
+
+		// Run logic
+		r, err := InitRepositoryWithOptions(d, InitOptions{
+			InitialBranchName: "main",
+		})
+		require.NoError(t, err, "failed creating a repo")
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
+
+		// assert returned repository
+		assert.Equal(t, d, r.Config.WorkTreePath)
+		assert.Equal(t, ginternals.DotGitPath(r.Config), r.dotGit.Path())
+		assert.NotNil(t, r.workTree)
+		assert.False(t, r.IsBare(), "repos should not be bare")
+
+		// Default branch should be master
+		data, err := os.ReadFile(filepath.Join(ginternals.DotGitPath(r.Config), ginternals.Head))
+		require.NoError(t, err)
+		require.Equal(t, "ref: refs/heads/main\n", string(data))
+	})
+
+	t.Run("should use provided branch", func(t *testing.T) {
+		t.Parallel()
+
+		// Setup
+		d, cleanup := testhelper.TempDir(t)
+		t.Cleanup(cleanup)
+
+		// Run logic
+		_, err := InitRepositoryWithOptions(d, InitOptions{
+			InitialBranchName: "../master",
+		})
+		require.Error(t, err)
+		require.Equal(t, err, ErrInvalidBranchName)
+	})
 }
 
 func TestOpen(t *testing.T) {

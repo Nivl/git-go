@@ -92,7 +92,7 @@ func TestParsePackedRefs(t *testing.T) {
 		require.NoError(t, err)
 
 		defer require.NoError(t, b.Close())
-		require.NoError(t, b.Init())
+		require.NoError(t, b.Init(ginternals.Master))
 		return dir, cleanup
 	}
 
@@ -207,7 +207,7 @@ func TestWriteReference(t *testing.T) {
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
-		require.NoError(t, b.Init())
+		require.NoError(t, b.Init(ginternals.Master))
 
 		ref := ginternals.NewSymbolicReference("HEAD", "refs/heads/master")
 		err = b.WriteReference(ref)
@@ -230,7 +230,7 @@ func TestWriteReference(t *testing.T) {
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
-		require.NoError(t, b.Init())
+		require.NoError(t, b.Init(ginternals.Master))
 
 		target, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
 		require.NoError(t, err)
@@ -255,7 +255,7 @@ func TestWriteReference(t *testing.T) {
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
-		require.NoError(t, b.Init())
+		require.NoError(t, b.Init(ginternals.Master))
 
 		ref := ginternals.NewSymbolicReference("H EAD", "refs/heads/master")
 		err = b.WriteReference(ref)
@@ -335,7 +335,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
-		require.NoError(t, b.Init())
+		require.NoError(t, b.Init(ginternals.Master))
 
 		ref := ginternals.NewSymbolicReference("refs/heads/my_feature", "refs/heads/master")
 		err = b.WriteReferenceSafe(ref)
@@ -359,7 +359,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
-		require.NoError(t, b.Init())
+		require.NoError(t, b.Init(ginternals.Master))
 
 		target, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
 		require.NoError(t, err)
@@ -385,7 +385,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 		t.Cleanup(func() {
 			require.NoError(t, b.Close())
 		})
-		require.NoError(t, b.Init())
+		require.NoError(t, b.Init(ginternals.Master))
 
 		ref := ginternals.NewSymbolicReference("H EAD", "refs/heads/master")
 		err = b.WriteReferenceSafe(ref)
