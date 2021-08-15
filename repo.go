@@ -53,6 +53,9 @@ type InitOptions struct {
 	InitialBranchName string
 	// IsBare represents whether a bare repository will be created or not
 	IsBare bool
+	// Symlink will create a .git text file in the working tree that points
+	// toward the actual repository
+	Symlink bool
 }
 
 // InitRepository initialize a new git repository by creating the .git
@@ -158,7 +161,7 @@ func InitRepositoryWithParams(cfg *config.Config, opts InitOptions) (r *Reposito
 		}(r)
 	}
 
-	if err = r.dotGit.Init(branchName); err != nil {
+	if err = r.dotGit.InitWithSymlink(branchName, opts.Symlink); err != nil {
 		return nil, err
 	}
 

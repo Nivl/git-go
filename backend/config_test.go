@@ -176,4 +176,34 @@ func TestInit(t *testing.T) {
 		require.True(t, errors.As(err, &perror), "error should be os.PathError")
 		assert.Contains(t, perror.Err.Error(), "denied")
 	})
+
+	t.Run("should create a symlink", func(t *testing.T) {
+		t.Parallel()
+
+		dir, cleanup := testhelper.TempDir(t)
+		t.Cleanup(cleanup)
+
+		cfg, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
+			WorkTreePath: filepath.Join(dir),
+			GitDirPath:   filepath.Join(dir, "separate-dir"),
+		})
+		require.NoError(t, err)
+
+		b, err := backend.NewFS(cfg)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+
+		require.NoError(t, b.InitWithSymlink(ginternals.Master, true))
+
+		gitfilePath := filepath.Join(dir, config.DefaultDotGitDirName)
+		require.FileExists(t, gitfilePath)
+
+		data, err := os.ReadFile(gitfilePath)
+		require.NoError(t, err)
+
+		expectedContent := "gitdir: " + filepath.Join(dir, "separate-dir")
+		require.Equal(t, expectedContent, string(data))
+	})
 }

@@ -14,9 +14,14 @@ import (
 	"github.com/spf13/afero"
 )
 
-// ErrNoWorkTreeAlone is thrown when a work tree path is given without
-// a git path
-var ErrNoWorkTreeAlone = errors.New("cannot specify a work tree without also specifying a git dir")
+var (
+	// ErrNoWorkTreeAlone is thrown when a work tree path is given without
+	// a git path
+	ErrNoWorkTreeAlone = errors.New("cannot specify a work tree without also specifying a git dir")
+	// ErrInvalidGitfileFormat is thrown when the file version of the .git
+	// is invalid
+	ErrInvalidGitfileFormat = errors.New("invalid gitfile format")
+)
 
 const (
 	// DefaultDotGitDirName corresponds to the default name of the git
@@ -177,8 +182,8 @@ func setConfig(e *env.Env, p *Config, opts LoadConfigOptions) error {
 	// - p.GitDirPath contains either nothing or $GIT_DIR
 	// - opts.GitDirPath contains either nothing or a value used to override
 	//   p.GitDirPath.
-	// - If nothing set, a .git directory will looked for by walking up the
-	//   current directory IF bare is not set. Otherwise the current
+	// - If nothing set, a .git file or directory will looked for by walking
+	//   up the current directory IF bare is not set. Otherwise the current
 	//   directory is used
 	// - If relative, the path will be appended to the current working
 	//   directory.
@@ -186,12 +191,7 @@ func setConfig(e *env.Env, p *Config, opts LoadConfigOptions) error {
 		p.GitDirPath = opts.GitDirPath
 	}
 	guessedWorkingTree := opts.WorkingDirectory
-	switch p.GitDirPath {
-	default:
-		if !filepath.IsAbs(p.GitDirPath) {
-			p.GitDirPath = filepath.Join(opts.WorkingDirectory, p.GitDirPath)
-		}
-	case "":
+	if p.GitDirPath == "" {
 		// In the case of a bare directory, we'll assume that we're at the root
 		p.GitDirPath = opts.WorkingDirectory
 		if !opts.IsBare {
@@ -202,7 +202,30 @@ func setConfig(e *env.Env, p *Config, opts LoadConfigOptions) error {
 				}
 			}
 			p.GitDirPath = filepath.Join(guessedWorkingTree, DefaultDotGitDirName)
+			// if we found a file then the file should contain a link to the actual repo
+			if info, err := p.FS.Stat(p.GitDirPath); !errors.Is(err, os.ErrNotExist) {
+				if err != nil {
+					return fmt.Errorf("could not check if repo is symlink: %w", err)
+				}
+				if !info.IsDir() {
+					rawFileContent, err := afero.ReadFile(p.FS, p.GitDirPath)
+					// TODO(melvin): for security reasons we may just want to
+					// read an arbitrary amount of bytes
+					if err != nil {
+						return fmt.Errorf("could not check the content of %s: %w", p.GitDirPath, err)
+					}
+					prefix := "gitdir: "
+					symlink := string(rawFileContent)
+					if !strings.HasPrefix(symlink, prefix) {
+						return ErrInvalidGitfileFormat
+					}
+					p.GitDirPath = strings.TrimPrefix(symlink, prefix)
+				}
+			}
 		}
+	}
+	if !filepath.IsAbs(p.GitDirPath) {
+		p.GitDirPath = filepath.Join(opts.WorkingDirectory, p.GitDirPath)
 	}
 
 	// GitCommonDir riles:
@@ -214,7 +237,7 @@ func setConfig(e *env.Env, p *Config, opts LoadConfigOptions) error {
 		commonDirFilePath := filepath.Join(p.GitDirPath, "commondir")
 		// TODO(melvin): for security reasons we may just want to
 		// read an arbitrary amount of bytes
-		rawCommonDirPath, err := os.ReadFile(commonDirFilePath)
+		rawCommonDirPath, err := afero.ReadFile(p.FS, commonDirFilePath)
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			return fmt.Errorf("could not check the content of %s: %w", commonDirFilePath, err)
 		}
