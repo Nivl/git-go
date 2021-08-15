@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/config"
 	"github.com/spf13/afero"
 	"gopkg.in/ini.v1"
 )
@@ -19,6 +21,25 @@ func (b *Backend) loadConfig() error {
 // Calling this method on an existing repository is safe. It will not
 // overwrite things that are already there, but will add what's missing.
 func (b *Backend) Init(branchName string) error {
+	return b.InitWithSymlink(branchName, false)
+}
+
+// InitWithSymlink initializes a repository. If createSymlink is set
+// to true, a text file will be created that will point to the repo.
+//
+// This method cannot be called concurrently with other methods.
+// Calling this method on an existing repository is safe. It will not
+// overwrite things that are already there, but will add what's missing.
+func (b *Backend) InitWithSymlink(branchName string, createSymlink bool) error {
+	if createSymlink {
+		linkSource := filepath.Join(b.config.WorkTreePath, config.DefaultDotGitDirName)
+		linkTarget := fmt.Sprintf("gitdir: %s", ginternals.DotGitPath(b.config))
+		err := afero.WriteFile(b.fs, linkSource, []byte(linkTarget), 0o644)
+		if err != nil {
+			return fmt.Errorf("could not create symlink %s: %w", linkSource, err)
+		}
+	}
+
 	// Create the directories if they don't already exist
 	dirs := []string{
 		b.Path(),

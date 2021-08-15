@@ -160,4 +160,79 @@ func TestInit(t *testing.T) {
 
 		assert.Empty(t, sdtout.String(), "no output was expected")
 	})
+
+	t.Run("--separate-git-dir", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("should work with valid params", func(t *testing.T) {
+			t.Parallel()
+
+			dir, cleanup := testhelper.TempDir(t)
+			t.Cleanup(cleanup)
+
+			err := initCmd(io.Discard,
+				&globalFlags{
+					env: env.NewFromKVList([]string{}),
+					C:   &testhelper.StringValue{Value: dir},
+				},
+				initCmdFlags{
+					separateGitDir: filepath.Join(dir, "separate"),
+				})
+			require.NoError(t, err)
+
+			require.FileExists(t, filepath.Join(dir, config.DefaultDotGitDirName))
+			require.FileExists(t, filepath.Join(dir, "separate", "HEAD"))
+		})
+
+		t.Run("should fail with", func(t *testing.T) {
+			t.Parallel()
+
+			testCases := []struct {
+				desc          string
+				flags         *globalFlags
+				errorContains string
+			}{
+				{
+					desc:          "bare set",
+					errorContains: "are mutually exclusive",
+					flags: &globalFlags{
+						env:  env.NewFromKVList([]string{}),
+						Bare: true,
+					},
+				},
+				{
+					desc:          "--git-dir",
+					errorContains: "incompatible with bare repository",
+					flags: &globalFlags{
+						env:    env.NewFromKVList([]string{}),
+						GitDir: "another-path",
+					},
+				},
+				{
+					desc:          "GIT_DIR",
+					errorContains: "incompatible with bare repository",
+					flags: &globalFlags{
+						env: env.NewFromKVList([]string{
+							"GIT_DIR=some-path",
+						}),
+					},
+				},
+			}
+			for i, tc := range testCases {
+				tc := tc
+				i := i
+				t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
+					t.Parallel()
+
+					err := initCmd(io.Discard,
+						tc.flags,
+						initCmdFlags{
+							separateGitDir: "path",
+						})
+					require.Error(t, err)
+					assert.Contains(t, err.Error(), tc.errorContains)
+				})
+			}
+		})
+	})
 }

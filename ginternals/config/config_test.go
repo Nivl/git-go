@@ -21,10 +21,20 @@ func TestLoadConfig(t *testing.T) {
 	// the common dir can be set by creating a file with a path in it
 	// we create a `with_commondir` directory to be able to run test in this
 	// context
-	withCommonDir := filepath.Join(dir, "with_commondir")
-	err := os.Mkdir(withCommonDir, 0o755)
+	gitDirWithCommonDir := filepath.Join(dir, "with_commondir")
+	err := os.Mkdir(gitDirWithCommonDir, 0o755)
 	require.NoError(t, err)
-	err = os.WriteFile(filepath.Join(withCommonDir, "commondir"), []byte(filepath.Join(dir, "common")), 0o644)
+	err = os.WriteFile(filepath.Join(gitDirWithCommonDir, "commondir"), []byte(filepath.Join(dir, "common")), 0o644)
+	require.NoError(t, err)
+
+	// git allows the .git to be a special "git-symlink" file that contains
+	// a path to the actual repo. see `git init --separate-git-dir`
+	// https://git-scm.com/docs/git-init#Documentation/git-init.txt---separate-git-dirltgitdirgt
+	wtWithGitfile := filepath.Join(dir, "with_gitfile_symlink")
+	err = os.Mkdir(wtWithGitfile, 0o755)
+	require.NoError(t, err)
+	content := "gitdir: " + filepath.Join(dir, ".git")
+	err = os.WriteFile(filepath.Join(wtWithGitfile, DefaultDotGitDirName), []byte(content), 0o644)
 	require.NoError(t, err)
 
 	cwd, err := os.Getwd()
@@ -202,7 +212,7 @@ func TestLoadConfig(t *testing.T) {
 			e: env.NewFromKVList([]string{}),
 			expectedParams: &Config{
 				WorkTreePath:     dir,
-				GitDirPath:       withCommonDir,
+				GitDirPath:       gitDirWithCommonDir,
 				CommonDirPath:    filepath.Join(dir, "common"),
 				LocalConfig:      filepath.Join(dir, "common", defaultConfigDirName),
 				ObjectDirPath:    filepath.Join(dir, "common", defaultObjectsDirName),
@@ -244,6 +254,21 @@ func TestLoadConfig(t *testing.T) {
 				CommonDirPath: filepath.Join(cwd, "wd"),
 				LocalConfig:   filepath.Join(cwd, "wd", "config"),
 				ObjectDirPath: filepath.Join(cwd, "wd", "objects"),
+			},
+			expectedError: nil,
+		},
+		{
+			desc: "repo with a .git file should work",
+			cfg: LoadConfigOptions{
+				WorkingDirectory: wtWithGitfile,
+			},
+			e: env.NewFromKVList([]string{}),
+			expectedParams: &Config{
+				WorkTreePath:  wtWithGitfile,
+				GitDirPath:    filepath.Join(dir, ".git"),
+				CommonDirPath: filepath.Join(dir, ".git"),
+				LocalConfig:   filepath.Join(dir, ".git", "config"),
+				ObjectDirPath: filepath.Join(dir, ".git", "objects"),
 			},
 			expectedError: nil,
 		},

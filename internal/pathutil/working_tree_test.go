@@ -14,13 +14,51 @@ import (
 func TestWorkingTreeFromPath(t *testing.T) {
 	t.Parallel()
 
-	t.Run("should be found fom subdir", func(t *testing.T) {
+	t.Run(".git dir without head shouldn't be returned", func(t *testing.T) {
 		t.Parallel()
 
 		path, cleanup := testhelper.TempDir(t)
 		t.Cleanup(cleanup)
 
 		err := os.MkdirAll(filepath.Join(path, ".git"), 0o755)
+		require.NoError(t, err)
+
+		finalPath := filepath.Join(path, "a", "b", "c")
+		err = os.MkdirAll(finalPath, 0o755)
+		require.NoError(t, err)
+
+		_, err = pathutil.WorkingTreeFromPath(finalPath, ".git")
+		require.Error(t, err)
+		require.Equal(t, pathutil.ErrNoRepo, err)
+	})
+
+	t.Run(".git file should be returned", func(t *testing.T) {
+		t.Parallel()
+
+		path, cleanup := testhelper.TempDir(t)
+		t.Cleanup(cleanup)
+
+		err := os.WriteFile(filepath.Join(path, ".git"), []byte(""), 0o644)
+		require.NoError(t, err)
+
+		finalPath := filepath.Join(path, "a", "b", "c")
+		err = os.MkdirAll(finalPath, 0o755)
+		require.NoError(t, err)
+
+		p, err := pathutil.WorkingTreeFromPath(finalPath, ".git")
+		require.NoError(t, err)
+		assert.Equal(t, path, p)
+	})
+
+	t.Run(".git dir with head should be returned", func(t *testing.T) {
+		t.Parallel()
+
+		path, cleanup := testhelper.TempDir(t)
+		t.Cleanup(cleanup)
+
+		err := os.MkdirAll(filepath.Join(path, ".git"), 0o755)
+		require.NoError(t, err)
+		err = os.WriteFile(filepath.Join(path, ".git", "HEAD"), []byte(""), 0o644)
 		require.NoError(t, err)
 
 		finalPath := filepath.Join(path, "a", "b", "c")
