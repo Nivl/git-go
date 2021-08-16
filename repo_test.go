@@ -229,12 +229,8 @@ func TestInit(t *testing.T) {
 		t.Cleanup(func() {
 			require.NoError(t, r.Close(), "failed closing repo")
 		})
-		_, err = os.Stat(filepath.Join(d, config.DefaultDotGitDirName))
-		require.Error(t, err, "expected .git to not exists")
-		assert.True(t, errors.Is(err, os.ErrNotExist), "invalid error returned")
-
-		_, err = os.Stat(filepath.Join(d, ginternals.Head))
-		require.NoError(t, err, "expected the HEAD to be at the root of the repo")
+		assert.NoFileExists(t, filepath.Join(d, config.DefaultDotGitDirName))
+		assert.FileExists(t, filepath.Join(d, ginternals.Head))
 	})
 }
 
@@ -403,8 +399,7 @@ func TestRepositoryNewBlob(t *testing.T) {
 
 	// make sure the blob was persisted
 	p := ginternals.LooseObjectPath(r.Config, blob.ID().String())
-	_, err = os.Stat(p)
-	require.NoError(t, err)
+	assert.FileExists(t, p)
 }
 
 func TestRepositoryGetCommit(t *testing.T) {
