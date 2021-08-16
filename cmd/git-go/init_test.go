@@ -65,7 +65,7 @@ func TestInit(t *testing.T) {
 		err := initCmd(sdtout, &globalFlags{
 			env: env.NewFromKVList([]string{}),
 			C:   &testhelper.StringValue{Value: dirPath},
-		}, initCmdFlags{})
+		}, initCmdFlags{}, "")
 		require.NoError(t, err)
 
 		gitDir := filepath.Join(dirPath, config.DefaultDotGitDirName)
@@ -85,14 +85,14 @@ func TestInit(t *testing.T) {
 		err := initCmd(io.Discard, &globalFlags{
 			env: env.NewFromKVList([]string{}),
 			C:   &testhelper.StringValue{Value: dirPath},
-		}, initCmdFlags{})
+		}, initCmdFlags{}, "")
 		require.NoError(t, err)
 		// Running twice
 		sdtout := bytes.NewBufferString("")
 		err = initCmd(sdtout, &globalFlags{
 			env: env.NewFromKVList([]string{}),
 			C:   &testhelper.StringValue{Value: dirPath},
-		}, initCmdFlags{})
+		}, initCmdFlags{}, "")
 		require.NoError(t, err)
 
 		gitDir := filepath.Join(dirPath, config.DefaultDotGitDirName)
@@ -109,7 +109,7 @@ func TestInit(t *testing.T) {
 		err := initCmd(io.Discard, &globalFlags{
 			env: env.NewFromKVList([]string{}),
 			C:   &testhelper.StringValue{Value: filepath.Join(dir, "this", "path", "is", "fake")},
-		}, initCmdFlags{})
+		}, initCmdFlags{}, "")
 		require.NoError(t, err)
 	})
 
@@ -126,7 +126,7 @@ func TestInit(t *testing.T) {
 			},
 			initCmdFlags{
 				initialBranch: "main",
-			})
+			}, "")
 		require.NoError(t, err)
 
 		data, err := os.ReadFile(filepath.Join(dir, config.DefaultDotGitDirName, ginternals.Head))
@@ -134,7 +134,7 @@ func TestInit(t *testing.T) {
 		require.Equal(t, "ref: refs/heads/main\n", string(data))
 	})
 
-	t.Run("Quiet should prevent writing data to stdout", func(t *testing.T) {
+	t.Run("--quiet should prevent writing data to stdout", func(t *testing.T) {
 		t.Parallel()
 
 		dir, cleanup := testhelper.TempDir(t)
@@ -149,7 +149,7 @@ func TestInit(t *testing.T) {
 			},
 			initCmdFlags{
 				quiet: true,
-			})
+			}, "")
 		require.NoError(t, err)
 
 		data, err := os.ReadFile(filepath.Join(dir, config.DefaultDotGitDirName, ginternals.Head))
@@ -175,7 +175,7 @@ func TestInit(t *testing.T) {
 				},
 				initCmdFlags{
 					separateGitDir: filepath.Join(dir, "separate"),
-				})
+				}, "")
 			require.NoError(t, err)
 
 			require.FileExists(t, filepath.Join(dir, config.DefaultDotGitDirName))
@@ -226,11 +226,30 @@ func TestInit(t *testing.T) {
 						tc.flags,
 						initCmdFlags{
 							separateGitDir: "path",
-						})
+						}, "")
 					require.Error(t, err)
 					assert.Contains(t, err.Error(), tc.errorContains)
 				})
 			}
+		})
+
+		t.Run("the provided target directory should be created", func(t *testing.T) {
+			t.Parallel()
+
+			dir, cleanup := testhelper.TempDir(t)
+			t.Cleanup(cleanup)
+
+			err := initCmd(io.Discard,
+				&globalFlags{
+					env: env.NewFromKVList([]string{}),
+					C:   &testhelper.StringValue{Value: dir},
+				},
+				initCmdFlags{},
+				filepath.Join(dir, "target"))
+			require.NoError(t, err)
+
+			assert.NoFileExists(t, filepath.Join(dir, config.DefaultDotGitDirName, ginternals.Head))
+			assert.FileExists(t, filepath.Join(dir, "target", config.DefaultDotGitDirName, ginternals.Head))
 		})
 	})
 }
