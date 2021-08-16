@@ -69,9 +69,7 @@ func TestInit(t *testing.T) {
 		require.NoError(t, err)
 
 		gitDir := filepath.Join(dirPath, config.DefaultDotGitDirName)
-		info, err := os.Stat(gitDir)
-		require.NoError(t, err)
-		assert.True(t, info.IsDir(), "expected .git to be a dir")
+		assert.DirExists(t, gitDir)
 
 		expectedOut := fmt.Sprintf("Initialized empty Git repository in %s\n", gitDir)
 		assert.Equal(t, expectedOut, sdtout.String())

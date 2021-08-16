@@ -67,16 +67,12 @@ func TestInit(t *testing.T) {
 		require.NoError(t, b.Init(ginternals.Master))
 
 		// Check the directories that should exists
-		_, err = os.Stat(gitDirPath)
-		assert.NoError(t, err)
-		_, err = os.Stat(objectDirPath)
-		assert.NoError(t, err)
-		_, err = os.Stat(ginternals.ObjectsInfoPath(cfg))
-		assert.NoError(t, err)
+		assert.DirExists(t, gitDirPath)
+		assert.DirExists(t, objectDirPath)
+		assert.DirExists(t, ginternals.ObjectsInfoPath(cfg))
 
 		// Check the directories that should NOT exists
-		_, err = os.Stat(filepath.Join(gitDirPath, "objects"))
-		assert.Error(t, err)
+		assert.NoDirExists(t, filepath.Join(gitDirPath, "objects"))
 	})
 
 	t.Run("bare repo should work", func(t *testing.T) {
@@ -93,13 +89,8 @@ func TestInit(t *testing.T) {
 		})
 
 		require.NoError(t, b.Init(ginternals.Master))
-
-		_, err = os.Stat(filepath.Join(dir, config.DefaultDotGitDirName))
-		require.Error(t, err, "expected .git to not exists")
-		assert.True(t, errors.Is(err, os.ErrNotExist), "invalid error returned")
-
-		_, err = os.Stat(filepath.Join(dir, ginternals.Head))
-		require.NoError(t, err, "expected the HEAD to be at the root of the repo")
+		assert.NoDirExists(t, filepath.Join(dir, config.DefaultDotGitDirName))
+		assert.FileExists(t, filepath.Join(dir, ginternals.Head))
 	})
 
 	t.Run("repo with existing data should work", func(t *testing.T) {

@@ -3,7 +3,6 @@ package git
 import (
 	"errors"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/Nivl/git-go/ginternals"
@@ -282,8 +281,7 @@ func TestTreeBuilderWrite(t *testing.T) {
 		assert.Len(t, tb.entries, 2)
 
 		p := ginternals.LooseObjectPath(r.Config, tree.ID().String())
-		_, err = os.Stat(p)
-		require.NoError(t, err)
+		assert.FileExists(t, p)
 	})
 
 	t.Run("building an existing tree should return the same data", func(t *testing.T) {
