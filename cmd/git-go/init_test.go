@@ -14,6 +14,7 @@ import (
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 )
 
 func TestInitParams(t *testing.T) {
@@ -250,6 +251,96 @@ func TestInit(t *testing.T) {
 
 			assert.NoFileExists(t, filepath.Join(dir, config.DefaultDotGitDirName, ginternals.Head))
 			assert.FileExists(t, filepath.Join(dir, "target", config.DefaultDotGitDirName, ginternals.Head))
+		})
+	})
+	t.Run("--object-format", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("default should be sha1", func(t *testing.T) {
+			t.Parallel()
+
+			dir, cleanup := testhelper.TempDir(t)
+			t.Cleanup(cleanup)
+
+			err := initCmd(io.Discard,
+				&globalFlags{
+					env: env.NewFromKVList([]string{}),
+					C:   &testhelper.StringValue{Value: dir},
+				},
+				initCmdFlags{}, "")
+			require.NoError(t, err)
+
+			c, err := ini.LoadSources(ini.LoadOptions{}, filepath.Join(dir, ".git", "config"))
+			require.NoError(t, err)
+			v := c.Section("extensions").Key("objectformat").String()
+			require.Equal(t, "", v, "sha1 should be implied")
+		})
+
+		t.Run("should work with valid params", func(t *testing.T) {
+			t.Parallel()
+
+			dir, cleanup := testhelper.TempDir(t)
+			t.Cleanup(cleanup)
+
+			err := initCmd(io.Discard,
+				&globalFlags{
+					env: env.NewFromKVList([]string{}),
+					C:   &testhelper.StringValue{Value: dir},
+				},
+				initCmdFlags{
+					objectFormat: "sha256",
+				}, "")
+			require.NoError(t, err)
+
+			c, err := ini.LoadSources(ini.LoadOptions{}, filepath.Join(dir, ".git", "config"))
+			require.NoError(t, err)
+			v := c.Section("extensions").Key("objectformat").String()
+			require.Equal(t, "sha256", v)
+		})
+
+		t.Run("should fail with invalid hash algo", func(t *testing.T) {
+			t.Parallel()
+
+			dir, cleanup := testhelper.TempDir(t)
+			t.Cleanup(cleanup)
+
+			err := initCmd(io.Discard,
+				&globalFlags{
+					env: env.NewFromKVList([]string{}),
+					C:   &testhelper.StringValue{Value: dir},
+				},
+				initCmdFlags{
+					objectFormat: "md5",
+				}, "")
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "unknown hash algorithm")
+		})
+
+		t.Run("should fail with changing hash algo", func(t *testing.T) {
+			t.Parallel()
+
+			dir, cleanup := testhelper.TempDir(t)
+			t.Cleanup(cleanup)
+
+			err := initCmd(io.Discard,
+				&globalFlags{
+					env: env.NewFromKVList([]string{}),
+					C:   &testhelper.StringValue{Value: dir},
+				},
+				initCmdFlags{}, "")
+			require.NoError(t, err)
+
+			// Try again with sha256
+			err = initCmd(io.Discard,
+				&globalFlags{
+					env: env.NewFromKVList([]string{}),
+					C:   &testhelper.StringValue{Value: dir},
+				},
+				initCmdFlags{
+					objectFormat: "sha256",
+				}, "")
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "attempt to reinitialize repository with different hash")
 		})
 	})
 }

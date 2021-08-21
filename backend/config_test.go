@@ -15,6 +15,7 @@ import (
 	"github.com/Nivl/git-go/internal/testhelper/confutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 )
 
 func TestInit(t *testing.T) {
@@ -186,7 +187,9 @@ func TestInit(t *testing.T) {
 			require.NoError(t, b.Close())
 		})
 
-		require.NoError(t, b.InitWithSymlink(ginternals.Master, true))
+		require.NoError(t, b.InitWithOptions(ginternals.Master, backend.InitOptions{
+			CreateSymlink: true,
+		}))
 
 		gitfilePath := filepath.Join(dir, config.DefaultDotGitDirName)
 		require.FileExists(t, gitfilePath)
@@ -196,5 +199,114 @@ func TestInit(t *testing.T) {
 
 		expectedContent := "gitdir: " + filepath.Join(dir, "separate-dir")
 		require.Equal(t, expectedContent, string(data))
+	})
+
+	t.Run("should use sha256", func(t *testing.T) {
+		t.Parallel()
+
+		dir, cleanup := testhelper.TempDir(t)
+		t.Cleanup(cleanup)
+
+		cfg, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
+			WorkTreePath: filepath.Join(dir),
+			GitDirPath:   filepath.Join(dir, ".git"),
+		})
+		require.NoError(t, err)
+
+		b, err := backend.NewFS(cfg)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+
+		require.NoError(t, b.InitWithOptions(ginternals.Master, backend.InitOptions{
+			HashAlgorithm: "sha256",
+		}))
+
+		// Parse the config file to make sure the hash algo has been set
+		configpath := filepath.Join(dir, ".git", "config")
+		cfgFile, err := ini.Load(configpath)
+		require.NoError(t, err)
+		v := cfgFile.Section("extensions").Key("objectformat").String()
+		assert.Equal(t, "sha256", v)
+	})
+
+	t.Run("should fail with an invalid hash", func(t *testing.T) {
+		t.Parallel()
+
+		dir, cleanup := testhelper.TempDir(t)
+		t.Cleanup(cleanup)
+
+		cfg, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
+			WorkTreePath: filepath.Join(dir),
+			GitDirPath:   filepath.Join(dir, ".git"),
+		})
+		require.NoError(t, err)
+
+		b, err := backend.NewFS(cfg)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+
+		require.Error(t, b.InitWithOptions(ginternals.Master, backend.InitOptions{
+			HashAlgorithm: "md5",
+		}))
+	})
+
+	t.Run("should fail if already has a hash set to sha256", func(t *testing.T) {
+		t.Parallel()
+
+		dir, cleanup := testhelper.TempDir(t)
+		t.Cleanup(cleanup)
+
+		err := os.Mkdir(filepath.Join(dir, ".git"), 0o755)
+		require.NoError(t, err)
+		err = os.WriteFile(filepath.Join(dir, ".git", "config"), []byte("[extensions]\nobjectformat = sha256"), 0o644)
+		require.NoError(t, err)
+
+		cfg, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
+			WorkTreePath: filepath.Join(dir),
+			GitDirPath:   filepath.Join(dir, ".git"),
+		})
+		require.NoError(t, err)
+
+		b, err := backend.NewFS(cfg)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+
+		require.Error(t, b.InitWithOptions(ginternals.Master, backend.InitOptions{
+			HashAlgorithm: "sha1",
+		}))
+	})
+
+	t.Run("should fail if already has a hash set to sha1", func(t *testing.T) {
+		t.Parallel()
+
+		dir, cleanup := testhelper.TempDir(t)
+		t.Cleanup(cleanup)
+
+		err := os.Mkdir(filepath.Join(dir, ".git"), 0o755)
+		require.NoError(t, err)
+		err = os.WriteFile(filepath.Join(dir, ".git", "config"), []byte(""), 0o644)
+		require.NoError(t, err)
+
+		cfg, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
+			WorkTreePath: filepath.Join(dir),
+			GitDirPath:   filepath.Join(dir, ".git"),
+		})
+		require.NoError(t, err)
+
+		b, err := backend.NewFS(cfg)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+
+		require.Error(t, b.InitWithOptions(ginternals.Master, backend.InitOptions{
+			HashAlgorithm: "sha256",
+		}))
 	})
 }

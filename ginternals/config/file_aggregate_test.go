@@ -143,6 +143,75 @@ func TestGetters(t *testing.T) {
 	})
 }
 
+func TestUpdate(t *testing.T) {
+	t.Parallel()
+
+	// Setup a few config files, a global one and a local one
+	dirPath, cleanup := testhelper.TempDir(t)
+	t.Cleanup(cleanup)
+
+	err := os.Mkdir(filepath.Join(dirPath, "etc"), 0o755)
+	require.NoError(t, err)
+
+	localConfigPath := filepath.Join(dirPath, "local_config")
+	globalConfigPath := filepath.Join(dirPath, "etc", "gitconfig")
+
+	err = os.WriteFile(globalConfigPath, []byte(`
+	[core]
+		worktree = root_dir
+	`), 0o644)
+	require.NoError(t, err)
+
+	err = os.WriteFile(localConfigPath, []byte(`
+	[core]
+		worktree = local_dir
+		repositoryformatversion = 0
+		bare = false
+	[init]
+		defaultBranch = main
+	`), 0o644)
+	require.NoError(t, err)
+
+	// Agg contains the config of both files. The local data should
+	// override the global ones
+	agg, err := NewFileAggregate(env.NewFromKVList([]string{}),
+		&Config{
+			LocalConfig: localConfigPath,
+			FS:          afero.NewOsFs(),
+			Prefix:      dirPath,
+		})
+	require.NoError(t, err)
+
+	t.Run("IsBare", func(t *testing.T) {
+		t.Parallel()
+
+		// We make sure the default data are as we expect
+		v, found := agg.IsBare()
+		require.True(t, found, "IsBare should be found")
+		require.False(t, v, "IsBare should be false")
+
+		// Update should change the value of the config
+		agg.UpdateIsBare(true)
+		v, found = agg.IsBare()
+		assert.True(t, found, "IsBare should be found")
+		assert.True(t, v, "IsBare should be true")
+	})
+
+	t.Run("UpdateObjectformat", func(t *testing.T) {
+		t.Parallel()
+
+		// We make sure the default data are as we expect
+		_, found := agg.Objectformat()
+		require.False(t, found, "Objectformat should not be found")
+
+		// Update should change the value of the config
+		agg.UpdateObjectformat("sha256")
+		v, found := agg.Objectformat()
+		assert.True(t, found, "Objectformat should be found")
+		assert.Equal(t, "sha256", v, "Objectformat should be true")
+	})
+}
+
 func TestGetPaths(t *testing.T) {
 	t.Parallel()
 

@@ -27,6 +27,8 @@ type Backend struct {
 	refs *sync.Map
 
 	fs afero.Fs
+
+	hashAlgorithm string
 }
 
 // NewFS returns a new Backend object using the local FileSystem
@@ -40,6 +42,7 @@ func New(cfg *config.Config, fs afero.Fs) (*Backend, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not create LRU cache: %w", err)
 	}
+
 	b := &Backend{
 		config:       cfg,
 		fs:           fs,
@@ -48,6 +51,14 @@ func New(cfg *config.Config, fs afero.Fs) (*Backend, error) {
 		packfiles:    map[ginternals.Oid]*packfile.Pack{},
 		refs:         &sync.Map{},
 		looseObjects: &sync.Map{},
+	}
+
+	b.hashAlgorithm, _ = cfg.FromFile().Objectformat()
+	if b.hashAlgorithm == "" {
+		b.hashAlgorithm = "sha1"
+	}
+	if b.hashAlgorithm != "sha1" && b.hashAlgorithm != "sha256" {
+		return nil, ErrUnknownHashAlgo
 	}
 
 	// we load a few things in memory

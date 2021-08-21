@@ -47,6 +47,8 @@ type Config struct {
 	// files
 	fromFiles *FileAggregate
 
+	env *env.Env
+
 	// GitDirPath represents the path to the .git directory.
 	// Maps to $GIT_DIR if set.
 	// Defaults to finding a ".git" folder in the current directory,
@@ -86,6 +88,15 @@ type Config struct {
 // set in the gitconfig files
 func (cfg *Config) FromFile() *FileAggregate {
 	return cfg.fromFiles
+}
+
+// Reload reloads all of git's config file
+func (cfg *Config) Reload() (err error) {
+	cfg.fromFiles, err = NewFileAggregate(cfg.env, cfg)
+	if err != nil {
+		return fmt.Errorf("could not reload config files: %w", err)
+	}
+	return nil
 }
 
 // LoadConfigOptions represents all the params used to set the default
@@ -139,6 +150,7 @@ func LoadConfig(e *env.Env, p LoadConfigOptions) (*Config, error) {
 		SkipSystemConfig: SkipSystemConfig,
 		LocalConfig:      e.Get("GIT_CONFIG"),
 		Prefix:           e.Get("PREFIX"),
+		env:              e,
 	}
 
 	if err := setConfig(e, opts, p); err != nil {
@@ -282,6 +294,10 @@ func setConfig(e *env.Env, p *Config, opts LoadConfigOptions) error {
 	p.fromFiles, err = NewFileAggregate(e, p)
 	if err != nil {
 		return fmt.Errorf("could not load config files: %w", err)
+	}
+
+	if _, set := p.fromFiles.IsBare(); !set {
+		p.fromFiles.UpdateIsBare(opts.IsBare)
 	}
 
 	// Worktree rules:

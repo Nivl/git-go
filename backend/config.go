@@ -9,11 +9,29 @@ import (
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/config"
 	"github.com/spf13/afero"
-	"gopkg.in/ini.v1"
+)
+
+var (
+	// ErrHashAlgoMismatch is returned when a repo is using a hash algo that
+	// is different than the one provided.
+	ErrHashAlgoMismatch = errors.New("attempt to reinitialize repository with different hash")
+	// ErrUnknownHashAlgo is returned when an Hash Algo is not supported
+	ErrUnknownHashAlgo = errors.New("unknown hash algorithm")
 )
 
 func (b *Backend) loadConfig() error {
 	return nil
+}
+
+// InitOptions represents all the options that can be used to
+// create a repository
+type InitOptions struct {
+	// HashAlgorithm specify the hash algorithm to use
+	// default to sha1
+	HashAlgorithm string
+	// CreateSymlink will create a .git FILE that will contains a path
+	// to the repo.
+	CreateSymlink bool
 }
 
 // Init initializes a repository.
@@ -21,17 +39,39 @@ func (b *Backend) loadConfig() error {
 // Calling this method on an existing repository is safe. It will not
 // overwrite things that are already there, but will add what's missing.
 func (b *Backend) Init(branchName string) error {
-	return b.InitWithSymlink(branchName, false)
+	return b.InitWithOptions(branchName, InitOptions{})
 }
 
-// InitWithSymlink initializes a repository. If createSymlink is set
-// to true, a text file will be created that will point to the repo.
+// InitWithOptions initializes a repository using the provided options
 //
 // This method cannot be called concurrently with other methods.
 // Calling this method on an existing repository is safe. It will not
 // overwrite things that are already there, but will add what's missing.
-func (b *Backend) InitWithSymlink(branchName string, createSymlink bool) error {
-	if createSymlink {
+func (b *Backend) InitWithOptions(branchName string, opts InitOptions) error {
+	_, err := b.fs.Stat(b.config.LocalConfig)
+	confFileExist := !errors.Is(err, os.ErrNotExist)
+
+	// Make sure we got a valid hash algorithm
+	switch opts.HashAlgorithm {
+	case "":
+		opts.HashAlgorithm = b.hashAlgorithm
+	default:
+		currentHashAlg, found := b.config.FromFile().Objectformat()
+		// SHA1 doesn't get persisted in the config file, so we have
+		// to make some assumption. If a config file already exists
+		// and it doesn't have an object-format, then it's using SHA1
+		if !found && confFileExist {
+			currentHashAlg = "sha1"
+		}
+		if currentHashAlg != "" && opts.HashAlgorithm != currentHashAlg {
+			return ErrHashAlgoMismatch
+		}
+	}
+	if opts.HashAlgorithm != "sha1" && opts.HashAlgorithm != "sha256" {
+		return ErrUnknownHashAlgo
+	}
+
+	if opts.CreateSymlink {
 		linkSource := filepath.Join(b.config.WorkTreePath, config.DefaultDotGitDirName)
 		linkTarget := fmt.Sprintf("gitdir: %s", ginternals.DotGitPath(b.config))
 		err := afero.WriteFile(b.fs, linkSource, []byte(linkTarget), 0o644)
@@ -74,11 +114,13 @@ func (b *Backend) InitWithSymlink(branchName string, createSymlink bool) error {
 		}
 	}
 
-	// We only create a config file if we don't already have one
-	_, err := b.fs.Stat(b.config.LocalConfig)
-	if errors.Is(err, os.ErrNotExist) {
-		if err = b.setDefaultCfg(); err != nil {
-			return fmt.Errorf("could not set the default config: %w", err)
+	// We only update the config file if we don't already have one
+	if !confFileExist {
+		if opts.HashAlgorithm != "sha1" {
+			b.config.FromFile().UpdateObjectformat(opts.HashAlgorithm)
+		}
+		if err = b.config.FromFile().Save(); err != nil {
+			return fmt.Errorf("could not save the config: %w", err)
 		}
 	}
 
@@ -90,30 +132,4 @@ func (b *Backend) InitWithSymlink(branchName string, createSymlink bool) error {
 	}
 
 	return nil
-}
-
-// setDefaultCfg set and persists the default git configuration for
-// the repository
-func (b *Backend) setDefaultCfg() error {
-	cfg := ini.Empty()
-
-	// Core
-	core, err := cfg.NewSection(CfgCore)
-	if err != nil {
-		return fmt.Errorf("could not create core section: %w", err)
-	}
-	coreCfg := map[string]string{
-		CfgCoreFormatVersion:     "0",
-		CfgCoreFileMode:          "true",
-		CfgCoreBare:              "false",
-		CfgCoreLogAllRefUpdate:   "true",
-		CfgCoreIgnoreCase:        "true",
-		CfgCorePrecomposeUnicode: "true",
-	}
-	for k, v := range coreCfg {
-		if _, err := core.NewKey(k, v); err != nil {
-			return fmt.Errorf("could not set %s: %w", k, err)
-		}
-	}
-	return cfg.SaveTo(b.config.LocalConfig)
 }

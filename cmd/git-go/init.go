@@ -19,6 +19,7 @@ import (
 type initCmdFlags struct {
 	initialBranch  string
 	separateGitDir string
+	objectFormat   string
 	quiet          bool
 }
 
@@ -34,6 +35,7 @@ func newInitCmd(cfg *globalFlags) *cobra.Command {
 	cmd.Flags().StringVarP(&flags.initialBranch, "initial-branch", "b", "", "Use the specified name for the initial branch in the newly created repository. If not specified, fall back to the default name (currently master, but this is subject to change in the future; the name can be customized via the init.defaultBranch configuration variable).")
 	cmd.Flags().BoolVarP(&flags.quiet, "quiet", "q", false, "Only print error and warning messages; all other output will be suppressed.")
 	cmd.Flags().StringVar(&flags.separateGitDir, "separate-git-dir", "", "Instead of initializing the repository as a directory to either $GIT_DIR or ./.git/, create a text file there containing the path to the actual repository. This file acts as filesystem-agnostic Git symbolic link to the repository.\n\nIf this is reinitialization, the repository will be moved to the specified path.")
+	cmd.Flags().StringVar(&flags.objectFormat, "object-format", "sha1", "Specify the given object format (hash algorithm) for the repository. The valid values are sha1 and (if enabled) sha256. sha1 is the default.\n\nTHIS OPTION IS EXPERIMENTAL! SHA-256 support is experimental and still in an early stage. A SHA-256 repository will in general not be able to share work with \"regular\" SHA-1 repositories. It should be assumed that, e.g., Git internal file formats in relation to SHA-256 repositories may change in backwards-incompatible ways. Only use --object-format=sha256 for testing purposes.")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		directory := ""
@@ -47,6 +49,13 @@ func newInitCmd(cfg *globalFlags) *cobra.Command {
 }
 
 func initCmd(out io.Writer, cfg *globalFlags, flags initCmdFlags, optionalDirectory string) error {
+	// Validate object format
+	if flags.objectFormat == "" {
+		flags.objectFormat = "sha1"
+	}
+	if flags.objectFormat != "sha1" && flags.objectFormat != "sha256" {
+		return fmt.Errorf("unknown hash algorithm '%s'", flags.objectFormat)
+	}
 	// validate conflicting options
 	gitDir := cfg.GitDir
 	if flags.separateGitDir != "" {
@@ -88,6 +97,7 @@ func initCmd(out io.Writer, cfg *globalFlags, flags initCmdFlags, optionalDirect
 		IsBare:            cfg.Bare,
 		InitialBranchName: flags.initialBranch,
 		Symlink:           flags.separateGitDir != "",
+		ObjectFormat:      flags.objectFormat,
 	})
 	if err != nil {
 		return err

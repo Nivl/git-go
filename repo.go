@@ -51,6 +51,8 @@ type InitOptions struct {
 	// InitialBranchName represents the name of the default branch to use
 	// Defaults to master
 	InitialBranchName string
+	// ObjectFormat represents the hash algorithm to use.
+	ObjectFormat string
 	// IsBare represents whether a bare repository will be created or not
 	IsBare bool
 	// Symlink will create a .git text file in the working tree that points
@@ -161,7 +163,10 @@ func InitRepositoryWithParams(cfg *config.Config, opts InitOptions) (r *Reposito
 		}(r)
 	}
 
-	if err = r.dotGit.InitWithSymlink(branchName, opts.Symlink); err != nil {
+	if err = r.dotGit.InitWithOptions(branchName, backend.InitOptions{
+		CreateSymlink: opts.Symlink,
+		HashAlgorithm: opts.ObjectFormat,
+	}); err != nil {
 		return nil, err
 	}
 
