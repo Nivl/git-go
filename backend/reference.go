@@ -98,7 +98,7 @@ func (b *Backend) loadRefs() (err error) {
 		}
 		relpath, e := filepath.Rel(b.Path(), path)
 		if e != nil {
-			return e // the error message is already pretty descriptive
+			return e //nolint:wrapcheck // the error message is already pretty descriptive
 		}
 		// the name of the ref is its UNIX path
 		b.refs.Store(filepath.ToSlash(relpath), data)

@@ -28,7 +28,7 @@ func newHashObjectCmd() *cobra.Command {
 func hashObjectCmd(out io.Writer, filePath, typ string) error {
 	content, err := os.ReadFile(filePath)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not read file content: %w", err)
 	}
 
 	var o *object.Object
@@ -55,7 +55,7 @@ func hashObjectCmd(out io.Writer, filePath, typ string) error {
 
 	_, err = o.Compress()
 	if err != nil {
-		return err
+		return fmt.Errorf("could not compress file: %w", err)
 	}
 
 	fmt.Fprintln(out, o.ID().String())

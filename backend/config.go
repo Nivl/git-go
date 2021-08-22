@@ -111,9 +111,15 @@ func (b *Backend) setDefaultCfg() error {
 		CfgCorePrecomposeUnicode: "true",
 	}
 	for k, v := range coreCfg {
-		if _, err := core.NewKey(k, v); err != nil {
-			return fmt.Errorf("could not set %s: %w", k, err)
+		if _, e := core.NewKey(k, v); e != nil {
+			return fmt.Errorf("could not set %s: %w", k, e)
 		}
 	}
-	return cfg.SaveTo(b.config.LocalConfig)
+	// TODO(melvin): this should use the provided FS interface instead
+	// of using actual file system
+	err = cfg.SaveTo(b.config.LocalConfig)
+	if err != nil {
+		return fmt.Errorf("could not persist file: %w", err)
+	}
+	return nil
 }

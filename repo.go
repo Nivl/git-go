@@ -161,11 +161,7 @@ func InitRepositoryWithParams(cfg *config.Config, opts InitOptions) (r *Reposito
 		}(r)
 	}
 
-	if err = r.dotGit.InitWithSymlink(branchName, opts.Symlink); err != nil {
-		return nil, err
-	}
-
-	return r, err
+	return r, r.dotGit.InitWithSymlink(branchName, opts.Symlink)
 }
 
 // OpenOptions contains all the optional data used to open a
@@ -279,7 +275,7 @@ func (r *Repository) GetObject(oid ginternals.Oid) (*object.Object, error) {
 func (r *Repository) GetCommit(oid ginternals.Oid) (*object.Commit, error) {
 	o, err := r.dotGit.Object(oid)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not get object: %w", err)
 	}
 	return o.AsCommit()
 }
@@ -288,7 +284,7 @@ func (r *Repository) GetCommit(oid ginternals.Oid) (*object.Commit, error) {
 func (r *Repository) GetTree(oid ginternals.Oid) (*object.Tree, error) {
 	o, err := r.dotGit.Object(oid)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not get object: %w", err)
 	}
 	return o.AsTree()
 }
@@ -315,7 +311,7 @@ func (r *Repository) GetReference(name string) (*ginternals.Reference, error) {
 func (r *Repository) NewBlob(data []byte) (*object.Blob, error) {
 	o := object.New(object.TypeBlob, data)
 	if _, err := r.dotGit.WriteObject(o); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not write object: %w", err)
 	}
 	return object.NewBlob(o), nil
 }
