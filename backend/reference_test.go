@@ -85,6 +85,8 @@ func TestParsePackedRefs(t *testing.T) {
 	t.Parallel()
 
 	createRepo := func(t *testing.T) (dir string, cleanup func()) {
+		t.Helper()
+
 		dir, cleanup = testhelper.TempDir(t)
 
 		cfg := confutil.NewCommonConfig(t, dir)
