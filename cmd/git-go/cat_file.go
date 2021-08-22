@@ -112,7 +112,7 @@ func catFileCmd(out io.Writer, cfg *globalFlags, p catFileParams) (err error) {
 
 	o, err := r.GetObject(oid)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not get object %s: %w", oid.String(), err)
 	}
 
 	if p.typ != "" {

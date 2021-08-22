@@ -39,7 +39,7 @@ linters:
     - exhaustivestruct # Checks if all struct's fields are initialized || Hard to use productively due to many valid use cases going against the linter
     - funlen # Tool for detection of long functions || Hard to use productively due to many valid use cases going against the linter
     - gci # Gci control golang package import order and make it always deterministic || Conflicts with gofumpt
-    - gochecknoglobals # check that no global variables exist || Hard to use productively due to many valid use cases going against the linter
+    - gochecknoglobals # check that no global variables exist || Hard to use productively due to many valid use cases going against the linter || Recommend using locally
     - gocognit # Computes and checks the cognitive complexity of functions || Hard to use productively due to many valid use cases going against the linter
     - goconst # Finds repeated strings that could be replaced by a constant || Hard to use productively due to many valid use cases going against the linter
     - gocyclo # Computes and checks the cyclomatic complexity of functions || Too much of a pain, too arbitrary
@@ -59,7 +59,8 @@ linters:
     - paralleltest # detects missing usage of t.Parallel() method in your Go test || Too many false positives https://github.com/kunwardeep/paralleltest/issues/8
     - scopelint # Replaced by exportloopref
     - testpackage # linter that makes you use a separate _test package || Hard to use productively due to many valid use cases going against the linter
-    - wrapcheck # Checks that errors returned from external packages are wrapped || No reasons not to use this one, we should probably try it
+    - thelper # detects golang test helpers without t.Helper() call and checks the consistency of test helpers || No reasons not to use this one, we should probably try it
+    - wrapcheck # Checks that errors returned from external packages are wrapped || Hard to use productively due to many valid use cases going against the linter || recommend using localy
     - wsl # Forces you to use empty lines || Too opinionated
 
 linters-settings:
@@ -86,7 +87,7 @@ linters-settings:
       - opinionated
 
     disabled-checks:
-      - sloppyReassign # conflicts with no shadow
+      - sloppyReassign # conflicts with no shadow || Recommend using locally
       - emptyFallthrough # we use fallthrough to force a case to go to default while being explicit
       - octalLiteral # we use raw octal everywhere
       - hugeParam # disabled because we pass Option objects by copy

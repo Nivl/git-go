@@ -489,13 +489,13 @@ func (pck *Pack) Close() error {
 	defer pck.mu.Unlock()
 
 	// To avoid leaks we try to close everything BEFORE cheking for errors
-	packErr := pck.r.Close()      //nolint:ifshort // we want to close more things before checking for the error
-	idxErr := pck.idxFile.Close() //nolint:ifshort // we want to close more things before checking for the error
+	packErr := pck.r.Close()      //nolint:ifshort,nonolint // we want to close more things before checking for the error. Also, nonolint returns a false positive
+	idxErr := pck.idxFile.Close() //nolint:ifshort,nonolint // we want to close more things before checking for the error. Also, nonolint returns a false positive
 	if packErr != nil {
-		return packErr
+		return fmt.Errorf("could not close packfile : %w", packErr)
 	}
 	if idxErr != nil {
-		return idxErr
+		return fmt.Errorf("could not close packfile index : %w", idxErr)
 	}
 	return nil
 }

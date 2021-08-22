@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"errors"
+	"fmt"
 )
 
 const (
@@ -68,7 +69,7 @@ func NewOidFromChars(id []byte) (Oid, error) {
 func NewOidFromStr(id string) (Oid, error) {
 	bytes, err := hex.DecodeString(id)
 	if err != nil {
-		return NullOid, err
+		return NullOid, fmt.Errorf("could not decode string: %w", err)
 	}
 
 	if len(bytes) != 20 {

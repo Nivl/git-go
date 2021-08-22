@@ -3,6 +3,7 @@ package exe
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os/exec"
 	"strings"
@@ -24,12 +25,12 @@ func execCmd(cmd *exec.Cmd) (stdout, stderr string, err error) {
 	// we pipe stderr to get the error message if something goes wrong
 	stderrReader, err := cmd.StderrPipe()
 	if err != nil {
-		return "", "", err
+		return "", "", fmt.Errorf("could not pipe stderr: %w", err)
 	}
 	// we pipe stdout to get the output of the script
 	stdoutReader, err := cmd.StdoutPipe()
 	if err != nil {
-		return "", "", err
+		return "", "", fmt.Errorf("could not pipe stddout: %w", err)
 	}
 
 	// We start the command
@@ -40,12 +41,12 @@ func execCmd(cmd *exec.Cmd) (stdout, stderr string, err error) {
 	// we read all stderr to get the error message (if any)
 	stderrByte, err := io.ReadAll(stderrReader)
 	if err != nil {
-		return "", "", err
+		return "", "", fmt.Errorf("could not read stderr: %w", err)
 	}
 	// we read all stdout to get the output of the script (if any)
 	stdoutByte, err := io.ReadAll(stdoutReader)
 	if err != nil {
-		return "", "", err
+		return "", "", fmt.Errorf("could not read stdout: %w", err)
 	}
 
 	stdout = strings.TrimSuffix(string(stdoutByte), "\n")

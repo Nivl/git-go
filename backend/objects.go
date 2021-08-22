@@ -179,7 +179,7 @@ func (b *Backend) objectFromPackfile(oid ginternals.Oid) (*object.Object, error)
 		if errors.Is(err, ginternals.ErrObjectNotFound) {
 			continue
 		}
-		return nil, err
+		return nil, fmt.Errorf("could not get object %s: %w", oid.String(), err)
 	}
 	return nil, ginternals.ErrObjectNotFound
 }
