@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/githash"
 	"github.com/Nivl/git-go/internal/readutil"
 )
 
@@ -58,17 +58,19 @@ type Tree struct {
 	rawObject *Object
 	// we don't use pointers to make sure entries are immutable
 	entries []TreeEntry
+
+	hash githash.Hash
 }
 
 // TreeEntry represents an entry inside a git tree
 type TreeEntry struct {
 	Path string
-	ID   ginternals.Oid
+	ID   githash.Oid
 	Mode TreeObjectMode
 }
 
 // NewTree returns a new tree with the given entries
-func NewTree(entries []TreeEntry) *Tree {
+func NewTree(hash githash.Hash, entries []TreeEntry) *Tree {
 	t := &Tree{
 		entries: entries,
 	}
@@ -119,7 +121,7 @@ func NewTreeFromObject(o *Object) (*Tree, error) {
 			if offset+20 > len(objData) {
 				return nil, fmt.Errorf("not enough space to retrieve the ID of entry %d: %w", i, ErrTreeInvalid)
 			}
-			entry.ID, err = ginternals.NewOidFromHex(objData[offset : offset+20])
+			entry.ID, err = o.hash.ConvertFromBytes(objData[offset : offset+20])
 			if err != nil {
 				// should never fail since any value is valid as long as it
 				// is 20 chars
@@ -136,6 +138,7 @@ func NewTreeFromObject(o *Object) (*Tree, error) {
 	return &Tree{
 		rawObject: o,
 		entries:   entries,
+		hash:      o.hash,
 	}, nil
 }
 
@@ -149,7 +152,7 @@ func (t *Tree) Entries() []TreeEntry {
 // ID returns the object's ID
 // ginternals.NullOid is returned if the object doesn't have
 // an ID yet
-func (t *Tree) ID() ginternals.Oid {
+func (t *Tree) ID() githash.Oid {
 	return t.rawObject.ID()
 }
 
@@ -175,5 +178,5 @@ func (t *Tree) ToObject() *Object {
 		buf.Write(e.ID.Bytes())
 	}
 
-	return New(TypeTree, buf.Bytes())
+	return New(t.hash, TypeTree, buf.Bytes())
 }

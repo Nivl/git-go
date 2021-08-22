@@ -8,6 +8,7 @@ import (
 
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/config"
+	"github.com/Nivl/git-go/ginternals/githash"
 	"github.com/Nivl/git-go/ginternals/packfile"
 	"github.com/Nivl/git-go/internal/cache"
 	"github.com/Nivl/git-go/internal/syncutil"
@@ -22,13 +23,13 @@ type Backend struct {
 	cache        *cache.LRU
 	looseObjects *sync.Map
 
-	packfiles map[ginternals.Oid]*packfile.Pack
+	packfiles map[githash.Oid]*packfile.Pack
 
 	refs *sync.Map
 
 	fs afero.Fs
 
-	hashAlgorithm string
+	hash githash.Hash
 }
 
 // NewFS returns a new Backend object using the local FileSystem
@@ -48,16 +49,21 @@ func New(cfg *config.Config, fs afero.Fs) (*Backend, error) {
 		fs:           fs,
 		cache:        c,
 		objectMu:     syncutil.NewNamedMutex(101),
-		packfiles:    map[ginternals.Oid]*packfile.Pack{},
+		packfiles:    map[githash.Oid]*packfile.Pack{},
 		refs:         &sync.Map{},
 		looseObjects: &sync.Map{},
 	}
 
-	b.hashAlgorithm, _ = cfg.FromFile().Objectformat()
-	if b.hashAlgorithm == "" {
-		b.hashAlgorithm = "sha1"
+	hashAlgorithm, _ := cfg.FromFile().Objectformat()
+	if hashAlgorithm == "" {
+		hashAlgorithm = "sha1"
 	}
-	if b.hashAlgorithm != "sha1" && b.hashAlgorithm != "sha256" {
+	switch hashAlgorithm {
+	case "sha1":
+		b.hash = githash.NewSHA1()
+	case "sha256":
+		b.hash = githash.NewSHA256()
+	default:
 		return nil, ErrUnknownHashAlgo
 	}
 
@@ -117,7 +123,7 @@ func (b *Backend) Close() (err error) {
 			err = fmt.Errorf("could not close packfile %s: %w", oid.String(), err)
 		}
 	}
-	b.packfiles = map[ginternals.Oid]*packfile.Pack{}
+	b.packfiles = map[githash.Oid]*packfile.Pack{}
 	return err
 }
 

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/githash"
 	"github.com/Nivl/git-go/internal/readutil"
 )
 
@@ -28,14 +28,16 @@ type Tag struct {
 
 	gpgSig string
 
-	id     ginternals.Oid
-	target ginternals.Oid
+	id     githash.Oid
+	target githash.Oid
 
 	typ Type
+
+	hash githash.Hash
 }
 
 // NewTag creates a new Tag object
-func NewTag(p *TagParams) *Tag {
+func NewTag(hash githash.Hash, p *TagParams) *Tag {
 	return &Tag{
 		target:  p.Target.ID(),
 		typ:     p.Target.Type(),
@@ -43,6 +45,7 @@ func NewTag(p *TagParams) *Tag {
 		tagger:  p.Tagger,
 		message: p.Message,
 		gpgSig:  p.OptGPGSig,
+		hash:    hash,
 	}
 }
 
@@ -69,6 +72,7 @@ func NewTagFromObject(o *Object) (*Tag, error) {
 	tag := &Tag{
 		id:        o.ID(),
 		rawObject: o,
+		hash:      o.hash,
 	}
 	offset := 0
 	objData := o.Bytes()
@@ -95,7 +99,7 @@ func NewTagFromObject(o *Object) (*Tag, error) {
 		kv := bytes.SplitN(line, []byte{' '}, 2)
 		switch string(kv[0]) {
 		case "object":
-			tag.target, err = ginternals.NewOidFromChars(kv[1])
+			tag.target, err = o.hash.ConvertFromChars(kv[1])
 			if err != nil {
 				return nil, fmt.Errorf("could not parse target id %#v: %w", kv[1], err)
 			}
@@ -135,12 +139,12 @@ func NewTagFromObject(o *Object) (*Tag, error) {
 }
 
 // ID returns the SHA of the tag object
-func (t *Tag) ID() ginternals.Oid {
+func (t *Tag) ID() githash.Oid {
 	return t.id
 }
 
 // Target returns the ID of the object targeted by the tag
-func (t *Tag) Target() ginternals.Oid {
+func (t *Tag) Target() githash.Oid {
 	return t.target
 }
 
@@ -203,6 +207,6 @@ func (t *Tag) ToObject() *Object {
 	buf.WriteRune('\n')
 
 	buf.WriteString(t.message)
-	t.rawObject = New(TypeTag, buf.Bytes())
+	t.rawObject = New(t.hash, TypeTag, buf.Bytes())
 	return t.rawObject
 }

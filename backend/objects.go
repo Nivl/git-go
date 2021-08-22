@@ -11,6 +11,7 @@ import (
 	"strconv"
 
 	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/githash"
 	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/Nivl/git-go/ginternals/packfile"
 	"github.com/Nivl/git-go/internal/errutil"
@@ -20,15 +21,15 @@ import (
 
 // Object returns the object that has given oid
 // This method can be called concurrently
-func (b *Backend) Object(oid ginternals.Oid) (*object.Object, error) {
-	key := oid[:]
+func (b *Backend) Object(oid githash.Oid) (*object.Object, error) {
+	key := oid.Bytes()
 	b.objectMu.Lock(key)
 	defer b.objectMu.Unlock(key)
 
 	return b.objectUnsafe(oid)
 }
 
-func (b *Backend) objectUnsafe(oid ginternals.Oid) (*object.Object, error) {
+func (b *Backend) objectUnsafe(oid githash.Oid) (*object.Object, error) {
 	if b.cache != nil {
 		if cachedO, found := b.cache.Get(oid); found {
 			if o, valid := cachedO.(*object.Object); valid {
@@ -62,7 +63,7 @@ func (b *Backend) objectUnsafe(oid ginternals.Oid) (*object.Object, error) {
 // space, then an ascii encoded length of the object, then a null
 // character, then the body of the object
 // TODO(melvin): Move to ginternals (NewFromLoose or something)
-func (b *Backend) looseObject(oid ginternals.Oid) (o *object.Object, err error) {
+func (b *Backend) looseObject(oid githash.Oid) (o *object.Object, err error) {
 	if _, exists := b.looseObjects.Load(oid); !exists {
 		return nil, os.ErrNotExist
 	}
@@ -156,7 +157,7 @@ func (b *Backend) loadPacks() error {
 		}
 
 		packFilePath := filepath.Join(p, info.Name())
-		pack, err := packfile.NewFromFile(b.fs, packFilePath)
+		pack, err := packfile.NewFromFile(b.fs, b.hash, packFilePath)
 		if err != nil {
 			return fmt.Errorf("could not parse packfile at %s: %w", packFilePath, err)
 		}
@@ -167,7 +168,7 @@ func (b *Backend) loadPacks() error {
 }
 
 // objectFromPackfile looks for an object in the packfiles
-func (b *Backend) objectFromPackfile(oid ginternals.Oid) (*object.Object, error) {
+func (b *Backend) objectFromPackfile(oid githash.Oid) (*object.Object, error) {
 	// TODO(melvin): parse MIDX files to speed up the process
 	// MIDX file: https://git-scm.com/docs/multi-pack-index
 	// https://github.com/Nivl/git-go/issues/13
@@ -186,15 +187,15 @@ func (b *Backend) objectFromPackfile(oid ginternals.Oid) (*object.Object, error)
 
 // HasObject returns whether an object exists in the odb
 // This method can be called concurrently
-func (b *Backend) HasObject(oid ginternals.Oid) (bool, error) {
-	key := oid[:]
+func (b *Backend) HasObject(oid githash.Oid) (bool, error) {
+	key := oid.Bytes()
 	b.objectMu.Lock(key)
 	defer b.objectMu.Unlock(key)
 
 	return b.hasObjectUnsafe(oid)
 }
 
-func (b *Backend) hasObjectUnsafe(oid ginternals.Oid) (bool, error) {
+func (b *Backend) hasObjectUnsafe(oid githash.Oid) (bool, error) {
 	_, err := b.objectUnsafe(oid)
 	if err == nil {
 		return true, nil
@@ -207,20 +208,20 @@ func (b *Backend) hasObjectUnsafe(oid ginternals.Oid) (bool, error) {
 
 // WriteObject adds an object to the odb
 // This method can be called concurrently
-func (b *Backend) WriteObject(o *object.Object) (ginternals.Oid, error) {
+func (b *Backend) WriteObject(o *object.Object) (githash.Oid, error) {
 	data, err := o.Compress()
 	if err != nil {
-		return ginternals.NullOid, fmt.Errorf("could not compress object: %w", err)
+		return b.hash.NullOid(), fmt.Errorf("could not compress object: %w", err)
 	}
 
 	oid := o.ID()
-	b.objectMu.Lock(oid[:])
-	defer b.objectMu.Unlock(oid[:])
+	b.objectMu.Lock(oid.Bytes())
+	defer b.objectMu.Unlock(oid.Bytes())
 
 	// Make sure the object doesn't already exist anywhere
 	found, err := b.hasObjectUnsafe(o.ID())
 	if err != nil {
-		return ginternals.NullOid, fmt.Errorf("could not check if object (%s) already exists: %w", o.ID().String(), err)
+		return b.hash.NullOid(), fmt.Errorf("could not check if object (%s) already exists: %w", o.ID().String(), err)
 	}
 	if found {
 		return o.ID(), nil
@@ -233,12 +234,12 @@ func (b *Backend) WriteObject(o *object.Object) (ginternals.Oid, error) {
 	// We need to make sure the dest dir exists
 	dest := filepath.Dir(p)
 	if err = b.fs.MkdirAll(dest, 0o755); err != nil {
-		return ginternals.NullOid, fmt.Errorf("could not create the destination directory %s: %w", dest, err)
+		return b.hash.NullOid(), fmt.Errorf("could not create the destination directory %s: %w", dest, err)
 	}
 
 	// We use 444 because git object are read-only
 	if err = afero.WriteFile(b.fs, p, data, 0o444); err != nil {
-		return ginternals.NullOid, fmt.Errorf("could not persist object %s at path %s: %w", sha, p, err)
+		return b.hash.NullOid(), fmt.Errorf("could not persist object %s at path %s: %w", sha, p, err)
 	}
 
 	// add the object to the cache
@@ -295,7 +296,7 @@ func (b *Backend) loadLooseObject() error {
 		}
 
 		sha := prefix + info.Name()
-		oid, err := ginternals.NewOidFromStr(sha)
+		oid, err := b.hash.ConvertFromString(sha)
 		if err != nil {
 			return fmt.Errorf("could not get oid from %s: %w", sha, err)
 		}
@@ -320,7 +321,7 @@ func (b *Backend) isLooseObjectDir(name string) bool {
 // packfiles
 func (b *Backend) WalkLooseObjectIDs(f packfile.OidWalkFunc) (err error) {
 	b.looseObjects.Range(func(key, value interface{}) bool {
-		err = f(key.(ginternals.Oid))
+		err = f(key.(githash.Oid))
 		if err != nil {
 			if err == packfile.OidWalkStop { //nolint:errorlint,goerr113 // it's a fake error so no need to use Error.Is()
 				err = nil

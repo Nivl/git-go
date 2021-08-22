@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/Nivl/git-go/ginternals/githash"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -153,7 +154,8 @@ func TestResolveReference(t *testing.T) {
 				return nil, errors.New("unexpected")
 			}
 		}
-		ref, err := ResolveReference("refs/heads/master", finder)
+		hash := githash.NewSHA1()
+		ref, err := ResolveReference(hash, "refs/heads/master", finder)
 		require.NoError(t, err)
 		assert.Equal(t, OidReference, ref.Type())
 		assert.Empty(t, ref.SymbolicTarget())
@@ -173,7 +175,8 @@ func TestResolveReference(t *testing.T) {
 				return nil, errors.New("unexpected")
 			}
 		}
-		ref, err := ResolveReference("HEAD", finder)
+		hash := githash.NewSHA1()
+		ref, err := ResolveReference(hash, "HEAD", finder)
 		require.NoError(t, err)
 		assert.Equal(t, SymbolicReference, ref.Type())
 		assert.Equal(t, "refs/heads/master", ref.SymbolicTarget())
@@ -193,7 +196,8 @@ func TestResolveReference(t *testing.T) {
 				return nil, errors.New("unexpected")
 			}
 		}
-		ref, err := ResolveReference("HEAD", finder)
+		hash := githash.NewSHA1()
+		ref, err := ResolveReference(hash, "HEAD", finder)
 		require.Error(t, err)
 		assert.Nil(t, ref)
 		assert.True(t, errors.Is(err, ErrRefInvalid), "invalid error returned")
@@ -210,7 +214,8 @@ func TestResolveReference(t *testing.T) {
 				return nil, errors.New("unexpected")
 			}
 		}
-		ref, err := ResolveReference("HEAD", finder)
+		hash := githash.NewSHA1()
+		ref, err := ResolveReference(hash, "HEAD", finder)
 		require.Error(t, err)
 		assert.Nil(t, ref)
 		assert.True(t, errors.Is(err, ErrRefNameInvalid), "invalid error returned")
@@ -227,7 +232,8 @@ func TestResolveReference(t *testing.T) {
 				return nil, errors.New("unexpected")
 			}
 		}
-		ref, err := ResolveReference("HEAD", finder)
+		hash := githash.NewSHA1()
+		ref, err := ResolveReference(hash, "HEAD", finder)
 		require.Error(t, err)
 		assert.Nil(t, ref)
 		assert.True(t, errors.Is(err, ErrRefInvalid), "invalid error returned")
@@ -244,7 +250,8 @@ func TestResolveReference(t *testing.T) {
 				return nil, errors.New("unexpected")
 			}
 		}
-		ref, err := ResolveReference("HEAD", finder)
+		hash := githash.NewSHA1()
+		ref, err := ResolveReference(hash, "HEAD", finder)
 		require.Error(t, err)
 		assert.Nil(t, ref)
 		assert.True(t, errors.Is(err, ErrRefInvalid), "invalid error returned")
@@ -257,7 +264,8 @@ func TestResolveReference(t *testing.T) {
 		finder := func(name string) ([]byte, error) {
 			return nil, expectedErr
 		}
-		ref, err := ResolveReference("HEAD", finder)
+		hash := githash.NewSHA1()
+		ref, err := ResolveReference(hash, "HEAD", finder)
 		require.Error(t, err)
 		assert.Nil(t, ref)
 		assert.True(t, errors.Is(err, expectedErr), "invalid error returned")
@@ -267,7 +275,8 @@ func TestResolveReference(t *testing.T) {
 func TestNewReference(t *testing.T) {
 	t.Parallel()
 
-	oid, err := NewOidFromStr("0eaf966ff79d8f61958aaefe163620d952606516")
+	hash := githash.NewSHA1()
+	oid, err := hash.ConvertFromString("0eaf966ff79d8f61958aaefe163620d952606516")
 	require.NoError(t, err)
 
 	ref := NewReference("HEAD", oid)
@@ -280,9 +289,10 @@ func TestNewReference(t *testing.T) {
 func TestNewSymbolicReference(t *testing.T) {
 	t.Parallel()
 
+	hash := githash.NewSHA1()
 	ref := NewSymbolicReference("HEAD", "refs/heads/master")
 	assert.Equal(t, SymbolicReference, ref.Type())
 	assert.Equal(t, "HEAD", ref.Name())
-	assert.Equal(t, NullOid, ref.Target())
+	assert.Equal(t, hash.NullOid(), ref.Target())
 	assert.Equal(t, "refs/heads/master", ref.SymbolicTarget())
 }

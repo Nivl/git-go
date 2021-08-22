@@ -7,6 +7,7 @@ import (
 
 	"github.com/Nivl/git-go"
 	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/githash"
 	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/Nivl/git-go/internal/testhelper"
 	"github.com/stretchr/testify/assert"
@@ -239,7 +240,7 @@ func TestNewCommit(t *testing.T) {
 		require.NoError(t, err)
 
 		ci := object.NewCommit(treeOID, object.NewSignature("author", "email"), &object.CommitOptions{
-			ParentsID: []ginternals.Oid{parentID},
+			ParentsID: []githash.Oid{parentID},
 			Message:   "message",
 			GPGSig:    "gpgsig",
 			Committer: object.NewSignature("committer", "commiter@domain.tld"),
@@ -249,7 +250,7 @@ func TestNewCommit(t *testing.T) {
 		assert.Equal(t, "gpgsig", ci.GPGSig())
 		assert.Equal(t, "committer", ci.Committer().Name)
 		assert.Equal(t, "author", ci.Author().Name)
-		assert.Equal(t, []ginternals.Oid{parentID}, ci.ParentIDs())
+		assert.Equal(t, []githash.Oid{parentID}, ci.ParentIDs())
 	})
 
 	t.Run("NewCommit with no committer should use the author", func(t *testing.T) {
@@ -350,7 +351,7 @@ func TestCommitToObject(t *testing.T) {
 		require.NoError(t, err)
 
 		ci := object.NewCommit(treeOID, object.NewSignature("author", "email"), &object.CommitOptions{
-			ParentsID: []ginternals.Oid{parentID},
+			ParentsID: []githash.Oid{parentID},
 			Message:   "message",
 			GPGSig:    "-----BEGIN PGP SIGNATURE-----\n\ndata\n-----END PGP SIGNATURE-----",
 			Committer: object.NewSignature("committer", "commiter@domain.tld"),

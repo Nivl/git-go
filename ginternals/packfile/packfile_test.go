@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/githash"
 	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/Nivl/git-go/ginternals/packfile"
 	"github.com/Nivl/git-go/internal/testhelper"
@@ -27,7 +28,8 @@ func TestNewFromFile(t *testing.T) {
 		cfg := confutil.NewCommonConfig(t, repoPath)
 		packFilePath := ginternals.PackfilePath(cfg, packFileName)
 
-		pack, err := packfile.NewFromFile(afero.NewOsFs(), packFilePath)
+		hash := githash.NewSHA1()
+		pack, err := packfile.NewFromFile(afero.NewOsFs(), hash, packFilePath)
 		require.NoError(t, err)
 		assert.NotNil(t, pack)
 		t.Cleanup(func() {
@@ -46,7 +48,8 @@ func TestNewFromFile(t *testing.T) {
 		cfg := confutil.NewCommonConfig(t, repoPath)
 		packFilePath := ginternals.PackfilePath(cfg, packFileName)
 
-		pack, err := packfile.NewFromFile(afero.NewOsFs(), packFilePath)
+		hash := githash.NewSHA1()
+		pack, err := packfile.NewFromFile(afero.NewOsFs(), hash, packFilePath)
 		require.Error(t, err)
 		assert.True(t, errors.Is(err, packfile.ErrInvalidMagic))
 		assert.Nil(t, pack)
@@ -66,7 +69,8 @@ func TestGetObject(t *testing.T) {
 		cfg := confutil.NewCommonConfig(t, repoPath)
 		packFilePath := ginternals.PackfilePath(cfg, packFileName)
 
-		pack, err := packfile.NewFromFile(afero.NewOsFs(), packFilePath)
+		hash := githash.NewSHA1()
+		pack, err := packfile.NewFromFile(afero.NewOsFs(), hash, packFilePath)
 		require.NoError(t, err)
 		assert.NotNil(t, pack)
 		t.Cleanup(func() {
@@ -75,7 +79,7 @@ func TestGetObject(t *testing.T) {
 
 		// TODO(melvin): Test multiple parents
 		t.Run("commit", func(t *testing.T) {
-			commitOid, err := ginternals.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
+			commitOid, err := hash.ConvertFromString("1dcdadc2a420225783794fbffd51e2e137a69646")
 			require.NoError(t, err)
 			o, err := pack.GetObject(commitOid)
 			require.NoError(t, err)
@@ -87,7 +91,7 @@ func TestGetObject(t *testing.T) {
 			require.NotZero(t, commit.Committer())
 
 			require.Len(t, commit.ParentIDs(), 1)
-			parentOid, err := ginternals.NewOidFromStr("f96f63e52cb8862b2c2d1a8b868229259c57854e")
+			parentOid, err := hash.ConvertFromString("f96f63e52cb8862b2c2d1a8b868229259c57854e")
 			require.NoError(t, err)
 			assert.Equal(t, parentOid, commit.ParentIDs()[0])
 
@@ -95,13 +99,13 @@ func TestGetObject(t *testing.T) {
 			assert.Equal(t, "Melvin Laplanche", commit.Author().Name)
 			assert.Equal(t, "Melvin Laplanche", commit.Committer().Name)
 
-			treeOid, err := ginternals.NewOidFromStr("c799e9129faae8d358e4b6de7813d6f970607893")
+			treeOid, err := hash.ConvertFromString("c799e9129faae8d358e4b6de7813d6f970607893")
 			require.NoError(t, err)
 			assert.Equal(t, treeOid, commit.TreeID())
 		})
 
 		t.Run("blob", func(t *testing.T) {
-			blobOid, err := ginternals.NewOidFromStr("3f2f87160d5b4217125264310c22bcdad5b0d8bb")
+			blobOid, err := hash.ConvertFromString("3f2f87160d5b4217125264310c22bcdad5b0d8bb")
 			require.NoError(t, err)
 			o, err := pack.GetObject(blobOid)
 			require.NoError(t, err)
@@ -114,7 +118,7 @@ func TestGetObject(t *testing.T) {
 		})
 
 		t.Run("tree", func(t *testing.T) {
-			treeOid, err := ginternals.NewOidFromStr("c799e9129faae8d358e4b6de7813d6f970607893")
+			treeOid, err := hash.ConvertFromString("c799e9129faae8d358e4b6de7813d6f970607893")
 			require.NoError(t, err)
 			o, err := pack.GetObject(treeOid)
 			require.NoError(t, err)
@@ -126,7 +130,7 @@ func TestGetObject(t *testing.T) {
 			require.Len(t, tree.Entries(), 18)
 
 			// check a random entry
-			entryOid, err := ginternals.NewOidFromStr("215559fe5053786726a19571fe0fd3d76c7fcfcd")
+			entryOid, err := hash.ConvertFromString("215559fe5053786726a19571fe0fd3d76c7fcfcd")
 			require.NoError(t, err)
 			entry := object.TreeEntry{
 				Mode: 0o100644,
@@ -157,7 +161,8 @@ func TestObjectCount(t *testing.T) {
 		cfg := confutil.NewCommonConfig(t, repoPath)
 		packFilePath := ginternals.PackfilePath(cfg, packFileName)
 
-		pack, err := packfile.NewFromFile(afero.NewOsFs(), packFilePath)
+		hash := githash.NewSHA1()
+		pack, err := packfile.NewFromFile(afero.NewOsFs(), hash, packFilePath)
 		require.NoError(t, err)
 		assert.NotNil(t, pack)
 		t.Cleanup(func() {
@@ -181,7 +186,8 @@ func TestWalkOids(t *testing.T) {
 	cfg := confutil.NewCommonConfig(t, repoPath)
 	packFilePath := ginternals.PackfilePath(cfg, packFileName)
 
-	pack, err := packfile.NewFromFile(afero.NewOsFs(), packFilePath)
+	hash := githash.NewSHA1()
+	pack, err := packfile.NewFromFile(afero.NewOsFs(), hash, packFilePath)
 	require.NoError(t, err)
 	assert.NotNil(t, pack)
 	t.Cleanup(func() {
@@ -192,7 +198,7 @@ func TestWalkOids(t *testing.T) {
 		t.Parallel()
 
 		totalObject := 0
-		err := pack.WalkOids(func(oid ginternals.Oid) error {
+		err := pack.WalkOids(func(oid githash.Oid) error {
 			totalObject++
 			return nil
 		})
@@ -204,7 +210,7 @@ func TestWalkOids(t *testing.T) {
 		t.Parallel()
 
 		totalObject := 0
-		err := pack.WalkOids(func(oid ginternals.Oid) error {
+		err := pack.WalkOids(func(oid githash.Oid) error {
 			if totalObject == 4 {
 				return packfile.OidWalkStop
 			}
@@ -220,7 +226,7 @@ func TestWalkOids(t *testing.T) {
 
 		someErr := errors.New("some error")
 		totalObject := 0
-		err := pack.WalkOids(func(oid ginternals.Oid) error {
+		err := pack.WalkOids(func(oid githash.Oid) error {
 			if totalObject == 4 {
 				return someErr
 			}

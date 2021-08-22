@@ -9,6 +9,7 @@ import (
 	"github.com/Nivl/git-go/backend"
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/config"
+	"github.com/Nivl/git-go/ginternals/githash"
 	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/spf13/afero"
 )
@@ -276,12 +277,12 @@ func (r *Repository) IsBare() bool {
 }
 
 // GetObject returns the object matching the given ID
-func (r *Repository) GetObject(oid ginternals.Oid) (*object.Object, error) {
+func (r *Repository) GetObject(oid githash.Oid) (*object.Object, error) {
 	return r.dotGit.Object(oid)
 }
 
 // GetCommit returns the commit matching the given SHA
-func (r *Repository) GetCommit(oid ginternals.Oid) (*object.Commit, error) {
+func (r *Repository) GetCommit(oid githash.Oid) (*object.Commit, error) {
 	o, err := r.dotGit.Object(oid)
 	if err != nil {
 		return nil, err
@@ -290,7 +291,7 @@ func (r *Repository) GetCommit(oid ginternals.Oid) (*object.Commit, error) {
 }
 
 // GetTree returns the tree matching the given SHA
-func (r *Repository) GetTree(oid ginternals.Oid) (*object.Tree, error) {
+func (r *Repository) GetTree(oid githash.Oid) (*object.Tree, error) {
 	o, err := r.dotGit.Object(oid)
 	if err != nil {
 		return nil, err
@@ -401,7 +402,7 @@ func (r *Repository) NewTag(p *object.TagParams) (*object.Tag, error) {
 }
 
 // NewLightweightTag creates, stores, and returns a lightweight tag
-func (r *Repository) NewLightweightTag(tag string, targetID ginternals.Oid) (*ginternals.Reference, error) {
+func (r *Repository) NewLightweightTag(tag string, targetID githash.Oid) (*ginternals.Reference, error) {
 	// let's make sure the object exists
 	found, err := r.dotGit.HasObject(targetID)
 	if err != nil {

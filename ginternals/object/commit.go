@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/githash"
 	"github.com/Nivl/git-go/internal/readutil"
 )
 
@@ -118,7 +118,7 @@ type CommitOptions struct {
 	// Committer represent the person creating the commit.
 	// If not provided, the author will be used as committer
 	Committer Signature
-	ParentsID []ginternals.Oid
+	ParentsID []githash.Oid
 }
 
 // Commit represents a commit object
@@ -131,13 +131,15 @@ type Commit struct {
 	gpgSig  string
 	message string
 
-	parentIDs []ginternals.Oid
-	treeID    ginternals.Oid
+	parentIDs []githash.Oid
+	treeID    githash.Oid
+
+	hash githash.Hash
 }
 
 // NewCommit creates a new Commit object
 // Any provided Oids won't be check
-func NewCommit(treeID ginternals.Oid, author Signature, opts *CommitOptions) *Commit {
+func NewCommit(hash githash.Hash, treeID githash.Oid, author Signature, opts *CommitOptions) *Commit {
 	c := &Commit{
 		treeID:    treeID,
 		author:    author,
@@ -145,6 +147,7 @@ func NewCommit(treeID ginternals.Oid, author Signature, opts *CommitOptions) *Co
 		message:   opts.Message,
 		parentIDs: opts.ParentsID,
 		gpgSig:    opts.GPGSig,
+		hash:      hash,
 	}
 
 	if c.committer.IsZero() {
@@ -181,6 +184,7 @@ func NewCommitFromObject(o *Object) (*Commit, error) {
 	}
 	ci := &Commit{
 		rawObject: o,
+		hash:      o.hash,
 	}
 	offset := 0
 	objData := o.Bytes()
@@ -207,12 +211,12 @@ func NewCommitFromObject(o *Object) (*Commit, error) {
 		var err error
 		switch string(kv[0]) {
 		case "tree":
-			ci.treeID, err = ginternals.NewOidFromChars(kv[1])
+			ci.treeID, err = o.hash.ConvertFromChars(kv[1])
 			if err != nil {
 				return nil, fmt.Errorf("could not parse tree id %#v: %w", kv[1], err)
 			}
 		case "parent":
-			oid, err := ginternals.NewOidFromChars(kv[1])
+			oid, err := o.hash.ConvertFromChars(kv[1])
 			if err != nil {
 				return nil, fmt.Errorf("could not parse parent id %#v: %w", kv[1], err)
 			}
@@ -248,7 +252,7 @@ func NewCommitFromObject(o *Object) (*Commit, error) {
 }
 
 // ID returns the SHA of the commit object
-func (c *Commit) ID() ginternals.Oid {
+func (c *Commit) ID() githash.Oid {
 	return c.rawObject.ID()
 }
 
@@ -271,14 +275,14 @@ func (c *Commit) Message() string {
 // - The first commit of an orphan branch has 0 parents
 // - A regular commit or the result of a fast-forward merge has 1 parent
 // - A true merge (no fast-forward) as 2 or more parents
-func (c *Commit) ParentIDs() []ginternals.Oid {
-	out := make([]ginternals.Oid, len(c.parentIDs))
+func (c *Commit) ParentIDs() []githash.Oid {
+	out := make([]githash.Oid, len(c.parentIDs))
 	copy(out, c.parentIDs)
 	return out
 }
 
 // TreeID returns the SHA of the commit's tree
-func (c *Commit) TreeID() ginternals.Oid {
+func (c *Commit) TreeID() githash.Oid {
 	return c.treeID
 }
 
@@ -323,5 +327,5 @@ func (c *Commit) ToObject() *Object {
 	buf.WriteRune('\n')
 
 	buf.WriteString(c.message)
-	return New(TypeCommit, buf.Bytes())
+	return New(c.hash, TypeCommit, buf.Bytes())
 }

@@ -1,6 +1,6 @@
 package object
 
-import "github.com/Nivl/git-go/ginternals"
+import "github.com/Nivl/git-go/ginternals/githash"
 
 // Blob represents a blob object
 type Blob struct {
@@ -15,7 +15,7 @@ func NewBlob(o *Object) *Blob {
 }
 
 // ID returns the blob's ID
-func (b *Blob) ID() ginternals.Oid {
+func (b *Blob) ID() githash.Oid {
 	return b.rawObject.id
 }
 

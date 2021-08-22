@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/githash"
 	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/Nivl/git-go/ginternals/packfile"
 	"github.com/Nivl/git-go/internal/testhelper"
@@ -289,7 +290,7 @@ func TestWalkPackedObjectIDs(t *testing.T) {
 		t.Parallel()
 
 		totalObject := 0
-		err := b.WalkPackedObjectIDs(func(oid ginternals.Oid) error {
+		err := b.WalkPackedObjectIDs(func(oid githash.Oid) error {
 			totalObject++
 			return nil
 		})
@@ -301,7 +302,7 @@ func TestWalkPackedObjectIDs(t *testing.T) {
 		t.Parallel()
 
 		totalObject := 0
-		err := b.WalkPackedObjectIDs(func(oid ginternals.Oid) error {
+		err := b.WalkPackedObjectIDs(func(oid githash.Oid) error {
 			if totalObject == 4 {
 				return packfile.OidWalkStop
 			}
@@ -317,7 +318,7 @@ func TestWalkPackedObjectIDs(t *testing.T) {
 
 		someErr := errors.New("some error")
 		totalObject := 0
-		err := b.WalkPackedObjectIDs(func(oid ginternals.Oid) error {
+		err := b.WalkPackedObjectIDs(func(oid githash.Oid) error {
 			if totalObject == 4 {
 				return someErr
 			}
@@ -347,7 +348,7 @@ func TestLoosePackedObjectIDs(t *testing.T) {
 		t.Parallel()
 
 		totalObject := 0
-		err := b.WalkLooseObjectIDs(func(oid ginternals.Oid) error {
+		err := b.WalkLooseObjectIDs(func(oid githash.Oid) error {
 			totalObject++
 			return nil
 		})
@@ -359,7 +360,7 @@ func TestLoosePackedObjectIDs(t *testing.T) {
 		t.Parallel()
 
 		totalObject := 0
-		err := b.WalkLooseObjectIDs(func(oid ginternals.Oid) error {
+		err := b.WalkLooseObjectIDs(func(oid githash.Oid) error {
 			totalObject++
 			return packfile.OidWalkStop
 		})
@@ -371,7 +372,7 @@ func TestLoosePackedObjectIDs(t *testing.T) {
 		t.Parallel()
 
 		someErr := errors.New("some error")
-		err := b.WalkLooseObjectIDs(func(oid ginternals.Oid) error {
+		err := b.WalkLooseObjectIDs(func(oid githash.Oid) error {
 			return someErr
 		})
 		assert.Error(t, err)

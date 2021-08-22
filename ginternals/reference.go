@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/Nivl/git-go/ginternals/githash"
 )
 
 // Common ref names
@@ -75,7 +77,7 @@ const (
 type Reference struct {
 	name   string
 	target string
-	id     Oid
+	id     githash.Oid
 	typ    ReferenceType
 }
 
@@ -85,12 +87,12 @@ type Reference struct {
 type RefContent func(name string) ([]byte, error)
 
 // ResolveReference resolves symbolic references
-func ResolveReference(name string, finder RefContent) (*Reference, error) {
-	return resolveRefs(name, finder, map[string]struct{}{})
+func ResolveReference(hash githash.Hash, name string, finder RefContent) (*Reference, error) {
+	return resolveRefs(hash, name, finder, map[string]struct{}{})
 }
 
 // resolveRefs resolves references recursively
-func resolveRefs(name string, finder RefContent, visited map[string]struct{}) (*Reference, error) {
+func resolveRefs(hash githash.Hash, name string, finder RefContent, visited map[string]struct{}) (*Reference, error) {
 	// we need to protect ourselves against circular references
 	// Ex: refs/heads/master is a ref to refs/heads/a which is a ref to
 	// refs/heads/master
@@ -118,7 +120,7 @@ func resolveRefs(name string, finder RefContent, visited map[string]struct{}) (*
 	// if the reference is symbolic, we need to follow to get the target
 	if string(data[0:5]) == "ref: " {
 		symbolicTarget := string(data[5:])
-		ref, err := resolveRefs(symbolicTarget, finder, visited)
+		ref, err := resolveRefs(hash, symbolicTarget, finder, visited)
 		if err != nil {
 			return nil, err
 		}
@@ -130,7 +132,7 @@ func resolveRefs(name string, finder RefContent, visited map[string]struct{}) (*
 		}, nil
 	}
 
-	oid, err := NewOidFromChars(data)
+	oid, err := hash.ConvertFromChars(data)
 	if err != nil {
 		return nil, ErrRefInvalid
 	}
@@ -143,7 +145,7 @@ func resolveRefs(name string, finder RefContent, visited map[string]struct{}) (*
 
 // NewReference return a new Reference object that targets
 // an object
-func NewReference(name string, target Oid) *Reference {
+func NewReference(name string, target githash.Oid) *Reference {
 	return &Reference{
 		typ:  OidReference,
 		name: name,
@@ -169,7 +171,7 @@ func (ref *Reference) Name() string {
 }
 
 // Target returns the ID targeted by a reference
-func (ref *Reference) Target() Oid {
+func (ref *Reference) Target() githash.Oid {
 	return ref.id
 }
 

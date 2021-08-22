@@ -14,6 +14,7 @@ import (
 	"sync"
 
 	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/githash"
 	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/Nivl/git-go/internal/cache"
 	"github.com/Nivl/git-go/internal/errutil"
@@ -86,6 +87,7 @@ type Pack struct {
 	r       afero.File
 	idxFile afero.File
 	idx     *PackIndex
+	hash    githash.Hash
 
 	// baseObjectCache is a cache for all the base objects.
 	// We only cache the base objects for 2 reasons:
@@ -96,7 +98,7 @@ type Pack struct {
 	//   performances rather than just caching anything
 	baseObjectCache *cache.LRU
 
-	id     ginternals.Oid
+	id     githash.Oid
 	header [packfileHeaderSize]byte
 
 	// Mutex used to protect the exported methods from being called
@@ -106,7 +108,7 @@ type Pack struct {
 
 // NewFromFile returns a pack object from the given file
 // The pack will need to be closed using Close()
-func NewFromFile(fs afero.Fs, filePath string) (pack *Pack, err error) {
+func NewFromFile(fs afero.Fs, hash githash.Hash, filePath string) (pack *Pack, err error) {
 	f, err := fs.Open(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("could not open %s: %w", filePath, err)
@@ -124,6 +126,7 @@ func NewFromFile(fs afero.Fs, filePath string) (pack *Pack, err error) {
 	p := &Pack{
 		r:               f,
 		baseObjectCache: c,
+		hash:            hash,
 	}
 
 	// Let's validate the header
@@ -139,22 +142,22 @@ func NewFromFile(fs afero.Fs, filePath string) (pack *Pack, err error) {
 	}
 
 	// Let's find the ID of the packfile (last element of the file)
-	id := make([]byte, ginternals.OidSize)
-	offset, err := f.Seek(-ginternals.OidSize, os.SEEK_END)
+	id := make([]byte, hash.OidSize())
+	offset, err := f.Seek(-int64(hash.OidSize()), os.SEEK_END)
 	if err != nil {
 		return nil, fmt.Errorf("could not get to the offset of the ID: %w", err)
 	}
 	if _, err = f.ReadAt(id, offset); err != nil {
 		return nil, fmt.Errorf("could not read the ID: %w", err)
 	}
-	p.id, err = ginternals.NewOidFromHex(id)
+	p.id, err = hash.ConvertFromBytes(id)
 	if err != nil {
 		return nil, fmt.Errorf("could not generate oid from %v: %w", id, err)
 	}
 
 	// Now we load the index file
 	indexFilePath := strings.TrimSuffix(filePath, ExtPackfile) + ExtIndex
-	p.idxFile, err = os.Open(indexFilePath)
+	p.idxFile, err = fs.Open(indexFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("could not open %s: %w", indexFilePath, err)
 	}
@@ -163,7 +166,7 @@ func NewFromFile(fs afero.Fs, filePath string) (pack *Pack, err error) {
 			p.idxFile.Close() //nolint:errcheck // it already failed
 		}
 	}()
-	p.idx, err = NewIndex(bufio.NewReader(p.idxFile))
+	p.idx, err = NewIndex(bufio.NewReader(p.idxFile), hash)
 	if err != nil {
 		return nil, fmt.Errorf("could create index for %s: %w", indexFilePath, err)
 	}
@@ -173,10 +176,10 @@ func NewFromFile(fs afero.Fs, filePath string) (pack *Pack, err error) {
 
 // getRawObjectAt return the raw object located at the given offset,
 // including its base info if the object is a delta
-func (pck *Pack) getRawObjectAt(objectOffset uint64) (o *object.Object, deltaBaseSHA ginternals.Oid, deltaBaseOffset uint64, err error) {
+func (pck *Pack) getRawObjectAt(objectOffset uint64) (o *object.Object, deltaBaseSHA githash.Oid, deltaBaseOffset uint64, err error) {
 	_, err = pck.r.Seek(int64(objectOffset), io.SeekStart)
 	if err != nil {
-		return nil, ginternals.NullOid, 0, fmt.Errorf("could not seek from 0 to object offset %d: %w", objectOffset, err)
+		return nil, pck.hash.NullOid(), 0, fmt.Errorf("could not seek from 0 to object offset %d: %w", objectOffset, err)
 	}
 	buf := bufio.NewReader(pck.r)
 
@@ -203,7 +206,7 @@ func (pck *Pack) getRawObjectAt(objectOffset uint64) (o *object.Object, deltaBas
 	// Total: 10 bytes
 	metadata, err := buf.Peek(10)
 	if err != nil {
-		return nil, ginternals.NullOid, 0, fmt.Errorf("could not get object meta: %w", err)
+		return nil, pck.hash.NullOid(), 0, fmt.Errorf("could not get object meta: %w", err)
 	}
 
 	// We now need to extract the type of the object. The type is a number
@@ -216,7 +219,7 @@ func (pck *Pack) getRawObjectAt(objectOffset uint64) (o *object.Object, deltaBas
 	// >> 4        : 0000_0TTT
 	objectType := object.Type((metadata[0] & 0b_0111_0000) >> 4)
 	if !objectType.IsValid() {
-		return nil, ginternals.NullOid, 0, fmt.Errorf("object type %d: %w", objectType, object.ErrObjectUnknown)
+		return nil, pck.hash.NullOid(), 0, fmt.Errorf("object type %d: %w", objectType, object.ErrObjectUnknown)
 	}
 
 	// The first part of the size is on the last 4 bits of the byte.
@@ -231,7 +234,7 @@ func (pck *Pack) getRawObjectAt(objectOffset uint64) (o *object.Object, deltaBas
 	if pck.isMSBSet(metadata[0]) {
 		size, byteRead, err := pck.readSize(metadata[1:])
 		if err != nil {
-			return nil, ginternals.NullOid, 0, fmt.Errorf("couldn't read object size: %w", err)
+			return nil, pck.hash.NullOid(), 0, fmt.Errorf("couldn't read object size: %w", err)
 		}
 		metadataSize += byteRead
 		// we add 4bits to the right of $size, then we merge everything with |
@@ -246,7 +249,7 @@ func (pck *Pack) getRawObjectAt(objectOffset uint64) (o *object.Object, deltaBas
 	// size), we now need to discard the right amount of bytes to move
 	// our internal cursor to the object data
 	if _, err = buf.Discard(metadataSize); err != nil {
-		return nil, ginternals.NullOid, 0, fmt.Errorf("could not skip the metadata: %w", err)
+		return nil, pck.hash.NullOid(), 0, fmt.Errorf("could not skip the metadata: %w", err)
 	}
 
 	// Some objects are deltified and need extra parsing before getting to
@@ -257,17 +260,17 @@ func (pck *Pack) getRawObjectAt(objectOffset uint64) (o *object.Object, deltaBas
 	// Refs: This delta contains the SHA of the base object
 	// ofs: This Delta contains a negative offset to the base object
 	var baseObjectOffset uint64
-	var baseObjectOid ginternals.Oid
+	var baseObjectOid githash.Oid = pck.hash.NullOid()
 	switch objectType { //nolint:exhaustive // only 2 types have a special treatment
 	case object.ObjectDeltaRef:
-		baseObjectSHA := make([]byte, ginternals.OidSize)
+		baseObjectSHA := make([]byte, pck.hash.OidSize())
 		_, err = buf.Read(baseObjectSHA)
 		if err != nil {
-			return nil, ginternals.NullOid, 0, fmt.Errorf("could not get base object SHA: %w", err)
+			return nil, pck.hash.NullOid(), 0, fmt.Errorf("could not get base object SHA: %w", err)
 		}
-		baseObjectOid, err = ginternals.NewOidFromHex(baseObjectSHA)
+		baseObjectOid, err = pck.hash.ConvertFromBytes(baseObjectSHA)
 		if err != nil {
-			return nil, ginternals.NullOid, 0, fmt.Errorf("could not parse base object SHA %#v: %w", baseObjectSHA, err)
+			return nil, pck.hash.NullOid(), 0, fmt.Errorf("could not parse base object SHA %#v: %w", baseObjectSHA, err)
 		}
 	case object.ObjectDeltaOFS:
 		// we're assuming the offset is no bigger than 9 bytes to fit an int64.
@@ -275,11 +278,11 @@ func (pck *Pack) getRawObjectAt(objectOffset uint64) (o *object.Object, deltaBas
 		// so we need to read an extra byte
 		offsetParts, err := buf.Peek(9)
 		if err != nil {
-			return nil, ginternals.NullOid, 0, fmt.Errorf("could not get base object offset: %w", err)
+			return nil, pck.hash.NullOid(), 0, fmt.Errorf("could not get base object offset: %w", err)
 		}
 		offset, bytesRead, err := pck.readDeltaOffset(offsetParts)
 		if err != nil {
-			return nil, ginternals.NullOid, 0, fmt.Errorf("couldn't read base object offset: %w", err)
+			return nil, pck.hash.NullOid(), 0, fmt.Errorf("couldn't read base object offset: %w", err)
 		}
 		baseObjectOffset = objectOffset - offset
 
@@ -287,28 +290,28 @@ func (pck *Pack) getRawObjectAt(objectOffset uint64) (o *object.Object, deltaBas
 		// now need to discard the right amount of bytes to move our internal
 		// cursor to the object data
 		if _, err = buf.Discard(bytesRead); err != nil {
-			return nil, ginternals.NullOid, 0, fmt.Errorf("could not skip the offset: %w", err)
+			return nil, pck.hash.NullOid(), 0, fmt.Errorf("could not skip the offset: %w", err)
 		}
 	}
 
 	// We can now fetch the actual data of the object, which is zlib encoded
 	zlibR, err := zlib.NewReader(buf)
 	if err != nil {
-		return nil, ginternals.NullOid, 0, fmt.Errorf("could not get zlib reader: %w", err)
+		return nil, pck.hash.NullOid(), 0, fmt.Errorf("could not get zlib reader: %w", err)
 	}
 	defer errutil.Close(zlibR, &err)
 
 	objectData := bytes.Buffer{}
 	_, err = io.CopyN(&objectData, zlibR, int64(objectSize))
 	if err != nil {
-		return nil, ginternals.NullOid, 0, fmt.Errorf("could not decompress: %w", err)
+		return nil, pck.hash.NullOid(), 0, fmt.Errorf("could not decompress: %w", err)
 	}
 
 	if objectData.Len() != int(objectSize) {
-		return nil, ginternals.NullOid, 0, fmt.Errorf("object size not valid. expecting %d, got %d: %w", objectSize, objectData.Len(), ErrInvalidObjectSize)
+		return nil, pck.hash.NullOid(), 0, fmt.Errorf("object size not valid. expecting %d, got %d: %w", objectSize, objectData.Len(), ErrInvalidObjectSize)
 	}
 
-	return object.New(objectType, objectData.Bytes()), baseObjectOid, baseObjectOffset, nil
+	return object.New(pck.hash, objectType, objectData.Bytes()), baseObjectOid, baseObjectOffset, nil
 }
 
 // getObjectAt return the object located at the given offset
@@ -451,18 +454,18 @@ func (pck *Pack) getObjectAt(objectOffset uint64) (*object.Object, error) {
 			i += int(instr)
 		}
 	}
-	return object.New(base.Type(), out.Bytes()), nil
+	return object.New(pck.hash, base.Type(), out.Bytes()), nil
 }
 
 // GetObject returns the object that has the given SHA
-func (pck *Pack) GetObject(oid ginternals.Oid) (*object.Object, error) {
+func (pck *Pack) GetObject(oid githash.Oid) (*object.Object, error) {
 	pck.mu.Lock()
 	defer pck.mu.Unlock()
 
 	return pck.getObject(oid)
 }
 
-func (pck *Pack) getObject(oid ginternals.Oid) (*object.Object, error) {
+func (pck *Pack) getObject(oid githash.Oid) (*object.Object, error) {
 	objectOffset, err := pck.idx.GetObjectOffset(oid)
 	if err != nil {
 		if !errors.Is(err, ginternals.ErrObjectNotFound) {
@@ -479,7 +482,7 @@ func (pck *Pack) ObjectCount() uint32 {
 }
 
 // ID returns the ID of the packfile
-func (pck *Pack) ID() ginternals.Oid {
+func (pck *Pack) ID() githash.Oid {
 	return pck.id
 }
 
@@ -615,7 +618,7 @@ func (pck *Pack) unsetMSB(b byte) byte {
 
 // OidWalkFunc represents a function that will be apply on all oid
 // found by Walk()
-type OidWalkFunc = func(oid ginternals.Oid) error
+type OidWalkFunc = func(oid githash.Oid) error
 
 // OidWalkStop is a fake error used to tell Walk() to stop
 var OidWalkStop = errors.New("stop walking") //nolint // the linter expects all errors to start with Err, but since here we're faking an error we don't want that

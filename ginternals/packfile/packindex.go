@@ -10,12 +10,12 @@ import (
 	"sync"
 
 	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/githash"
 	"github.com/Nivl/git-go/internal/readutil"
 )
 
 const (
 	layer1Size      = 1024
-	layer2EntrySize = ginternals.OidSize
 	layer3EntrySize = 4
 	layer4EntrySize = 4
 )
@@ -88,15 +88,17 @@ func indexHeader() []byte {
 type PackIndex struct {
 	mu sync.Mutex
 
+	hash githash.Hash
+
 	r          readutil.BufferedReader
-	hashOffset map[ginternals.Oid]uint64
+	hashOffset map[githash.Oid]uint64
 
 	parseError error
 	parsed     bool
 }
 
 // NewIndex returns an index object from the given reader
-func NewIndex(r readutil.BufferedReader) (idx *PackIndex, err error) {
+func NewIndex(r readutil.BufferedReader, hash githash.Hash) (idx *PackIndex, err error) {
 	// Let's validate the header
 	header := make([]byte, len(indexHeader()))
 	_, err = r.Read(header)
@@ -108,13 +110,14 @@ func NewIndex(r readutil.BufferedReader) (idx *PackIndex, err error) {
 	}
 
 	return &PackIndex{
-		r: r,
+		r:    r,
+		hash: hash,
 	}, nil
 }
 
 // GetObjectOffset returns the offset of Oid in the packfile
 // If the object is not found ginternals.ErrObjectNotFound is returned
-func (idx *PackIndex) GetObjectOffset(oid ginternals.Oid) (uint64, error) {
+func (idx *PackIndex) GetObjectOffset(oid githash.Oid) (uint64, error) {
 	if err := idx.parse(); err != nil {
 		return 0, fmt.Errorf("could not parse the index file: %w", err)
 	}
@@ -149,7 +152,7 @@ func (idx *PackIndex) parse() (err error) {
 
 	bufInt32 := make([]byte, 4)
 	bufInt64 := make([]byte, 8)
-	bufOid := make([]byte, ginternals.OidSize)
+	bufOid := make([]byte, idx.hash.OidSize())
 
 	// First we parse layer1 to get the count of objects in the packfile.
 	// Since layer1 stores a cumul, all we have to do is to get the number
@@ -171,15 +174,15 @@ func (idx *PackIndex) parse() (err error) {
 	// Now we can allocate the right amount of memory to store all the
 	// oids temporarily in an ordered list, and fill it by parsing
 	// layer2 which contains all oids back-to-back
-	oids := make([]ginternals.Oid, 0, objectCount)
+	oids := make([]githash.Oid, 0, objectCount)
 	// we basically need to get everything in between layer2 and
 	// layer3
 	layer2offset := len(indexHeader()) + layer1Size
-	layer2Size := objectCount * layer2EntrySize
+	layer2Size := objectCount * idx.hash.OidSize()
 	layer3offset := layer2offset + layer2Size
 
 	for i := 0; i < objectCount; i++ {
-		currentOffset := layer2offset + i*ginternals.OidSize
+		currentOffset := layer2offset + i*idx.hash.OidSize()
 		// this should only happen if the indexfile is invalid and
 		// layer2 is smaller than it should
 		if currentOffset >= layer3offset {
@@ -190,7 +193,7 @@ func (idx *PackIndex) parse() (err error) {
 		if err != nil {
 			return fmt.Errorf("couldn't get the oid at offset %d: %w", currentOffset, err)
 		}
-		oid, err := ginternals.NewOidFromHex(bufOid)
+		oid, err := idx.hash.ConvertFromBytes(bufOid)
 		if err != nil {
 			return fmt.Errorf("invalid oid at offset %d: %w", currentOffset, err)
 		}
@@ -209,7 +212,7 @@ func (idx *PackIndex) parse() (err error) {
 	// We can now allocate our final map (oid => offset) and fill it with the
 	// correct offsets by reading into layer4 and layer5
 	// We'll first loop over layer4, then into layer if needed
-	idx.hashOffset = make(map[ginternals.Oid]uint64, objectCount)
+	idx.hashOffset = make(map[githash.Oid]uint64, objectCount)
 	layer4Offset := layer2offset + layer2Size + layer3Size
 	layer4Size := objectCount * layer4EntrySize
 	layer5Offset := int64(layer4Offset + layer4Size)
@@ -219,7 +222,7 @@ func (idx *PackIndex) parse() (err error) {
 	// a buffered reader, we cannot go back and forth between layer4 and 5,
 	// so if layer4 contains a layer5 object, we'll have to read it later
 	type layer5Data struct {
-		oid            ginternals.Oid
+		oid            githash.Oid
 		relativeOffset uint64
 	}
 	layer5offsets := []*layer5Data{}

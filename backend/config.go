@@ -8,6 +8,7 @@ import (
 
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/config"
+	"github.com/Nivl/git-go/ginternals/githash"
 	"github.com/spf13/afero"
 )
 
@@ -54,7 +55,7 @@ func (b *Backend) InitWithOptions(branchName string, opts InitOptions) error {
 	// Make sure we got a valid hash algorithm
 	switch opts.HashAlgorithm {
 	case "":
-		opts.HashAlgorithm = b.hashAlgorithm
+		opts.HashAlgorithm = b.hash.Name()
 	default:
 		currentHashAlg, found := b.config.FromFile().Objectformat()
 		// SHA1 doesn't get persisted in the config file, so we have
@@ -67,8 +68,15 @@ func (b *Backend) InitWithOptions(branchName string, opts InitOptions) error {
 			return ErrHashAlgoMismatch
 		}
 	}
-	if opts.HashAlgorithm != "sha1" && opts.HashAlgorithm != "sha256" {
-		return ErrUnknownHashAlgo
+	if opts.HashAlgorithm != b.hash.Name() {
+		switch opts.HashAlgorithm {
+		case "sha1":
+			b.hash = githash.NewSHA1()
+		case "sha256":
+			b.hash = githash.NewSHA256()
+		default:
+			return ErrUnknownHashAlgo
+		}
 	}
 
 	if opts.CreateSymlink {
@@ -118,6 +126,7 @@ func (b *Backend) InitWithOptions(branchName string, opts InitOptions) error {
 	if !confFileExist {
 		if opts.HashAlgorithm != "sha1" {
 			b.config.FromFile().UpdateObjectformat(opts.HashAlgorithm)
+			b.config.FromFile().UpdateRepoFormatVersion("1")
 		}
 		if err = b.config.FromFile().Save(); err != nil {
 			return fmt.Errorf("could not save the config: %w", err)

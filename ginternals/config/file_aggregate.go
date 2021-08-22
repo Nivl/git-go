@@ -71,6 +71,11 @@ func (cfg *FileAggregate) RepoFormatVersion() (version int, ok bool) {
 	return v, true
 }
 
+// UpdateRepoFormatVersion updates the version of the format of the repo.
+func (cfg *FileAggregate) UpdateRepoFormatVersion(ver string) {
+	cfg.local.Section("core").Key("repositoryformatversion").SetValue(ver)
+}
+
 // DefaultBranch returns the branch name to use when creating a new
 // repository.
 // The branch name isn't checked and may be an invalid value

@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/Nivl/git-go/ginternals"
+	"github.com/Nivl/git-go/ginternals/githash"
 	"github.com/Nivl/git-go/internal/errutil"
 )
 
@@ -113,21 +113,23 @@ type Object struct {
 	content      []byte
 	idProcessing sync.Once
 	typ          Type
-	id           ginternals.Oid
+	id           githash.Oid
+	hash         githash.Hash
 }
 
 // New creates a new git object of the given type
-func New(typ Type, content []byte) *Object {
+func New(hash githash.Hash, typ Type, content []byte) *Object {
 	o := &Object{
 		typ:     typ,
 		content: content,
+		hash:    hash,
 	}
 	o.id, _ = o.build()
 	return o
 }
 
 // ID returns the ID of the object.
-func (o *Object) ID() ginternals.Oid {
+func (o *Object) ID() githash.Oid {
 	o.idProcessing.Do(func() {
 		o.id, _ = o.build()
 	})
@@ -149,7 +151,7 @@ func (o *Object) Bytes() []byte {
 	return o.content
 }
 
-func (o *Object) build() (oid ginternals.Oid, data []byte) {
+func (o *Object) build() (oid githash.Oid, data []byte) {
 	// Quick reminder that the Write* methods on bytes.Buffer never fails,
 	// the error returned is always nil
 	w := new(bytes.Buffer)
@@ -167,7 +169,7 @@ func (o *Object) build() (oid ginternals.Oid, data []byte) {
 
 	// get the SHA of the file
 	data = w.Bytes()
-	oid = ginternals.NewOidFromContent(data)
+	oid = o.hash.Sum(data)
 	return oid, data
 }
 
