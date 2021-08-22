@@ -153,7 +153,7 @@ func (b *Backend) writeReference(ref *ginternals.Reference) error {
 		return ginternals.ErrRefNameInvalid
 	}
 
-	target := ""
+	var target string
 	switch ref.Type() {
 	case ginternals.SymbolicReference:
 		target = fmt.Sprintf("ref: %s\n", ref.SymbolicTarget())

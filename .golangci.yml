@@ -33,43 +33,35 @@ issues:
 linters:
   enable-all: true
   disable:
-    - cyclop # checks function and package cyclomatic complexity
-    - depguard # Go linter that checks if package imports are in a list of acceptable packages
-    - dupl # Tool for code clone detection
-    - exhaustivestruct # Checks if all struct's fields are initialized
-    - funlen # Tool for detection of long functions
-    - gci # Gci control golang package import order and make it always deterministic
-    - gochecknoglobals # check that no global variables exist
-    - gocognit # Computes and checks the cognitive complexity of functions
-    - goconst # Finds repeated strings that could be replaced by a constant
-    - gocyclo # Computes and checks the cyclomatic complexity of functions
-    - godot # Check if comments end in a period
-    - godox # Tool for detection of FIXME, TODO and other comment keywords
+    - cyclop # checks function and package cyclomatic complexity || Hard to use productively due to many valid use cases going against the linter
+    - depguard # Go linter that checks if package imports are in a list of acceptable packages || No use case for this repo
+    - dupl # Tool for code clone detection || Hard to use productively due to many valid use cases going against the linter
+    - exhaustivestruct # Checks if all struct's fields are initialized || Hard to use productively due to many valid use cases going against the linter
+    - funlen # Tool for detection of long functions || Hard to use productively due to many valid use cases going against the linter
+    - gci # Gci control golang package import order and make it always deterministic || Conflicts with gofumpt
+    - gochecknoglobals # check that no global variables exist || Hard to use productively due to many valid use cases going against the linter
+    - gocognit # Computes and checks the cognitive complexity of functions || Hard to use productively due to many valid use cases going against the linter
+    - goconst # Finds repeated strings that could be replaced by a constant || Hard to use productively due to many valid use cases going against the linter
+    - gocyclo # Computes and checks the cyclomatic complexity of functions || Too much of a pain, too arbitrary
+    - godot # Check if comments end in a period || Good to have, too much work for now
+    - godox # Tool for detection of FIXME, TODO and other comment keywords || There is absolutely nothing wrong having in-code FIXMEs and TODOs
     - gofmt # Replaced by gofumpt
-    - goheader # Checks is file header matches to pattern
     - golint # Replaced by revive
-    - gomnd # An analyzer to detect magic numbers
-    - gomoddirectives # Manage the use of 'replace', 'retract', and 'excludes' directives in go.mod
-    - gomodguard # Allow and block list linter for direct Go module dependencies
-    - ifshort # Checks that your code uses short syntax for if-statements whenever possible
-    - importas # Enforces consistent import aliases
+    - gomnd # An analyzer to detect magic numbers || Hard to use productively due to many valid use cases going against the linter. A comment works bertter than creating many vars
+    - gomoddirectives # Manage the use of 'replace', 'retract', and 'excludes' directives in go.mod || Conflicts with pflag's replace that we force into cobra
+    - gomodguard # Allow and block list linter for direct Go module dependencies || No use case for this repo
     - interfacer  # No longer maintained, project archived on github
-    - lll  # Reports long lines
-    - makezero  # Finds slice declarations with non-zero initial length
+    - lll  # Reports long lines || Hard to use productively due to many valid use cases going against the linter
     - maligned  # Replaced by govet 'fieldalignment'
-    - nakedret  # Finds naked returns in functions greater than a specified function length
-    - nestif  # Reports deeply nested if statements
-    - nlreturn # checks for a new line before return and branch statements to increase code clarity
+    - nakedret  # Finds naked returns in functions greater than a specified function length || Too opinionated, doesn't solve any issue we have
+    - nestif  # Reports deeply nested if statements || Hard to use productively due to many valid use cases going against the linter
+    - nlreturn # checks for a new line before return and branch statements to increase code clarity || Too opinionated
     - paralleltest # detects missing usage of t.Parallel() method in your Go test || Too many false positives https://github.com/kunwardeep/paralleltest/issues/8
-    - predeclared # find code that shadows one of Go's predeclared identifiers
-    - promlinter # Check Prometheus metrics naming via promlint
     - scopelint # Replaced by exportloopref
-    - tagliatelle # Checks the struct tags
-    - testpackage # linter that makes you use a separate _test package
-    - thelper # detects golang test helpers without t.Helper() call and checks the consistency of test helpers
-    - wastedassign # finds wasted assignment statements
-    - wrapcheck # Checks that errors returned from external packages are wrapped
-    - wsl # Forces you to use empty lines
+    - testpackage # linter that makes you use a separate _test package || Hard to use productively due to many valid use cases going against the linter
+    - thelper # detects golang test helpers without t.Helper() call and checks the consistency of test helpers || No reasons not to use this one, we should probably try it
+    - wrapcheck # Checks that errors returned from external packages are wrapped || No reasons not to use this one, we should probably try it
+    - wsl # Forces you to use empty lines || Too opinionated
 
 linters-settings:
   govet:
