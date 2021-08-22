@@ -12,6 +12,8 @@ import (
 
 // NewCommonConfig creates a new basic config object using the most common options
 func NewCommonConfig(t *testing.T, workingTreePath string) *config.Config {
+	t.Helper()
+
 	cfg, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 		WorkTreePath: workingTreePath,
 		GitDirPath:   filepath.Join(workingTreePath, config.DefaultDotGitDirName),
@@ -23,6 +25,8 @@ func NewCommonConfig(t *testing.T, workingTreePath string) *config.Config {
 // NewCommonConfigBare creates a new basic config object using the most common options
 // for a bare repository
 func NewCommonConfigBare(t *testing.T, workingTreePath string) *config.Config {
+	t.Helper()
+
 	cfg, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
 		IsBare:     true,
 		GitDirPath: workingTreePath,

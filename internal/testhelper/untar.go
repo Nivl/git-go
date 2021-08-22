@@ -21,6 +21,8 @@ const (
 
 // UnTar will untar a git repository in a new temporary folder.
 func UnTar(t *testing.T, repoName RepoName) (repoPath string, cleanup func()) {
+	t.Helper()
+
 	repoPath, cleanup = TempDir(t)
 
 	_, err := exe.Run("tar",
@@ -33,6 +35,8 @@ func UnTar(t *testing.T, repoName RepoName) (repoPath string, cleanup func()) {
 
 // TestdataPath returns the absolute path to the testdata directory
 func TestdataPath(t *testing.T) string {
+	t.Helper()
+
 	root, err := pathutil.WorkingTree(".git")
 	require.NoError(t, err)
 	return filepath.Join(root, "internal", "testdata")

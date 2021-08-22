@@ -11,6 +11,8 @@ import (
 
 // TempDir creates a temp dir and returns a cleanup method
 func TempDir(t *testing.T) (out string, cleanup func()) {
+	t.Helper()
+
 	out, err := os.MkdirTemp("", strings.ReplaceAll(t.Name(), "/", "_")+"_")
 	require.NoError(t, err)
 
@@ -22,6 +24,8 @@ func TempDir(t *testing.T) (out string, cleanup func()) {
 
 // TempFile creates a temp file and returns a cleanup method
 func TempFile(t *testing.T) (out *os.File, cleanup func()) {
+	t.Helper()
+
 	out, err := os.CreateTemp("", strings.ReplaceAll(t.Name(), "/", "_")+"_")
 	require.NoError(t, err)
 
