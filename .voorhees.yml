@@ -2,26 +2,23 @@ version: 1
 default:
   limit: 6 months
 rules:
-  # No release since Jan 2020 but still has some activity on Master
-  # mainteners are actively commenting on issues and PRs.
-  github.com/hashicorp/golang-lru: 24 months
+  # No release since Jan 2020, no commits since Jan 2021.
+  # Contributors are commenting on issues and PRs, but PRs are
+  # awaiting to be merged.
+  github.com/hashicorp/golang-lru: 30 months
 
   # No release since Q3 2019 but still has some activity on Master.
-  # Mainteners are NOT actively commenting on issues and PRs. Forks
+  # Maintainers are NOT actively commenting on issues and PRs. Forks
   # are being made.
   #
   # It's been replaced by cornfeedhobo/pflag but because of
   # a bug in Go, we must keep spf13/pflag in go.mod.
   #
-  # The bug should be fixed in Go 1.17
-  # Link: https://github.com/golang/go/issues/26904#issuecomment-785234200
-  github.com/spf13/pflag: 99 months
+  # The bug should be fixed in Go 1.19
+  # Link: https://github.com/golang/go/issues/26904#issuecomment-934662475
+  github.com/spf13/pflag: skip
 
-  # No release since the last October 2020.
-  # Couple of PRs opened, a few issues as well, no activity from
-  # maintainer. Nothing too worriying yet.
-  gopkg.in/ini.v1: 12 months
-
-  # No release since January 2021, but still has some activity on Master
-  # mainteners are actively commenting on issues and PRs.
-  github.com/stretchr/testify: 12 months
+  # No release since January 2021, but still has some activity on Master.
+  # Maintainers are actively commenting on issues and PRs.
+  # They just need to cut a new release.
+  github.com/stretchr/testify: 18 months
