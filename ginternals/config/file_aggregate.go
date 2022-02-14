@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 
 	"github.com/Nivl/git-go/env"
 	"gopkg.in/ini.v1"
@@ -21,37 +22,104 @@ var defaultLoadOption = ini.LoadOptions{
 	SkipUnrecognizableLines: true,
 }
 
+// defaultConfig generates a basic default git config using the
+// most common options
+func defaultConfig() (*ini.File, error) {
+	cfg := ini.Empty(defaultLoadOption)
+
+	core := cfg.Section("core")
+	coreCfg := map[string]string{
+		"repositoryformatversion": "0",
+		"filemode":                "true",
+		"logallrefupdates":        "true",
+		"ignorecase":              "true",
+		"precomposeunicode":       "true",
+	}
+	for k, v := range coreCfg {
+		if _, err := core.NewKey(k, v); err != nil {
+			return nil, fmt.Errorf("could not set core.%s: %w", k, err)
+		}
+	}
+
+	return cfg, nil
+}
+
 // FileAggregate represents the aggregate of all the config files
 // impacting a repository
 type FileAggregate struct {
-	cfg *Config
-	agg *ini.File
+	cfg    *Config
+	global *ini.File
+	local  *ini.File
+}
+
+// Save persists the changes made to the config files
+func (cfg *FileAggregate) Save() error {
+	return cfg.local.SaveTo(cfg.cfg.LocalConfig)
 }
 
 // RepoFormatVersion returns the version of the format of the repo
 func (cfg *FileAggregate) RepoFormatVersion() (version int, ok bool) {
-	v, err := cfg.agg.Section("core").Key("repositoryformatversion").Int()
+	source := cfg.global
+	if cfg.local.Section("core").HasKey("repositoryformatversion") {
+		source = cfg.local
+	}
+
+	v, err := source.Section("core").Key("repositoryformatversion").Int()
 	if err != nil {
 		return 0, false
 	}
 	return v, true
 }
 
+// UpdateRepoFormatVersion updates the version of the format of the repo.
+func (cfg *FileAggregate) UpdateRepoFormatVersion(ver string) {
+	cfg.local.Section("core").Key("repositoryformatversion").SetValue(ver)
+}
+
 // DefaultBranch returns the branch name to use when creating a new
 // repository.
 // The branch name isn't checked and may be an invalid value
 func (cfg *FileAggregate) DefaultBranch() (name string, ok bool) {
-	v := cfg.agg.Section("init").Key("defaultBranch").String()
+	source := cfg.global
+	if cfg.local.Section("init").HasKey("defaultBranch") {
+		source = cfg.local
+	}
+
+	v := source.Section("init").Key("defaultBranch").String()
 	if v == "" {
 		return "", false
 	}
 	return v, true
 }
 
-// WorkTree returns the path of the work-tree
+// WorkTree returns the path of the work-tree.
 func (cfg *FileAggregate) WorkTree() (workTree string, ok bool) {
-	v := cfg.agg.Section("core").Key("worktree").String()
+	source := cfg.global
+	if cfg.local.Section("core").HasKey("worktree") {
+		source = cfg.local
+	}
+
+	v := source.Section("core").Key("worktree").String()
 	return v, v != ""
+}
+
+// IsBare returns whether the repository is bare or not.
+func (cfg *FileAggregate) IsBare() (isBare, ok bool) {
+	source := cfg.global
+	if cfg.local.Section("core").HasKey("bare") {
+		source = cfg.local
+	}
+
+	v, err := source.Section("core").Key("bare").Bool()
+	if err != nil {
+		return false, false
+	}
+	return v, true
+}
+
+// UpdateIsBare updates the core.bare option.
+func (cfg *FileAggregate) UpdateIsBare(isBare bool) {
+	cfg.local.Section("core").Key("bare").SetValue(strconv.FormatBool(isBare))
 }
 
 // NewFileAggregate loads all the available config files and returns an object
@@ -89,8 +157,8 @@ func NewFileAggregate(e *env.Env, cfg *Config) (confFile *FileAggregate, err err
 	defer func() {
 		// we need to cleanup the file descriptors to avoid a leak
 		for _, f := range files {
-			//nolint:errcheck // it's expected to fail as the files are already closed.
-			// go-ini already closes the files for us. This code is
+			//nolint:errcheck // it's expected to fail as the files are
+			// already closed. go-ini closes the files for us. This code is
 			// only here to prevent a FD leak in case go-ini updates the
 			// behavior and we don't see it / remember about it
 			f.(io.ReadCloser).Close()
@@ -100,18 +168,28 @@ func NewFileAggregate(e *env.Env, cfg *Config) (confFile *FileAggregate, err err
 		return nil, err
 	}
 
-	if len(files) == 0 {
-		confFile.agg = ini.Empty(defaultLoadOption)
-		return confFile, nil
-	}
-
-	// ini.Load wants the config file separated over 2 args, the second args
-	// being a spreadable.
-	src := files[0]
-	others := files[1:]
-	confFile.agg, err = ini.LoadSources(defaultLoadOption, src, others...)
-	if err != nil {
-		return nil, fmt.Errorf("could not load config file: %w", err)
+	confFile.global = ini.Empty(defaultLoadOption)
+	switch len(files) {
+	case 0:
+		if confFile.local, err = defaultConfig(); err != nil {
+			return nil, fmt.Errorf("could not create default local config: %w", err)
+		}
+	default:
+		if len(files) > 1 {
+			// ini.Load wants the config file separated over 2 args, the
+			// second args being a spreadable.
+			// The files are ordered in a way that the first one will be
+			// overwritten by the second, which will be overwritten by
+			// the third, etc.
+			confFile.global, err = ini.LoadSources(defaultLoadOption, files[0], files[1:len(files)-1]...)
+			if err != nil {
+				return nil, fmt.Errorf("could not aggregate config file: %w", err)
+			}
+		}
+		confFile.local, err = ini.LoadSources(defaultLoadOption, files[len(files)-1])
+		if err != nil {
+			return nil, fmt.Errorf("could not load config file: %w", err)
+		}
 	}
 	return confFile, nil
 }
