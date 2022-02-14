@@ -186,7 +186,9 @@ func TestInit(t *testing.T) {
 			require.NoError(t, b.Close())
 		})
 
-		require.NoError(t, b.InitWithSymlink(ginternals.Master, true))
+		require.NoError(t, b.InitWithOptions(ginternals.Master, backend.InitOptions{
+			CreateSymlink: true,
+		}))
 
 		gitfilePath := filepath.Join(dir, config.DefaultDotGitDirName)
 		require.FileExists(t, gitfilePath)

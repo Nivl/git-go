@@ -9,11 +9,18 @@ import (
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/config"
 	"github.com/spf13/afero"
-	"gopkg.in/ini.v1"
 )
 
 func (b *Backend) loadConfig() error {
 	return nil
+}
+
+// InitOptions represents all the options that can be used to
+// create a repository
+type InitOptions struct {
+	// CreateSymlink will create a .git FILE that will contains a path
+	// to the repo.
+	CreateSymlink bool
 }
 
 // Init initializes a repository.
@@ -21,17 +28,16 @@ func (b *Backend) loadConfig() error {
 // Calling this method on an existing repository is safe. It will not
 // overwrite things that are already there, but will add what's missing.
 func (b *Backend) Init(branchName string) error {
-	return b.InitWithSymlink(branchName, false)
+	return b.InitWithOptions(branchName, InitOptions{})
 }
 
-// InitWithSymlink initializes a repository. If createSymlink is set
-// to true, a text file will be created that will point to the repo.
+// InitWithOptions initializes a repository using the provided options.
 //
 // This method cannot be called concurrently with other methods.
 // Calling this method on an existing repository is safe. It will not
 // overwrite things that are already there, but will add what's missing.
-func (b *Backend) InitWithSymlink(branchName string, createSymlink bool) error {
-	if createSymlink {
+func (b *Backend) InitWithOptions(branchName string, opts InitOptions) error {
+	if opts.CreateSymlink {
 		linkSource := filepath.Join(b.config.WorkTreePath, config.DefaultDotGitDirName)
 		linkTarget := fmt.Sprintf("gitdir: %s", ginternals.DotGitPath(b.config))
 		err := afero.WriteFile(b.fs, linkSource, []byte(linkTarget), 0o644)
@@ -77,8 +83,8 @@ func (b *Backend) InitWithSymlink(branchName string, createSymlink bool) error {
 	// We only create a config file if we don't already have one
 	_, err := b.fs.Stat(b.config.LocalConfig)
 	if errors.Is(err, os.ErrNotExist) {
-		if err = b.setDefaultCfg(); err != nil {
-			return fmt.Errorf("could not set the default config: %w", err)
+		if err = b.config.FromFile().Save(); err != nil {
+			return fmt.Errorf("could not save the config: %w", err)
 		}
 	}
 
@@ -89,37 +95,5 @@ func (b *Backend) InitWithSymlink(branchName string, createSymlink bool) error {
 		return fmt.Errorf("could not write HEAD: %w", err)
 	}
 
-	return nil
-}
-
-// setDefaultCfg set and persists the default git configuration for
-// the repository
-func (b *Backend) setDefaultCfg() error {
-	cfg := ini.Empty()
-
-	// Core
-	core, err := cfg.NewSection(CfgCore)
-	if err != nil {
-		return fmt.Errorf("could not create core section: %w", err)
-	}
-	coreCfg := map[string]string{
-		CfgCoreFormatVersion:     "0",
-		CfgCoreFileMode:          "true",
-		CfgCoreBare:              "false",
-		CfgCoreLogAllRefUpdate:   "true",
-		CfgCoreIgnoreCase:        "true",
-		CfgCorePrecomposeUnicode: "true",
-	}
-	for k, v := range coreCfg {
-		if _, e := core.NewKey(k, v); e != nil {
-			return fmt.Errorf("could not set %s: %w", k, e)
-		}
-	}
-	// TODO(melvin): this should use the provided FS interface instead
-	// of using actual file system
-	err = cfg.SaveTo(b.config.LocalConfig)
-	if err != nil {
-		return fmt.Errorf("could not persist file: %w", err)
-	}
 	return nil
 }

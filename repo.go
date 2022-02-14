@@ -161,7 +161,14 @@ func InitRepositoryWithParams(cfg *config.Config, opts InitOptions) (r *Reposito
 		}(r)
 	}
 
-	return r, r.dotGit.InitWithSymlink(branchName, opts.Symlink)
+	err = r.dotGit.InitWithOptions(branchName, backend.InitOptions{
+		CreateSymlink: opts.Symlink,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return r, err
 }
 
 // OpenOptions contains all the optional data used to open a

@@ -289,6 +289,7 @@ func TestLoadConfig(t *testing.T) {
 			// We don't want to check for files or FS
 			out.fromFiles = nil
 			out.FS = nil
+			out.env = nil
 
 			assert.Equal(t, tc.expectedParams, out)
 		})
@@ -338,6 +339,7 @@ func TestNewGitOptionsSkipEnv(t *testing.T) {
 			// We remove some data to make the assertion easier
 			out.FS = nil
 			out.fromFiles = nil
+			out.env = nil
 
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedParams, out)
@@ -345,9 +347,9 @@ func TestNewGitOptionsSkipEnv(t *testing.T) {
 	}
 }
 
+// This test isn't ran in parallel because it share a state between all
+// its subtests
 func TestWrapper(t *testing.T) {
-	t.Parallel()
-
 	// First we setup a config file and we make sure it's loaded
 	dir, err := os.Getwd()
 	require.NoError(t, err)
@@ -377,7 +379,31 @@ func TestWrapper(t *testing.T) {
 	// All good, we can run our other tests that requires a config
 
 	t.Run("FromFile", func(t *testing.T) {
-		t.Parallel()
 		require.NotNil(t, out.FromFile(), "expected FromFile() to return an object")
+	})
+
+	t.Run("Save and Reload", func(t *testing.T) {
+		// Validate the original settings
+		v, found := out.FromFile().IsBare()
+		require.True(t, found, "IsBare should have been set by LoadConfig()")
+		require.False(t, v, "IsBare should be false")
+
+		// Updating should update the config in memory
+		// a reload should erase the settings
+		out.FromFile().UpdateIsBare(true)
+		v, found = out.FromFile().IsBare()
+		assert.True(t, found, "IsBare should now be set")
+		assert.True(t, v, "IsBare should be true")
+		require.NoError(t, out.Reload())
+		_, found = out.FromFile().IsBare()
+		require.False(t, found, "IsBare shouldn't be set after a reload")
+
+		// A reload should keep the value is it's been saved
+		out.FromFile().UpdateIsBare(true)
+		require.NoError(t, out.fromFiles.Save())
+		require.NoError(t, out.Reload())
+		v, found = out.FromFile().IsBare()
+		assert.True(t, found, "IsBare should now be set")
+		assert.True(t, v, "IsBare should be true")
 	})
 }
