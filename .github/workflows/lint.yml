@@ -5,7 +5,7 @@ jobs:
     name: Go Code
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
 
       - name: Get Go version
         id: gover
@@ -23,7 +23,7 @@ jobs:
     name: "Codecov.yml"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.4.0
+      - uses: actions/checkout@v3
 
       - name: Validate codecov.yml
         id: codecov
