@@ -1,6 +1,6 @@
 version: 1
 default:
-  limit: 6 months
+  limit: 12 months
 rules:
   # No release since Jan 2020, no commits since Jan 2021.
   # Contributors are commenting on issues and PRs, but PRs are
