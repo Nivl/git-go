@@ -11,8 +11,8 @@ import (
 	"github.com/Nivl/git-go/env"
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/config"
-	"github.com/Nivl/git-go/internal/testhelper"
-	"github.com/Nivl/git-go/internal/testhelper/confutil"
+	"github.com/Nivl/git-go/internal/testutil"
+	"github.com/Nivl/git-go/internal/testutil/confutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +23,7 @@ func TestInit(t *testing.T) {
 	t.Run("regular repo should work", func(t *testing.T) {
 		t.Parallel()
 
-		dir, cleanup := testhelper.TempDir(t)
+		dir, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		cfg := confutil.NewCommonConfig(t, dir)
@@ -43,7 +43,7 @@ func TestInit(t *testing.T) {
 	t.Run("repo with separated object dir", func(t *testing.T) {
 		t.Parallel()
 
-		repo, cleanupRepo := testhelper.TempDir(t)
+		repo, cleanupRepo := testutil.TempDir(t)
 		t.Cleanup(cleanupRepo)
 
 		gitDirPath := filepath.Join(repo, ".git")
@@ -78,7 +78,7 @@ func TestInit(t *testing.T) {
 	t.Run("bare repo should work", func(t *testing.T) {
 		t.Parallel()
 
-		dir, cleanup := testhelper.TempDir(t)
+		dir, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		cfg := confutil.NewCommonConfigBare(t, dir)
@@ -96,7 +96,7 @@ func TestInit(t *testing.T) {
 	t.Run("repo with existing data should work", func(t *testing.T) {
 		t.Parallel()
 
-		dir, cleanup := testhelper.TempDir(t)
+		dir, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		// create a directory
@@ -125,7 +125,7 @@ func TestInit(t *testing.T) {
 			t.Skip("Windows doesn't seem to be blocking writes.")
 		}
 
-		dir, cleanup := testhelper.TempDir(t)
+		dir, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		// create a directory
@@ -148,7 +148,7 @@ func TestInit(t *testing.T) {
 	t.Run("should fail if file exists without write perm", func(t *testing.T) {
 		t.Parallel()
 
-		dir, cleanup := testhelper.TempDir(t)
+		dir, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		// create a file
@@ -171,7 +171,7 @@ func TestInit(t *testing.T) {
 	t.Run("should create a symlink", func(t *testing.T) {
 		t.Parallel()
 
-		dir, cleanup := testhelper.TempDir(t)
+		dir, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		cfg, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{

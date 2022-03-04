@@ -7,7 +7,7 @@ import (
 
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/object"
-	"github.com/Nivl/git-go/internal/testhelper"
+	"github.com/Nivl/git-go/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -47,7 +47,7 @@ func TestTreeBuilderInsert(t *testing.T) {
 			t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
 				t.Parallel()
 
-				repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+				repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 				t.Cleanup(cleanup)
 
 				r, err := OpenRepository(repoPath)
@@ -76,7 +76,7 @@ func TestTreeBuilderInsert(t *testing.T) {
 	t.Run("should pass inserting multiple objects", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
@@ -106,7 +106,7 @@ func TestTreeBuilderInsert(t *testing.T) {
 	t.Run("should pass overwritting a path", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
@@ -139,7 +139,7 @@ func TestTreeBuilderInsert(t *testing.T) {
 	t.Run("should fail with invalid mode", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
@@ -165,7 +165,7 @@ func TestTreeBuilderRemove(t *testing.T) {
 	t.Run("should remove elements", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
@@ -202,7 +202,7 @@ func TestTreeBuilderRemove(t *testing.T) {
 	t.Run("should pass removing something that doesn't exists", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
@@ -232,7 +232,7 @@ func TestTreeBuilderWrite(t *testing.T) {
 	t.Run("should return 4b825dc642cb6eb9a060e54bf8d69288fbee4904 for empty tree", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
@@ -252,7 +252,7 @@ func TestTreeBuilderWrite(t *testing.T) {
 	t.Run("should persist tree", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
@@ -287,7 +287,7 @@ func TestTreeBuilderWrite(t *testing.T) {
 	t.Run("building an existing tree should return the same data", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)

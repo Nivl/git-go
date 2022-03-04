@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/Nivl/git-go/env"
-	"github.com/Nivl/git-go/internal/testhelper"
+	"github.com/Nivl/git-go/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +15,7 @@ import (
 func TestLoadConfig(t *testing.T) {
 	t.Parallel()
 
-	dir, cleanup := testhelper.TempDir(t)
+	dir, cleanup := testutil.TempDir(t)
 	t.Cleanup(cleanup)
 
 	// the common dir can be set by creating a file with a path in it
@@ -41,7 +41,7 @@ func TestLoadConfig(t *testing.T) {
 	require.NoError(t, err)
 	currentRepoRoot := filepath.Join(cwd, "..", "..")
 
-	validRepoRoot, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+	validRepoRoot, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 	t.Cleanup(cleanup)
 
 	testCases := []struct {
@@ -358,7 +358,7 @@ func TestWrapper(t *testing.T) {
 	expectedWorktreePath := filepath.Join(root, "some", "path")
 
 	// create the config file
-	f, cleanup := testhelper.TempFile(t)
+	f, cleanup := testutil.TempFile(t)
 	t.Cleanup(cleanup)
 	_, err = f.WriteString("[core]\nworktree = " + expectedWorktreePath)
 	require.NoError(t, err)

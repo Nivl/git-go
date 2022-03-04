@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/Nivl/git-go/env"
-	"github.com/Nivl/git-go/internal/testhelper"
+	"github.com/Nivl/git-go/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -14,10 +14,10 @@ import (
 func TestLoadRepository(t *testing.T) {
 	t.Parallel()
 
-	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+	repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 	t.Cleanup(cleanup)
 
-	tmpPath, cleanup := testhelper.TempDir(t)
+	tmpPath, cleanup := testutil.TempDir(t)
 	t.Cleanup(cleanup)
 
 	testCases := []struct {
@@ -42,7 +42,7 @@ func TestLoadRepository(t *testing.T) {
 
 			cfg := &globalFlags{
 				env: env.NewFromKVList([]string{}),
-				C:   testhelper.NewStringValue(tc.C),
+				C:   testutil.NewStringValue(tc.C),
 			}
 			repo, err := loadRepository(cfg)
 			if tc.expectError {

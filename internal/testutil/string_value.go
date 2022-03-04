@@ -1,4 +1,4 @@
-package testhelper
+package testutil
 
 import (
 	"github.com/spf13/pflag"

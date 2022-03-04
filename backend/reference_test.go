@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/Nivl/git-go/ginternals"
-	"github.com/Nivl/git-go/internal/testhelper"
-	"github.com/Nivl/git-go/internal/testhelper/confutil"
+	"github.com/Nivl/git-go/internal/testutil"
+	"github.com/Nivl/git-go/internal/testutil/confutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,7 +19,7 @@ func TestReference(t *testing.T) {
 	t.Run("Should fail if reference doesn't exists", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		cfg := confutil.NewCommonConfig(t, repoPath)
@@ -37,7 +37,7 @@ func TestReference(t *testing.T) {
 	t.Run("Should success to follow a symbolic ref", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		cfg := confutil.NewCommonConfig(t, repoPath)
@@ -60,7 +60,7 @@ func TestReference(t *testing.T) {
 	t.Run("Should success to follow an oid ref", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		cfg := confutil.NewCommonConfig(t, repoPath)
@@ -87,7 +87,7 @@ func TestParsePackedRefs(t *testing.T) {
 	createRepo := func(t *testing.T) (dir string, cleanup func()) {
 		t.Helper()
 
-		dir, cleanup = testhelper.TempDir(t)
+		dir, cleanup = testutil.TempDir(t)
 
 		cfg := confutil.NewCommonConfig(t, dir)
 		b, err := NewFS(cfg)
@@ -153,7 +153,7 @@ func TestParsePackedRefs(t *testing.T) {
 	t.Run("Should correctly extract data", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		cfg := confutil.NewCommonConfig(t, repoPath)
@@ -200,7 +200,7 @@ func TestWriteReference(t *testing.T) {
 	t.Run("should pass writing a new symbolic reference", func(t *testing.T) {
 		t.Parallel()
 
-		dir, cleanup := testhelper.TempDir(t)
+		dir, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		cfg := confutil.NewCommonConfig(t, dir)
@@ -223,7 +223,7 @@ func TestWriteReference(t *testing.T) {
 	t.Run("should pass writing a new oid reference", func(t *testing.T) {
 		t.Parallel()
 
-		dir, cleanup := testhelper.TempDir(t)
+		dir, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		cfg := confutil.NewCommonConfig(t, dir)
@@ -248,7 +248,7 @@ func TestWriteReference(t *testing.T) {
 	t.Run("should fail with invalid name", func(t *testing.T) {
 		t.Parallel()
 
-		dir, cleanup := testhelper.TempDir(t)
+		dir, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		cfg := confutil.NewCommonConfig(t, dir)
@@ -268,7 +268,7 @@ func TestWriteReference(t *testing.T) {
 	t.Run("should pass overwriting a symbolic reference", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		cfg := confutil.NewCommonConfig(t, repoPath)
@@ -295,7 +295,7 @@ func TestWriteReference(t *testing.T) {
 	t.Run("should pass overwriting an oid reference", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		cfg := confutil.NewCommonConfig(t, repoPath)
@@ -328,7 +328,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 	t.Run("should pass writing a new symbolic reference", func(t *testing.T) {
 		t.Parallel()
 
-		dir, cleanup := testhelper.TempDir(t)
+		dir, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		cfg := confutil.NewCommonConfig(t, dir)
@@ -352,7 +352,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 	t.Run("should pass writing a new oid reference", func(t *testing.T) {
 		t.Parallel()
 
-		dir, cleanup := testhelper.TempDir(t)
+		dir, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		cfg := confutil.NewCommonConfig(t, dir)
@@ -378,7 +378,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 	t.Run("should fail with invalid name", func(t *testing.T) {
 		t.Parallel()
 
-		dir, cleanup := testhelper.TempDir(t)
+		dir, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		cfg := confutil.NewCommonConfig(t, dir)
@@ -398,7 +398,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 	t.Run("should fail overwritting a ref on disk", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		cfg := confutil.NewCommonConfig(t, repoPath)
@@ -427,7 +427,7 @@ func TestWriteReferenceSafe(t *testing.T) {
 	t.Run("should fail overwritting a packed ref", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		cfg := confutil.NewCommonConfig(t, repoPath)
@@ -458,7 +458,7 @@ func TestWalkReferences(t *testing.T) {
 	t.Run("should pass writing a new symbolic reference", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		cfg := confutil.NewCommonConfig(t, repoPath)
@@ -480,7 +480,7 @@ func TestWalkReferences(t *testing.T) {
 	t.Run("should stop with WalkStop", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		cfg := confutil.NewCommonConfig(t, repoPath)
@@ -505,7 +505,7 @@ func TestWalkReferences(t *testing.T) {
 	t.Run("should bubble up the provided error", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		cfg := confutil.NewCommonConfig(t, repoPath)

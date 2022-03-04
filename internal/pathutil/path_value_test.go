@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/Nivl/git-go/internal/pathutil"
-	"github.com/Nivl/git-go/internal/testhelper"
+	"github.com/Nivl/git-go/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +17,7 @@ func TestNewDirPathFlagWithDefault(t *testing.T) {
 	t.Run("single valid path should pass", func(t *testing.T) {
 		t.Parallel()
 
-		path, cleanup := testhelper.TempDir(t)
+		path, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		p := pathutil.NewDirPathFlagWithDefault("/tmp")
@@ -30,7 +30,7 @@ func TestNewDirPathFlagWithDefault(t *testing.T) {
 	t.Run("no path should use default", func(t *testing.T) {
 		t.Parallel()
 
-		path, cleanup := testhelper.TempDir(t)
+		path, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		p := pathutil.NewDirPathFlagWithDefault(path)
@@ -40,7 +40,7 @@ func TestNewDirPathFlagWithDefault(t *testing.T) {
 	t.Run("invalid path should fail", func(t *testing.T) {
 		t.Parallel()
 
-		path, cleanup := testhelper.TempDir(t)
+		path, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		p := pathutil.NewDirPathFlagWithDefault("/tmp")
@@ -52,7 +52,7 @@ func TestNewDirPathFlagWithDefault(t *testing.T) {
 	t.Run("path should concat", func(t *testing.T) {
 		t.Parallel()
 
-		path, cleanup := testhelper.TempDir(t)
+		path, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		finalPath := filepath.Join(path, "a", "b", "c")
@@ -75,7 +75,7 @@ func TestNewDirPathFlagWithDefault(t *testing.T) {
 	t.Run("empty values should be ignored", func(t *testing.T) {
 		t.Parallel()
 
-		path, cleanup := testhelper.TempDir(t)
+		path, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		finalPath := filepath.Join(path, "a", "b", "c")
@@ -104,7 +104,7 @@ func TestNewDirPathFlagWithDefault(t *testing.T) {
 	t.Run("absolute path should overwrite", func(t *testing.T) {
 		t.Parallel()
 
-		path, cleanup := testhelper.TempDir(t)
+		path, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		fullPath := filepath.Join(path, "a", "b", "c")
@@ -124,7 +124,7 @@ func TestNewDirPathFlagWithDefault(t *testing.T) {
 	t.Run("should fail if path is a file", func(t *testing.T) {
 		t.Parallel()
 
-		f, cleanup := testhelper.TempFile(t)
+		f, cleanup := testutil.TempFile(t)
 		t.Cleanup(cleanup)
 
 		p := pathutil.NewDirPathFlagWithDefault("/tmp")
@@ -140,7 +140,7 @@ func TestNewFilePathFlagWithDefault(t *testing.T) {
 	t.Run("should fail if path is a directory", func(t *testing.T) {
 		t.Parallel()
 
-		path, cleanup := testhelper.TempDir(t)
+		path, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		p := pathutil.NewFilePathFlagWithDefault("/tmp")
@@ -152,7 +152,7 @@ func TestNewFilePathFlagWithDefault(t *testing.T) {
 	t.Run("should pass if path is a file", func(t *testing.T) {
 		t.Parallel()
 
-		f, cleanup := testhelper.TempFile(t)
+		f, cleanup := testutil.TempFile(t)
 		t.Cleanup(cleanup)
 
 		p := pathutil.NewFilePathFlagWithDefault("/tmp")
@@ -167,7 +167,7 @@ func TestNewPathFlagWithDefault(t *testing.T) {
 	t.Run("should pass if path is a directory", func(t *testing.T) {
 		t.Parallel()
 
-		path, cleanup := testhelper.TempDir(t)
+		path, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		p := pathutil.NewPathFlagWithDefault("/tmp")
@@ -178,7 +178,7 @@ func TestNewPathFlagWithDefault(t *testing.T) {
 	t.Run("should pass if path is a file", func(t *testing.T) {
 		t.Parallel()
 
-		f, cleanup := testhelper.TempFile(t)
+		f, cleanup := testutil.TempFile(t)
 		t.Cleanup(cleanup)
 
 		p := pathutil.NewPathFlagWithDefault("/tmp")

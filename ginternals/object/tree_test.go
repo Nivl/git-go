@@ -9,7 +9,7 @@ import (
 	"github.com/Nivl/git-go"
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/object"
-	"github.com/Nivl/git-go/internal/testhelper"
+	"github.com/Nivl/git-go/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,7 +25,7 @@ func TestTree(t *testing.T) {
 		require.NoError(t, err)
 
 		testFile := fmt.Sprintf("tree_%s", treeSHA)
-		content, err := os.ReadFile(filepath.Join(testhelper.TestdataPath(t), testFile))
+		content, err := os.ReadFile(filepath.Join(testutil.TestdataPath(t), testFile))
 		require.NoError(t, err)
 
 		o := object.New(object.TypeTree, content)
@@ -156,7 +156,7 @@ func TestNewTreeFromObject(t *testing.T) {
 		t.Parallel()
 
 		// Find a tree
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		r, err := git.OpenRepository(repoPath)

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/Nivl/git-go/internal/pathutil"
-	"github.com/Nivl/git-go/internal/testhelper"
+	"github.com/Nivl/git-go/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +17,7 @@ func TestWorkingTreeFromPath(t *testing.T) {
 	t.Run(".git dir without head shouldn't be returned", func(t *testing.T) {
 		t.Parallel()
 
-		path, cleanup := testhelper.TempDir(t)
+		path, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		err := os.MkdirAll(filepath.Join(path, ".git"), 0o755)
@@ -35,7 +35,7 @@ func TestWorkingTreeFromPath(t *testing.T) {
 	t.Run(".git file should be returned", func(t *testing.T) {
 		t.Parallel()
 
-		path, cleanup := testhelper.TempDir(t)
+		path, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		err := os.WriteFile(filepath.Join(path, ".git"), []byte(""), 0o644)
@@ -53,7 +53,7 @@ func TestWorkingTreeFromPath(t *testing.T) {
 	t.Run(".git dir with head should be returned", func(t *testing.T) {
 		t.Parallel()
 
-		path, cleanup := testhelper.TempDir(t)
+		path, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		err := os.MkdirAll(filepath.Join(path, ".git"), 0o755)
@@ -73,7 +73,7 @@ func TestWorkingTreeFromPath(t *testing.T) {
 	t.Run("no repo should return an error", func(t *testing.T) {
 		t.Parallel()
 
-		path, cleanup := testhelper.TempDir(t)
+		path, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		finalPath := filepath.Join(path, "a", "b", "c")

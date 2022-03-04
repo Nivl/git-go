@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/Nivl/git-go/env"
-	"github.com/Nivl/git-go/internal/testhelper"
+	"github.com/Nivl/git-go/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -77,7 +77,7 @@ func TestCatFileParams(t *testing.T) {
 func TestCatFile(t *testing.T) {
 	t.Parallel()
 
-	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+	repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 	t.Cleanup(cleanup)
 
 	testCases := []struct {
@@ -196,7 +196,7 @@ func TestCatFile(t *testing.T) {
 			expected := tc.expectedOutput
 			if strings.HasPrefix(tc.expectedOutput, "file://") {
 				filename := strings.TrimPrefix(tc.expectedOutput, "file://")
-				content, err := os.ReadFile(filepath.Join(testhelper.TestdataPath(t), filename))
+				content, err := os.ReadFile(filepath.Join(testutil.TestdataPath(t), filename))
 				require.NoError(t, err)
 				expected = string(content)
 			}
