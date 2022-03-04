@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/Nivl/git-go/internal/testhelper/exe"
+	"github.com/Nivl/git-go/internal/testutil/exe"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

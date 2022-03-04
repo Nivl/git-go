@@ -4,15 +4,15 @@ import (
 	"testing"
 
 	"github.com/Nivl/git-go/backend"
-	"github.com/Nivl/git-go/internal/testhelper"
-	"github.com/Nivl/git-go/internal/testhelper/confutil"
+	"github.com/Nivl/git-go/internal/testutil"
+	"github.com/Nivl/git-go/internal/testutil/confutil"
 	"github.com/stretchr/testify/require"
 )
 
 func TestPath(t *testing.T) {
 	t.Parallel()
 
-	dir, cleanup := testhelper.TempDir(t)
+	dir, cleanup := testutil.TempDir(t)
 	t.Cleanup(cleanup)
 
 	cfg := confutil.NewCommonConfig(t, dir)

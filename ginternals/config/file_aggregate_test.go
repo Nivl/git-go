@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/Nivl/git-go/env"
-	"github.com/Nivl/git-go/internal/testhelper"
+	"github.com/Nivl/git-go/internal/testutil"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -56,7 +56,7 @@ func TestGetters(t *testing.T) {
 	t.Parallel()
 
 	// Setup a few config files, a global one and a local one
-	dirPath, cleanup := testhelper.TempDir(t)
+	dirPath, cleanup := testutil.TempDir(t)
 	t.Cleanup(cleanup)
 
 	err := os.Mkdir(filepath.Join(dirPath, "etc"), 0o755)
@@ -147,7 +147,7 @@ func TestUpdate(t *testing.T) {
 	t.Parallel()
 
 	// Setup a few config files, a global one and a local one
-	dirPath, cleanup := testhelper.TempDir(t)
+	dirPath, cleanup := testutil.TempDir(t)
 	t.Cleanup(cleanup)
 
 	err := os.Mkdir(filepath.Join(dirPath, "etc"), 0o755)

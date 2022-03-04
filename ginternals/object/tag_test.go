@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/Nivl/git-go/ginternals/object"
-	"github.com/Nivl/git-go/internal/testhelper"
+	"github.com/Nivl/git-go/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -19,7 +19,7 @@ func TestNewTag(t *testing.T) {
 	t.Run("NewTag with all data sets", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		r, err := git.OpenRepository(repoPath)
@@ -56,7 +56,7 @@ func TestTagToObject(t *testing.T) {
 	t.Run("ToObject should return the raw object", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 		r, err := git.OpenRepository(repoPath)
 		require.NoError(t, err)
@@ -80,7 +80,7 @@ func TestTagToObject(t *testing.T) {
 	t.Run("happy path on NewTag", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 		r, err := git.OpenRepository(repoPath)
 		require.NoError(t, err)
@@ -120,7 +120,7 @@ func TestNewTagFromObject(t *testing.T) {
 		t.Parallel()
 
 		// Find a tag
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		r, err := git.OpenRepository(repoPath)

@@ -1,7 +1,7 @@
 ignore:
   - "internal/test*"
   - "cmd/git-go/main.go"
-  - "internal/testhelper"
+  - "internal/testutil"
 
 codecov:
   notify:

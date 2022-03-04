@@ -8,8 +8,8 @@ import (
 
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/packfile"
-	"github.com/Nivl/git-go/internal/testhelper"
-	"github.com/Nivl/git-go/internal/testhelper/confutil"
+	"github.com/Nivl/git-go/internal/testutil"
+	"github.com/Nivl/git-go/internal/testutil/confutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,7 +20,7 @@ func TestNewIndex(t *testing.T) {
 	t.Run("valid indexfile should pass", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		indexFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.idx"
@@ -41,7 +41,7 @@ func TestNewIndex(t *testing.T) {
 	t.Run("a packfile should fail", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		indexFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.pack"
@@ -64,10 +64,10 @@ func TestNewIndex(t *testing.T) {
 func TestGetObjectOffset(t *testing.T) {
 	t.Parallel()
 
-	t.Run(string(testhelper.RepoSmall), func(t *testing.T) {
+	t.Run(string(testutil.RepoSmall), func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		indexFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.idx"

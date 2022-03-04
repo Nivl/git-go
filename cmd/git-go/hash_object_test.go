@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/Nivl/git-go/env"
-	"github.com/Nivl/git-go/internal/testhelper"
+	"github.com/Nivl/git-go/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +22,7 @@ func TestHashObjectCmd(t *testing.T) {
 		t.Run("default should be blob", func(t *testing.T) {
 			t.Parallel()
 
-			repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+			repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 			t.Cleanup(cleanup)
 
 			cwd, err := os.Getwd()
@@ -58,7 +58,7 @@ func TestHashObjectCmd(t *testing.T) {
 			cmd.SetArgs([]string{
 				"hash-object",
 				"-t", "blob",
-				filepath.Join(testhelper.TestdataPath(t), "blob"),
+				filepath.Join(testutil.TestdataPath(t), "blob"),
 			})
 			cmd.SetOut(outBuf)
 
@@ -88,7 +88,7 @@ func TestHashObjectCmd(t *testing.T) {
 			cmd.SetArgs([]string{
 				"hash-object",
 				"-t", "tree",
-				filepath.Join(testhelper.TestdataPath(t), "tree"),
+				filepath.Join(testutil.TestdataPath(t), "tree"),
 			})
 			cmd.SetOut(outBuf)
 
@@ -114,7 +114,7 @@ func TestHashObjectCmd(t *testing.T) {
 			cmd.SetArgs([]string{
 				"hash-object",
 				"-t", "tree",
-				filepath.Join(testhelper.TestdataPath(t), "blob"),
+				filepath.Join(testutil.TestdataPath(t), "blob"),
 			})
 			cmd.SetOut(outBuf)
 
@@ -145,7 +145,7 @@ func TestHashObjectCmd(t *testing.T) {
 			cmd.SetArgs([]string{
 				"hash-object",
 				"-t", "commit",
-				filepath.Join(testhelper.TestdataPath(t), "commit"),
+				filepath.Join(testutil.TestdataPath(t), "commit"),
 			})
 			cmd.SetOut(outBuf)
 
@@ -171,7 +171,7 @@ func TestHashObjectCmd(t *testing.T) {
 			cmd.SetArgs([]string{
 				"hash-object",
 				"-t", "commit",
-				filepath.Join(testhelper.TestdataPath(t), "tree"),
+				filepath.Join(testutil.TestdataPath(t), "tree"),
 			})
 			cmd.SetOut(outBuf)
 

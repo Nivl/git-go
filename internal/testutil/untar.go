@@ -1,4 +1,4 @@
-package testhelper
+package testutil
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/Nivl/git-go/internal/pathutil"
-	"github.com/Nivl/git-go/internal/testhelper/exe"
+	"github.com/Nivl/git-go/internal/testutil/exe"
 	"github.com/stretchr/testify/require"
 )
 

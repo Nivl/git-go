@@ -10,8 +10,8 @@ import (
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/Nivl/git-go/ginternals/packfile"
-	"github.com/Nivl/git-go/internal/testhelper"
-	"github.com/Nivl/git-go/internal/testhelper/confutil"
+	"github.com/Nivl/git-go/internal/testutil"
+	"github.com/Nivl/git-go/internal/testutil/confutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +22,7 @@ func TestObject(t *testing.T) {
 	t.Run("existing loose object should be returned", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		oid, err := ginternals.NewOidFromStr("b07e28976ac8972715598f390964d53cf4dbc1bd")
@@ -47,7 +47,7 @@ func TestObject(t *testing.T) {
 	t.Run("existing object in packfile should be returned", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		oid, err := ginternals.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
@@ -71,7 +71,7 @@ func TestObject(t *testing.T) {
 	t.Run("un-existing object should fail", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		oid, err := ginternals.NewOidFromStr("2dcdadc2a420225783794fbffd51e2e137a69646")
@@ -97,7 +97,7 @@ func TestHasObject(t *testing.T) {
 	t.Run("existing object should exist", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		cfg := confutil.NewCommonConfig(t, repoPath)
@@ -118,7 +118,7 @@ func TestHasObject(t *testing.T) {
 	t.Run("non-existing object should not exist", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		cfg := confutil.NewCommonConfig(t, repoPath)
@@ -139,7 +139,7 @@ func TestHasObject(t *testing.T) {
 	t.Run("cache should be updated", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		cfg := confutil.NewCommonConfig(t, repoPath)
@@ -171,7 +171,7 @@ func TestHasObject(t *testing.T) {
 	t.Run("invalid cache should be replaced", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		cfg := confutil.NewCommonConfig(t, repoPath)
@@ -202,7 +202,7 @@ func TestWriteObject(t *testing.T) {
 	t.Run("add a new blob", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		cfg := confutil.NewCommonConfig(t, repoPath)
@@ -234,7 +234,7 @@ func TestWriteObject(t *testing.T) {
 	t.Run("Writing the same object twice should not trigger a rewrite", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		cfg := confutil.NewCommonConfig(t, repoPath)
@@ -275,7 +275,7 @@ func TestWriteObject(t *testing.T) {
 func TestWalkPackedObjectIDs(t *testing.T) {
 	t.Parallel()
 
-	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+	repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 	t.Cleanup(cleanup)
 
 	cfg := confutil.NewCommonConfig(t, repoPath)
@@ -333,7 +333,7 @@ func TestWalkPackedObjectIDs(t *testing.T) {
 func TestLoosePackedObjectIDs(t *testing.T) {
 	t.Parallel()
 
-	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+	repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 	t.Cleanup(cleanup)
 
 	cfg := confutil.NewCommonConfig(t, repoPath)
@@ -382,7 +382,7 @@ func TestLoosePackedObjectIDs(t *testing.T) {
 func TestIsLooseObjectDir(t *testing.T) {
 	t.Parallel()
 
-	dir, cleanup := testhelper.TempDir(t)
+	dir, cleanup := testutil.TempDir(t)
 	t.Cleanup(cleanup)
 
 	cfg := confutil.NewCommonConfig(t, dir)

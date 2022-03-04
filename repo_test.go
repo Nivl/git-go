@@ -12,7 +12,7 @@ import (
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/config"
 	"github.com/Nivl/git-go/ginternals/object"
-	"github.com/Nivl/git-go/internal/testhelper"
+	"github.com/Nivl/git-go/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,7 +24,7 @@ func TestInit(t *testing.T) {
 		t.Parallel()
 
 		// Setup
-		d, cleanup := testhelper.TempDir(t)
+		d, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		// Run logic
@@ -50,7 +50,7 @@ func TestInit(t *testing.T) {
 		t.Parallel()
 
 		// Setup
-		d, cleanup := testhelper.TempDir(t)
+		d, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		// Run logic
@@ -69,7 +69,7 @@ func TestInit(t *testing.T) {
 	t.Run("repo with a custom .git", func(t *testing.T) {
 		t.Parallel()
 
-		d, cleanup := testhelper.TempDir(t)
+		d, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		opts, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
@@ -89,7 +89,7 @@ func TestInit(t *testing.T) {
 	t.Run("repo with a custom .git and .git/objects", func(t *testing.T) {
 		t.Parallel()
 
-		d, cleanup := testhelper.TempDir(t)
+		d, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		// Run logic
@@ -117,7 +117,7 @@ func TestInit(t *testing.T) {
 		t.Parallel()
 
 		// Setup
-		f, cleanup := testhelper.TempFile(t)
+		f, cleanup := testutil.TempFile(t)
 		t.Cleanup(cleanup)
 
 		// Run logic
@@ -137,7 +137,7 @@ func TestInit(t *testing.T) {
 		t.Parallel()
 
 		// Setup
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		// Run logic
@@ -151,7 +151,7 @@ func TestInit(t *testing.T) {
 		t.Run("should fail creating a repo in a protected directory", func(t *testing.T) {
 			t.Parallel()
 
-			dir, cleanup := testhelper.TempDir(t)
+			dir, cleanup := testutil.TempDir(t)
 			t.Cleanup(cleanup)
 
 			target := filepath.Join(dir, "protected")
@@ -175,7 +175,7 @@ func TestInit(t *testing.T) {
 		t.Parallel()
 
 		// Setup
-		d, cleanup := testhelper.TempDir(t)
+		d, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		// Run logic
@@ -203,7 +203,7 @@ func TestInit(t *testing.T) {
 		t.Parallel()
 
 		// Setup
-		d, cleanup := testhelper.TempDir(t)
+		d, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		// Run logic
@@ -218,7 +218,7 @@ func TestInit(t *testing.T) {
 		t.Parallel()
 
 		// Setup
-		d, cleanup := testhelper.TempDir(t)
+		d, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		// Run logic
@@ -240,7 +240,7 @@ func TestOpen(t *testing.T) {
 	t.Run("repo with working tree", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
@@ -260,7 +260,7 @@ func TestOpen(t *testing.T) {
 	t.Run("bare repo", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 		repoPath = filepath.Join(repoPath, ".git")
 
@@ -283,10 +283,10 @@ func TestOpen(t *testing.T) {
 	t.Run("repo with a custom .git", func(t *testing.T) {
 		t.Parallel()
 
-		d, cleanupWt := testhelper.TempDir(t)
+		d, cleanupWt := testutil.TempDir(t)
 		t.Cleanup(cleanupWt)
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 		repoPath = filepath.Join(repoPath, ".git")
 
@@ -308,7 +308,7 @@ func TestOpen(t *testing.T) {
 	t.Run("should fail if repo doesn't exist", func(t *testing.T) {
 		t.Parallel()
 
-		d, cleanup := testhelper.TempDir(t)
+		d, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		_, err := OpenRepository(d)
@@ -319,7 +319,7 @@ func TestOpen(t *testing.T) {
 	t.Run("should fail if directory doesn't exist", func(t *testing.T) {
 		t.Parallel()
 
-		d, cleanup := testhelper.TempDir(t)
+		d, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		_, err := OpenRepository(filepath.Join(d, "404"))
@@ -334,7 +334,7 @@ func TestRepositoryGetObject(t *testing.T) {
 	t.Run("loose object", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
@@ -358,7 +358,7 @@ func TestRepositoryGetObject(t *testing.T) {
 	t.Run("Object from packfile", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
@@ -382,7 +382,7 @@ func TestRepositoryGetObject(t *testing.T) {
 func TestRepositoryNewBlob(t *testing.T) {
 	t.Parallel()
 
-	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+	repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 	t.Cleanup(cleanup)
 
 	r, err := OpenRepository(repoPath)
@@ -405,7 +405,7 @@ func TestRepositoryNewBlob(t *testing.T) {
 func TestRepositoryGetCommit(t *testing.T) {
 	t.Parallel()
 
-	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+	repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 	t.Cleanup(cleanup)
 
 	r, err := OpenRepository(repoPath)
@@ -429,7 +429,7 @@ func TestRepositoryGetCommit(t *testing.T) {
 func TestRepositoryGetReference(t *testing.T) {
 	t.Parallel()
 
-	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+	repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 	t.Cleanup(cleanup)
 	r, err := OpenRepository(repoPath)
 	require.NoError(t, err)
@@ -480,7 +480,7 @@ func TestRepositoryGetReference(t *testing.T) {
 func TestRepositoryGetTree(t *testing.T) {
 	t.Parallel()
 
-	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+	repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 	t.Cleanup(cleanup)
 
 	r, err := OpenRepository(repoPath)
@@ -505,7 +505,7 @@ func TestRepositoryNewCommit(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
@@ -543,7 +543,7 @@ func TestRepositoryNewCommit(t *testing.T) {
 	t.Run("should fail if a parent is not a commit", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
@@ -573,7 +573,7 @@ func TestRepositoryNewCommit(t *testing.T) {
 func TestRepositoryNewDetachedCommit(t *testing.T) {
 	t.Parallel()
 
-	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+	repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 	t.Cleanup(cleanup)
 
 	r, err := OpenRepository(repoPath)
@@ -614,7 +614,7 @@ func TestRepositoryGetTag(t *testing.T) {
 	t.Run("annotated", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
@@ -647,7 +647,7 @@ func TestRepositoryGetTag(t *testing.T) {
 	t.Run("lightweight", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
@@ -673,7 +673,7 @@ func TestRepositoryGetTag(t *testing.T) {
 	t.Run("unexisting tag", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
@@ -694,7 +694,7 @@ func TestRepositoryNewTag(t *testing.T) {
 	t.Run("create a new valid tag", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
@@ -740,7 +740,7 @@ func TestRepositoryNewTag(t *testing.T) {
 	t.Run("should fail creating a tag that already exist", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
@@ -770,7 +770,7 @@ func TestRepositoryNewTag(t *testing.T) {
 	t.Run("should fail creating a tag using a non-persisted object", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
@@ -800,7 +800,7 @@ func TestRepositoryNewLightweightTag(t *testing.T) {
 	t.Run("create a new valid tag", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
@@ -822,7 +822,7 @@ func TestRepositoryNewLightweightTag(t *testing.T) {
 	t.Run("should fail creating a tag that already exist", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)
@@ -843,7 +843,7 @@ func TestRepositoryNewLightweightTag(t *testing.T) {
 	t.Run("should fail creating a tag using a non-persisted object", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		r, err := OpenRepository(repoPath)

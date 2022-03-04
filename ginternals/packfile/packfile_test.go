@@ -7,8 +7,8 @@ import (
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/object"
 	"github.com/Nivl/git-go/ginternals/packfile"
-	"github.com/Nivl/git-go/internal/testhelper"
-	"github.com/Nivl/git-go/internal/testhelper/confutil"
+	"github.com/Nivl/git-go/internal/testutil"
+	"github.com/Nivl/git-go/internal/testutil/confutil"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,7 +20,7 @@ func TestNewFromFile(t *testing.T) {
 	t.Run("valid packfile should pass", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		packFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.pack"
@@ -39,7 +39,7 @@ func TestNewFromFile(t *testing.T) {
 	t.Run("indexfile should fail", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		packFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.idx"
@@ -59,7 +59,7 @@ func TestGetObject(t *testing.T) {
 	t.Run("valid object should return an object", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		packFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.pack"
@@ -149,7 +149,7 @@ func TestObjectCount(t *testing.T) {
 	t.Run("count the amount of objects in the test repo", func(t *testing.T) {
 		t.Parallel()
 
-		repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 		t.Cleanup(cleanup)
 
 		// Load the packfile
@@ -174,7 +174,7 @@ func TestObjectCount(t *testing.T) {
 func TestWalkOids(t *testing.T) {
 	t.Parallel()
 
-	repoPath, cleanup := testhelper.UnTar(t, testhelper.RepoSmall)
+	repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
 	t.Cleanup(cleanup)
 	// Load the packfile
 	packFileName := "pack-0163931160835b1de2f120e1aa7e52206debeb14.pack"

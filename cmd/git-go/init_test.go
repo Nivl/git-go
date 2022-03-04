@@ -11,7 +11,7 @@ import (
 	"github.com/Nivl/git-go/env"
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/config"
-	"github.com/Nivl/git-go/internal/testhelper"
+	"github.com/Nivl/git-go/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -33,7 +33,7 @@ func TestInitParams(t *testing.T) {
 		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
 			t.Parallel()
 
-			dirPath, cleanup := testhelper.TempDir(t)
+			dirPath, cleanup := testutil.TempDir(t)
 			t.Cleanup(cleanup)
 			tc.args = append(tc.args, "-C", dirPath)
 
@@ -57,14 +57,14 @@ func TestInit(t *testing.T) {
 	t.Run("should work with default params", func(t *testing.T) {
 		t.Parallel()
 
-		dirPath, cleanup := testhelper.TempDir(t)
+		dirPath, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		sdtout := bytes.NewBufferString("")
 
 		err := initCmd(sdtout, &globalFlags{
 			env: env.NewFromKVList([]string{}),
-			C:   &testhelper.StringValue{Value: dirPath},
+			C:   &testutil.StringValue{Value: dirPath},
 		}, initCmdFlags{}, "")
 		require.NoError(t, err)
 
@@ -78,20 +78,20 @@ func TestInit(t *testing.T) {
 	t.Run("init an existing repo should change the output message", func(t *testing.T) {
 		t.Parallel()
 
-		dirPath, cleanup := testhelper.TempDir(t)
+		dirPath, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		// Running once
 		err := initCmd(io.Discard, &globalFlags{
 			env: env.NewFromKVList([]string{}),
-			C:   &testhelper.StringValue{Value: dirPath},
+			C:   &testutil.StringValue{Value: dirPath},
 		}, initCmdFlags{}, "")
 		require.NoError(t, err)
 		// Running twice
 		sdtout := bytes.NewBufferString("")
 		err = initCmd(sdtout, &globalFlags{
 			env: env.NewFromKVList([]string{}),
-			C:   &testhelper.StringValue{Value: dirPath},
+			C:   &testutil.StringValue{Value: dirPath},
 		}, initCmdFlags{}, "")
 		require.NoError(t, err)
 
@@ -103,12 +103,12 @@ func TestInit(t *testing.T) {
 	t.Run("should create un-existing path", func(t *testing.T) {
 		t.Parallel()
 
-		dir, cleanup := testhelper.TempDir(t)
+		dir, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		err := initCmd(io.Discard, &globalFlags{
 			env: env.NewFromKVList([]string{}),
-			C:   &testhelper.StringValue{Value: filepath.Join(dir, "this", "path", "is", "fake")},
+			C:   &testutil.StringValue{Value: filepath.Join(dir, "this", "path", "is", "fake")},
 		}, initCmdFlags{}, "")
 		require.NoError(t, err)
 	})
@@ -116,13 +116,13 @@ func TestInit(t *testing.T) {
 	t.Run("should allow a branch name", func(t *testing.T) {
 		t.Parallel()
 
-		dir, cleanup := testhelper.TempDir(t)
+		dir, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		err := initCmd(io.Discard,
 			&globalFlags{
 				env: env.NewFromKVList([]string{}),
-				C:   &testhelper.StringValue{Value: dir},
+				C:   &testutil.StringValue{Value: dir},
 			},
 			initCmdFlags{
 				initialBranch: "main",
@@ -137,7 +137,7 @@ func TestInit(t *testing.T) {
 	t.Run("--quiet should prevent writing data to stdout", func(t *testing.T) {
 		t.Parallel()
 
-		dir, cleanup := testhelper.TempDir(t)
+		dir, cleanup := testutil.TempDir(t)
 		t.Cleanup(cleanup)
 
 		sdtout := bytes.NewBufferString("")
@@ -145,7 +145,7 @@ func TestInit(t *testing.T) {
 		err := initCmd(sdtout,
 			&globalFlags{
 				env: env.NewFromKVList([]string{}),
-				C:   &testhelper.StringValue{Value: dir},
+				C:   &testutil.StringValue{Value: dir},
 			},
 			initCmdFlags{
 				quiet: true,
@@ -165,13 +165,13 @@ func TestInit(t *testing.T) {
 		t.Run("should work with valid params", func(t *testing.T) {
 			t.Parallel()
 
-			dir, cleanup := testhelper.TempDir(t)
+			dir, cleanup := testutil.TempDir(t)
 			t.Cleanup(cleanup)
 
 			err := initCmd(io.Discard,
 				&globalFlags{
 					env: env.NewFromKVList([]string{}),
-					C:   &testhelper.StringValue{Value: dir},
+					C:   &testutil.StringValue{Value: dir},
 				},
 				initCmdFlags{
 					separateGitDir: filepath.Join(dir, "separate"),
@@ -236,13 +236,13 @@ func TestInit(t *testing.T) {
 		t.Run("the provided target directory should be created", func(t *testing.T) {
 			t.Parallel()
 
-			dir, cleanup := testhelper.TempDir(t)
+			dir, cleanup := testutil.TempDir(t)
 			t.Cleanup(cleanup)
 
 			err := initCmd(io.Discard,
 				&globalFlags{
 					env: env.NewFromKVList([]string{}),
-					C:   &testhelper.StringValue{Value: dir},
+					C:   &testutil.StringValue{Value: dir},
 				},
 				initCmdFlags{},
 				filepath.Join(dir, "target"))

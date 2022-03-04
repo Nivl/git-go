@@ -9,7 +9,7 @@ import (
 
 	"github.com/Nivl/git-go/ginternals"
 	"github.com/Nivl/git-go/ginternals/object"
-	"github.com/Nivl/git-go/internal/testhelper"
+	"github.com/Nivl/git-go/internal/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -123,7 +123,7 @@ func TestAsTree(t *testing.T) {
 		treeSHA := "e5b9e846e1b468bc9597ff95d71dfacda8bd54e3"
 
 		testFile := fmt.Sprintf("tree_%s", treeSHA)
-		content, err := os.ReadFile(filepath.Join(testhelper.TestdataPath(t), testFile))
+		content, err := os.ReadFile(filepath.Join(testutil.TestdataPath(t), testFile))
 		require.NoError(t, err)
 
 		o := object.New(object.TypeTree, content)
@@ -138,7 +138,7 @@ func TestAsTree(t *testing.T) {
 func TestAsBlob(t *testing.T) {
 	t.Parallel()
 
-	content, err := os.ReadFile(filepath.Join(testhelper.TestdataPath(t), "blob_642480605b8b0fd464ab5762e044269cf29a60a3"))
+	content, err := os.ReadFile(filepath.Join(testutil.TestdataPath(t), "blob_642480605b8b0fd464ab5762e044269cf29a60a3"))
 	require.NoError(t, err)
 
 	o := object.New(object.TypeBlob, content)
@@ -331,7 +331,7 @@ func TestCompress(t *testing.T) {
 		treeSHA := "e5b9e846e1b468bc9597ff95d71dfacda8bd54e3"
 
 		testFile := fmt.Sprintf("tree_%s", treeSHA)
-		content, err := os.ReadFile(filepath.Join(testhelper.TestdataPath(t), testFile))
+		content, err := os.ReadFile(filepath.Join(testutil.TestdataPath(t), testFile))
 		require.NoError(t, err)
 
 		o := object.New(object.TypeTree, content)
