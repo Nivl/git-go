@@ -320,6 +320,59 @@ func TestWriteReference(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, target.String()+"\n", string(data))
 	})
+
+	t.Run("should pass writing a reference containing '/'", func(t *testing.T) {
+		t.Parallel()
+
+		dir, cleanup := testutil.TempDir(t)
+		t.Cleanup(cleanup)
+
+		cfg := confutil.NewCommonConfig(t, dir)
+		b, err := NewFS(cfg)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+		require.NoError(t, b.Init(ginternals.Master))
+
+		target, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
+		require.NoError(t, err)
+		ref := ginternals.NewReference("ml/tests/references", target)
+		err = b.WriteReference(ref)
+		require.NoError(t, err)
+
+		data, err := os.ReadFile(filepath.Join(b.Path(), "ml", "tests", "references"))
+		require.NoError(t, err)
+		assert.Equal(t, target.String()+"\n", string(data))
+	})
+
+	t.Run("should fail writing a reference containing '/' already used by another reference", func(t *testing.T) {
+		t.Parallel()
+
+		dir, cleanup := testutil.TempDir(t)
+		t.Cleanup(cleanup)
+
+		cfg := confutil.NewCommonConfig(t, dir)
+		b, err := NewFS(cfg)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+		require.NoError(t, b.Init(ginternals.Master))
+
+		target, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
+		require.NoError(t, err)
+		ref := ginternals.NewReference("ml/tests", target)
+		err = b.WriteReference(ref)
+		require.NoError(t, err)
+
+		ref = ginternals.NewReference("ml/tests/references", target)
+		err = b.WriteReference(ref)
+		require.Error(t, err)
+		// TODO(melvin): check error type. Windows doesn't fail on the MkdirAll
+		// Making it hard to have a cross-platform test right now.
+		// require.Contains(t, err.Error(), "not a directory")
+	})
 }
 
 func TestWriteReferenceSafe(t *testing.T) {
