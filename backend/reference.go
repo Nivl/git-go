@@ -164,8 +164,20 @@ func (b *Backend) writeReference(ref *ginternals.Reference) error {
 	}
 
 	refPath := b.systemPath(ref.Name())
+	// Since we can have `/` in the ref name, we need to create
+	// the path on the FS
+	dir := filepath.Dir(refPath)
+	err := b.fs.MkdirAll(dir, 0o755)
+	if err != nil {
+		// TODO(melvin): This fails if someone creates a ref
+		// named ml/foo and then another ref named ml/foo/bar since
+		// foo is a file. We should probably return a better error
+		// message in this case (and potentially check this in IsRefNameValid?)
+		return fmt.Errorf("could not persist reference to disk: %w", err)
+	}
+	// We can now create the actual file
 	data := []byte(target)
-	err := afero.WriteFile(b.fs, refPath, data, 0o644)
+	err = afero.WriteFile(b.fs, refPath, data, 0o644)
 	if err != nil {
 		return fmt.Errorf("could not persist reference to disk: %w", err)
 	}
