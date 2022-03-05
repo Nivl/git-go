@@ -135,7 +135,7 @@ func TestLoadConfig(t *testing.T) {
 			},
 			e: env.NewFromKVList([]string{}),
 			expectedParams: &Config{
-				WorkTreePath:     filepath.Join(validRepoRoot),
+				WorkTreePath:     validRepoRoot,
 				GitDirPath:       filepath.Join(validRepoRoot, DefaultDotGitDirName),
 				CommonDirPath:    filepath.Join(validRepoRoot, DefaultDotGitDirName),
 				LocalConfig:      filepath.Join(validRepoRoot, DefaultDotGitDirName, defaultConfigDirName),
