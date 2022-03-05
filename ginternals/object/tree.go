@@ -56,7 +56,10 @@ func (m TreeObjectMode) ObjectType() Type {
 // Tree represents a git tree object
 type Tree struct {
 	rawObject *Object
-	// we don't use pointers to make sure entries are immutable
+	cache     map[string]TreeEntry
+
+	// We don't use pointers to make sure entries are immutable
+	// We don't use a map to map sure the order stays the same
 	entries []TreeEntry
 }
 
@@ -71,8 +74,12 @@ type TreeEntry struct {
 func NewTree(entries []TreeEntry) *Tree {
 	t := &Tree{
 		entries: entries,
+		cache:   make(map[string]TreeEntry, len(entries)),
 	}
 	t.rawObject = t.ToObject()
+	for _, entry := range entries {
+		t.cache[entry.Path] = entry
+	}
 	return t
 }
 
@@ -90,6 +97,7 @@ func NewTreeFromObject(o *Object) (*Tree, error) {
 	}
 
 	entries := []TreeEntry{}
+	cache := map[string]TreeEntry{}
 
 	objData := o.Bytes()
 	if len(objData) > 0 {
@@ -128,6 +136,7 @@ func NewTreeFromObject(o *Object) (*Tree, error) {
 			offset += 20
 
 			entries = append(entries, entry)
+			cache[entry.Path] = entry
 			if len(objData) == offset {
 				break
 			}
@@ -136,6 +145,7 @@ func NewTreeFromObject(o *Object) (*Tree, error) {
 	return &Tree{
 		rawObject: o,
 		entries:   entries,
+		cache:     cache,
 	}, nil
 }
 
@@ -144,6 +154,12 @@ func (t *Tree) Entries() []TreeEntry {
 	out := make([]TreeEntry, len(t.entries))
 	copy(out, t.entries)
 	return out
+}
+
+// Entry returns an entry from its path
+func (t *Tree) Entry(path string) (entry TreeEntry, ok bool) {
+	entry, ok = t.cache[path]
+	return
 }
 
 // ID returns the object's ID
