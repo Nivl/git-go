@@ -45,3 +45,11 @@ tool. The main commands are:
 - `task install` to install the `git-go` to the GOPATH
 - `task build` to create a `git` binary in the `./bin` directory
 - `task dev -w` to have the binary at `./bin/git` automatically rebuilt with every change in the code
+
+## Getting Started with the lib
+
+The [git package](https://pkg.go.dev/github.com/Nivl/git-go) should contain
+everything you need to do most of the common operations. For more advanced
+operations, you should use the [ginternals package](https://pkg.go.dev/github.com/Nivl/git-go/ginternals).
+
+You can take a look at our [smoke tests](https://github.com/Nivl/git-go/tree/main/smoke) for examples of usage.
