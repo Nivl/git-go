@@ -51,11 +51,12 @@ linters:
     - gomnd # An analyzer to detect magic numbers || Hard to use productively due to many valid use cases going against the linter. A comment works bertter than creating many vars
     - gomoddirectives # Manage the use of 'replace', 'retract', and 'excludes' directives in go.mod || Conflicts with pflag's replace that we force into cobra
     - gomodguard # Allow and block list linter for direct Go module dependencies || No use case for this repo
-    - interfacer  # No longer maintained, project archived on github
+    - interfacer # No longer maintained, project archived on github
+    - ireturn # Checks that methods take interfaces and return concrete types || Too opinionated, not always what you want
     - lll  # Reports long lines || Hard to use productively due to many valid use cases going against the linter
-    - maligned  # Replaced by govet 'fieldalignment'
-    - nakedret  # Finds naked returns in functions greater than a specified function length || Too opinionated, doesn't solve any issue we have
-    - nestif  # Reports deeply nested if statements || Hard to use productively due to many valid use cases going against the linter
+    - maligned # Replaced by govet 'fieldalignment'
+    - nakedret # Finds naked returns in functions greater than a specified function length || Too opinionated, doesn't solve any issue we have
+    - nestif # Reports deeply nested if statements || Hard to use productively due to many valid use cases going against the linter
     - nlreturn # checks for a new line before return and branch statements to increase code clarity || Too opinionated
     - paralleltest # detects missing usage of t.Parallel() method in your Go test || Too many false positives https://github.com/kunwardeep/paralleltest/issues/8
     - scopelint # Replaced by exportloopref
