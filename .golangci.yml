@@ -19,6 +19,7 @@ issues:
         - gosec
         - goerr113
         - forcetypeassert
+        - maintidx
 
     - path: _test\.go
       text: "fieldalignment: struct"
