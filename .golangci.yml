@@ -38,6 +38,7 @@ linters:
     - depguard # Go linter that checks if package imports are in a list of acceptable packages || No use case for this repo
     - dupl # Tool for code clone detection || Hard to use productively due to many valid use cases going against the linter
     - exhaustivestruct # Checks if all struct's fields are initialized || Hard to use productively due to many valid use cases going against the linter
+    - forcetypeassert # Finds forced type assertions || In our code this can only happen in case of internal error and we would trigger a panic anyway if this happens.
     - funlen # Tool for detection of long functions || Hard to use productively due to many valid use cases going against the linter
     - gci # Gci control golang package import order and make it always deterministic || Conflicts with gofumpt
     - gochecknoglobals # check that no global variables exist || Hard to use productively due to many valid use cases going against the linter || Recommend using locally
