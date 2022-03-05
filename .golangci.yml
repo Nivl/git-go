@@ -19,6 +19,7 @@ issues:
         - gosec
         - goerr113
         - forcetypeassert
+        - maintidx
 
     - path: _test\.go
       text: "fieldalignment: struct"
@@ -37,6 +38,7 @@ linters:
     - depguard # Go linter that checks if package imports are in a list of acceptable packages || No use case for this repo
     - dupl # Tool for code clone detection || Hard to use productively due to many valid use cases going against the linter
     - exhaustivestruct # Checks if all struct's fields are initialized || Hard to use productively due to many valid use cases going against the linter
+    - forcetypeassert # Finds forced type assertions || In our code this can only happen in case of internal error and we would trigger a panic anyway if this happens.
     - funlen # Tool for detection of long functions || Hard to use productively due to many valid use cases going against the linter
     - gci # Gci control golang package import order and make it always deterministic || Conflicts with gofumpt
     - gochecknoglobals # check that no global variables exist || Hard to use productively due to many valid use cases going against the linter || Recommend using locally
@@ -50,16 +52,18 @@ linters:
     - gomnd # An analyzer to detect magic numbers || Hard to use productively due to many valid use cases going against the linter. A comment works bertter than creating many vars
     - gomoddirectives # Manage the use of 'replace', 'retract', and 'excludes' directives in go.mod || Conflicts with pflag's replace that we force into cobra
     - gomodguard # Allow and block list linter for direct Go module dependencies || No use case for this repo
-    - interfacer  # No longer maintained, project archived on github
+    - interfacer # No longer maintained, project archived on github
+    - ireturn # Checks that methods take interfaces and return concrete types || Too opinionated, not always what you want
     - lll  # Reports long lines || Hard to use productively due to many valid use cases going against the linter
-    - maligned  # Replaced by govet 'fieldalignment'
-    - nakedret  # Finds naked returns in functions greater than a specified function length || Too opinionated, doesn't solve any issue we have
-    - nestif  # Reports deeply nested if statements || Hard to use productively due to many valid use cases going against the linter
+    - maligned # Replaced by govet 'fieldalignment'
+    - nakedret # Finds naked returns in functions greater than a specified function length || Too opinionated, doesn't solve any issue we have
+    - nestif # Reports deeply nested if statements || Hard to use productively due to many valid use cases going against the linter
     - nlreturn # checks for a new line before return and branch statements to increase code clarity || Too opinionated
     - paralleltest # detects missing usage of t.Parallel() method in your Go test || Too many false positives https://github.com/kunwardeep/paralleltest/issues/8
     - scopelint # Replaced by exportloopref
     - testpackage # linter that makes you use a separate _test package || Hard to use productively due to many valid use cases going against the linter
     - thelper # detects golang test helpers without t.Helper() call and checks the consistency of test helpers || No reasons not to use this one, we should probably try it
+    - varnamelen # Checks that the length of a variable's name matches its scope || Hard to use productively due to many valid use cases going against the linter
     - wrapcheck # Checks that errors returned from external packages are wrapped || Hard to use productively due to many valid use cases going against the linter || recommend using localy
     - wsl # Forces you to use empty lines || Too opinionated
 

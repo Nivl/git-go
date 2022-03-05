@@ -157,7 +157,7 @@ func (o *Object) build() (oid ginternals.Oid, data []byte) {
 	// Write the type
 	w.WriteString(o.Type().String())
 	// add the space
-	w.WriteRune(' ')
+	w.WriteByte(' ')
 	// write the size
 	w.WriteString(strconv.Itoa(o.Size()))
 	// Write the NULL char

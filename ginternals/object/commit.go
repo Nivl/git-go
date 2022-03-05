@@ -298,29 +298,29 @@ func (c *Commit) ToObject() *Object {
 	buf := new(bytes.Buffer)
 	buf.WriteString("tree ")
 	buf.WriteString(c.treeID.String())
-	buf.WriteRune('\n')
+	buf.WriteByte('\n')
 
 	for _, p := range c.parentIDs {
 		buf.WriteString("parent ")
 		buf.WriteString(p.String())
-		buf.WriteRune('\n')
+		buf.WriteByte('\n')
 	}
 
 	buf.WriteString("author ")
 	buf.WriteString(c.Author().String())
-	buf.WriteRune('\n')
+	buf.WriteByte('\n')
 
 	buf.WriteString("committer ")
 	buf.WriteString(c.Committer().String())
-	buf.WriteRune('\n')
+	buf.WriteByte('\n')
 
 	if c.gpgSig != "" {
 		buf.WriteString("gpgsig ")
 		buf.WriteString(c.gpgSig)
-		buf.WriteRune('\n')
+		buf.WriteByte('\n')
 	}
 
-	buf.WriteRune('\n')
+	buf.WriteByte('\n')
 
 	buf.WriteString(c.message)
 	return New(TypeCommit, buf.Bytes())

@@ -175,7 +175,7 @@ func TestInit(t *testing.T) {
 		t.Cleanup(cleanup)
 
 		cfg, err := config.LoadConfigSkipEnv(config.LoadConfigOptions{
-			WorkTreePath: filepath.Join(dir),
+			WorkTreePath: dir,
 			GitDirPath:   filepath.Join(dir, "separate-dir"),
 		})
 		require.NoError(t, err)

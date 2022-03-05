@@ -11,7 +11,7 @@ import (
 
 // Run runs a command and return stderr as error
 func Run(name string, arg ...string) (string, error) {
-	cmd := exec.Command(name, arg...) //nolint:gosec // using a variable is expected
+	cmd := exec.Command(name, arg...)
 	stdout, stderr, err := execCmd(cmd)
 
 	if err != nil && stderr != "" {

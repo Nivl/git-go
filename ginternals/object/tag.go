@@ -180,27 +180,27 @@ func (t *Tag) ToObject() *Object {
 	buf := new(bytes.Buffer)
 	buf.WriteString("object ")
 	buf.WriteString(t.target.String())
-	buf.WriteRune('\n')
+	buf.WriteByte('\n')
 
 	buf.WriteString("tag ")
 	buf.WriteString(t.Name())
-	buf.WriteRune('\n')
+	buf.WriteByte('\n')
 
 	buf.WriteString("type ")
 	buf.WriteString(t.Type().String())
-	buf.WriteRune('\n')
+	buf.WriteByte('\n')
 
 	buf.WriteString("tagger ")
 	buf.WriteString(t.Tagger().String())
-	buf.WriteRune('\n')
+	buf.WriteByte('\n')
 
 	if t.gpgSig != "" {
 		buf.WriteString("gpgsig ")
 		buf.WriteString(t.gpgSig)
-		buf.WriteRune('\n')
+		buf.WriteByte('\n')
 	}
 
-	buf.WriteRune('\n')
+	buf.WriteByte('\n')
 
 	buf.WriteString(t.message)
 	t.rawObject = New(TypeTag, buf.Bytes())
