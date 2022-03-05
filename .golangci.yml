@@ -60,6 +60,7 @@ linters:
     - scopelint # Replaced by exportloopref
     - testpackage # linter that makes you use a separate _test package || Hard to use productively due to many valid use cases going against the linter
     - thelper # detects golang test helpers without t.Helper() call and checks the consistency of test helpers || No reasons not to use this one, we should probably try it
+    - varnamelen # Checks that the length of a variable's name matches its scope || Hard to use productively due to many valid use cases going against the linter
     - wrapcheck # Checks that errors returned from external packages are wrapped || Hard to use productively due to many valid use cases going against the linter || recommend using localy
     - wsl # Forces you to use empty lines || Too opinionated
 
