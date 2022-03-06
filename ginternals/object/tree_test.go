@@ -61,6 +61,65 @@ func TestTree(t *testing.T) {
 	})
 }
 
+func TestTreeEntry(t *testing.T) {
+	t.Parallel()
+
+	id, err := ginternals.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
+	require.NoError(t, err)
+	id2, err := ginternals.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
+	require.NoError(t, err)
+
+	tree := object.NewTree([]object.TreeEntry{
+		{
+			Path: "README.md",
+			ID:   id,
+			Mode: object.ModeFile,
+		},
+		{
+			Path: "src",
+			ID:   id2,
+			Mode: object.ModeDirectory,
+		},
+	})
+
+	testCases := []struct {
+		desc        string
+		path        string
+		expectedOid ginternals.Oid
+	}{
+		{
+			desc:        "existing blob",
+			path:        "README.md",
+			expectedOid: id,
+		},
+		{
+			desc:        "existing tree",
+			path:        "src",
+			expectedOid: id2,
+		},
+		{
+			desc:        "invalid path",
+			path:        "404",
+			expectedOid: ginternals.NullOid,
+		},
+	}
+	for i, tc := range testCases {
+		tree := tree
+		tc := tc
+		i := i
+		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
+			t.Parallel()
+			entry, ok := tree.Entry(tc.path)
+			if tc.expectedOid == ginternals.NullOid {
+				assert.False(t, ok)
+				return
+			}
+			assert.True(t, ok)
+			assert.Equal(t, tc.expectedOid, entry.ID)
+		})
+	}
+}
+
 func TestTreeObjectMode(t *testing.T) {
 	t.Parallel()
 
