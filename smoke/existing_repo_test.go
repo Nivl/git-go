@@ -35,20 +35,12 @@ func TestWorkingOnExistingRepo(t *testing.T) {
 	rootTree.Entries()
 
 	// Let's find the readme
-	// TODO(melvin): Add a convenience method to find a file in a tree
-	entries := rootTree.Entries()
-	readmeOid := ginternals.NullOid
-	for _, entry := range entries {
-		if entry.Path == "README.md" {
-			readmeOid = entry.ID
-			break
-		}
-	}
-	if readmeOid.IsZero() {
+	readmeEntry, ok := rootTree.Entry("README.md")
+	if !ok {
 		t.Fatal("couldn't find the readme in the tree")
 	}
 	// TODO(melvin): Add a convenience method to get a blob
-	readmeObj, err := r.GetObject(readmeOid)
+	readmeObj, err := r.GetObject(readmeEntry.ID)
 	require.NoError(t, err, "failed finding the readme object from it's oid")
 	readme := readmeObj.AsBlob()
 
