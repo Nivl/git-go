@@ -379,6 +379,52 @@ func TestRepositoryGetObject(t *testing.T) {
 	})
 }
 
+func TestRepositoryGetBlob(t *testing.T) {
+	t.Parallel()
+
+	t.Run("should succeed with a valid", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
+		t.Cleanup(cleanup)
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err, "failed loading a repo")
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
+
+		oid, err := ginternals.NewOidFromStr("b07e28976ac8972715598f390964d53cf4dbc1bd")
+		require.NoError(t, err)
+
+		obj, err := r.GetBlob(oid)
+		require.NoError(t, err)
+		require.NotNil(t, obj)
+
+		assert.Equal(t, oid, obj.ID())
+		assert.Equal(t, "package packfile", string(obj.Bytes()[:16]))
+	})
+
+	t.Run("should fail returning an invalid object", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
+		t.Cleanup(cleanup)
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err, "failed loading a repo")
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
+
+		oid, err := ginternals.NewOidFromStr("e16f38976ac8972715598f390964d53cf4dbc1bd")
+		require.NoError(t, err)
+
+		_, err = r.GetBlob(oid)
+		require.Error(t, err)
+	})
+}
+
 func TestRepositoryNewBlob(t *testing.T) {
 	t.Parallel()
 
