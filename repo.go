@@ -278,6 +278,18 @@ func (r *Repository) GetObject(oid ginternals.Oid) (*object.Object, error) {
 	return r.dotGit.Object(oid)
 }
 
+// GetBlob returns the blob matching the given ID
+// This method will always work as long as the OID points to a valid
+// object. Calling GetBlob with a commit OID, will return the raw data
+// of the commit.
+func (r *Repository) GetBlob(oid ginternals.Oid) (*object.Blob, error) {
+	o, err := r.dotGit.Object(oid)
+	if err != nil {
+		return nil, fmt.Errorf("could not get object: %w", err)
+	}
+	return o.AsBlob(), nil
+}
+
 // GetCommit returns the commit matching the given SHA
 func (r *Repository) GetCommit(oid ginternals.Oid) (*object.Commit, error) {
 	o, err := r.dotGit.Object(oid)
