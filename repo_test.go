@@ -971,6 +971,25 @@ func TestNewReference(t *testing.T) {
 		assert.Equal(t, oid, ref.Target())
 		assert.Empty(t, ref.SymbolicTarget())
 	})
+
+	t.Run("should fail crating a ref with a name that conflicts", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
+		t.Cleanup(cleanup)
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
+
+		oid, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
+		require.NoError(t, err)
+
+		_, err = r.NewReference("HEAD/2", oid)
+		require.Error(t, err)
+	})
 }
 
 func TestNewSymbolicReference(t *testing.T) {
@@ -1029,6 +1048,22 @@ func TestNewSymbolicReference(t *testing.T) {
 		assert.Equal(t, "HEAD", ref.Name())
 		assert.Equal(t, "bbb720a96e4c29b9950a4c577c98470a4d5dd089", ref.Target().String())
 		assert.Equal(t, "refs/heads/master", ref.SymbolicTarget())
+	})
+
+	t.Run("should fail crating a ref with a name that conflicts", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
+		t.Cleanup(cleanup)
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
+
+		_, err = r.NewSymbolicReference("HEAD/2", "refs/heads/master")
+		require.Error(t, err)
 	})
 }
 
