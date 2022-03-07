@@ -328,7 +328,7 @@ func TestOpen(t *testing.T) {
 	})
 }
 
-func TestRepositoryGetObject(t *testing.T) {
+func TestRepositoryObject(t *testing.T) {
 	t.Parallel()
 
 	t.Run("loose object", func(t *testing.T) {
@@ -346,7 +346,7 @@ func TestRepositoryGetObject(t *testing.T) {
 		oid, err := ginternals.NewOidFromStr("b07e28976ac8972715598f390964d53cf4dbc1bd")
 		require.NoError(t, err)
 
-		obj, err := r.GetObject(oid)
+		obj, err := r.Object(oid)
 		require.NoError(t, err)
 		require.NotNil(t, obj)
 
@@ -370,7 +370,7 @@ func TestRepositoryGetObject(t *testing.T) {
 		oid, err := ginternals.NewOidFromStr("1dcdadc2a420225783794fbffd51e2e137a69646")
 		require.NoError(t, err)
 
-		obj, err := r.GetObject(oid)
+		obj, err := r.Object(oid)
 		require.NoError(t, err)
 		require.NotNil(t, obj)
 
@@ -379,7 +379,7 @@ func TestRepositoryGetObject(t *testing.T) {
 	})
 }
 
-func TestRepositoryGetBlob(t *testing.T) {
+func TestRepositoryBlob(t *testing.T) {
 	t.Parallel()
 
 	t.Run("should succeed with a valid", func(t *testing.T) {
@@ -397,7 +397,7 @@ func TestRepositoryGetBlob(t *testing.T) {
 		oid, err := ginternals.NewOidFromStr("b07e28976ac8972715598f390964d53cf4dbc1bd")
 		require.NoError(t, err)
 
-		obj, err := r.GetBlob(oid)
+		obj, err := r.Blob(oid)
 		require.NoError(t, err)
 		require.NotNil(t, obj)
 
@@ -420,7 +420,7 @@ func TestRepositoryGetBlob(t *testing.T) {
 		oid, err := ginternals.NewOidFromStr("e16f38976ac8972715598f390964d53cf4dbc1bd")
 		require.NoError(t, err)
 
-		_, err = r.GetBlob(oid)
+		_, err = r.Blob(oid)
 		require.Error(t, err)
 	})
 }
@@ -448,7 +448,7 @@ func TestRepositoryNewBlob(t *testing.T) {
 	assert.FileExists(t, p)
 }
 
-func TestRepositoryGetCommit(t *testing.T) {
+func TestRepositoryCommit(t *testing.T) {
 	t.Parallel()
 
 	repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
@@ -463,7 +463,7 @@ func TestRepositoryGetCommit(t *testing.T) {
 	commitOid, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
 	require.NoError(t, err)
 
-	c, err := r.GetCommit(commitOid)
+	c, err := r.Commit(commitOid)
 	require.NoError(t, err)
 
 	assert.Equal(t, commitOid, c.ID())
@@ -472,7 +472,7 @@ func TestRepositoryGetCommit(t *testing.T) {
 	assert.Equal(t, "6097a04b7a327c4be68f222ca66e61b8e1abe5c1", c.ParentIDs()[0].String())
 }
 
-func TestRepositoryGetReference(t *testing.T) {
+func TestRepositoryReference(t *testing.T) {
 	t.Parallel()
 
 	repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
@@ -510,7 +510,7 @@ func TestRepositoryGetReference(t *testing.T) {
 		t.Run(fmt.Sprintf("%d/%s", i, tc.desc), func(t *testing.T) {
 			t.Parallel()
 
-			ref, err := r.GetReference(tc.refName)
+			ref, err := r.Reference(tc.refName)
 
 			if tc.expectedError != nil {
 				assert.True(t, errors.Is(err, tc.expectedError), "wrong error returned")
@@ -523,7 +523,7 @@ func TestRepositoryGetReference(t *testing.T) {
 	}
 }
 
-func TestRepositoryGetTree(t *testing.T) {
+func TestRepositoryTree(t *testing.T) {
 	t.Parallel()
 
 	repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
@@ -538,7 +538,7 @@ func TestRepositoryGetTree(t *testing.T) {
 	treeOid, err := ginternals.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
 	require.NoError(t, err)
 
-	tree, err := r.GetTree(treeOid)
+	tree, err := r.Tree(treeOid)
 	require.NoError(t, err)
 
 	assert.Equal(t, treeOid, tree.ID())
@@ -563,10 +563,10 @@ func TestRepositoryNewCommit(t *testing.T) {
 		ref, err := r.dotGit.Reference(ginternals.LocalBranchFullName(ginternals.Master))
 		require.NoError(t, err)
 
-		headCommit, err := r.GetCommit(ref.Target())
+		headCommit, err := r.Commit(ref.Target())
 		require.NoError(t, err)
 
-		headTree, err := r.GetTree(headCommit.TreeID())
+		headTree, err := r.Tree(headCommit.TreeID())
 		require.NoError(t, err)
 
 		sig := object.NewSignature("author", "author@domain.tld")
@@ -577,7 +577,7 @@ func TestRepositoryNewCommit(t *testing.T) {
 		require.NoError(t, err)
 
 		// The commit should be findable
-		_, err = r.GetCommit(c.ID())
+		_, err = r.Commit(c.ID())
 		require.NoError(t, err)
 
 		// We update the ref since it should have changed
@@ -601,10 +601,10 @@ func TestRepositoryNewCommit(t *testing.T) {
 		ref, err := r.dotGit.Reference(ginternals.LocalBranchFullName(ginternals.Master))
 		require.NoError(t, err)
 
-		headCommit, err := r.GetCommit(ref.Target())
+		headCommit, err := r.Commit(ref.Target())
 		require.NoError(t, err)
 
-		headTree, err := r.GetTree(headCommit.TreeID())
+		headTree, err := r.Tree(headCommit.TreeID())
 		require.NoError(t, err)
 
 		sig := object.NewSignature("author", "author@domain.tld")
@@ -631,10 +631,10 @@ func TestRepositoryNewDetachedCommit(t *testing.T) {
 	ref, err := r.dotGit.Reference(ginternals.LocalBranchFullName(ginternals.Master))
 	require.NoError(t, err)
 
-	headCommit, err := r.GetCommit(ref.Target())
+	headCommit, err := r.Commit(ref.Target())
 	require.NoError(t, err)
 
-	headTree, err := r.GetTree(headCommit.TreeID())
+	headTree, err := r.Tree(headCommit.TreeID())
 	require.NoError(t, err)
 
 	sig := object.NewSignature("author", "author@domain.tld")
@@ -645,7 +645,7 @@ func TestRepositoryNewDetachedCommit(t *testing.T) {
 	require.NoError(t, err)
 
 	// The commit should be findable
-	_, err = r.GetCommit(c.ID())
+	_, err = r.Commit(c.ID())
 	require.NoError(t, err)
 
 	// We update the ref to make sure it's not updated
@@ -654,7 +654,7 @@ func TestRepositoryNewDetachedCommit(t *testing.T) {
 	assert.Equal(t, ref.Target(), updateddRef.Target())
 }
 
-func TestRepositoryGetTag(t *testing.T) {
+func TestRepositoryTag(t *testing.T) {
 	t.Parallel()
 
 	t.Run("annotated", func(t *testing.T) {
@@ -672,12 +672,12 @@ func TestRepositoryGetTag(t *testing.T) {
 		tagID, err := ginternals.NewOidFromStr("80316e01dbfdf5c2a8a20de66c747ecd4c4bd442")
 		require.NoError(t, err)
 
-		tagRef, err := r.GetTag("annotated")
+		tagRef, err := r.Tag("annotated")
 		require.NoError(t, err)
 
 		require.Equal(t, tagID, tagRef.Target())
 
-		rawTag, err := r.GetObject(tagRef.Target())
+		rawTag, err := r.Object(tagRef.Target())
 		require.NoError(t, err)
 		tag, err := rawTag.AsTag()
 		require.NoError(t, err)
@@ -705,12 +705,12 @@ func TestRepositoryGetTag(t *testing.T) {
 		targettedCommitID, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
 		require.NoError(t, err)
 
-		tagRef, err := r.GetTag("lightweight")
+		tagRef, err := r.Tag("lightweight")
 		require.NoError(t, err)
 
 		require.Equal(t, targettedCommitID, tagRef.Target())
 
-		commit, err := r.GetCommit(tagRef.Target())
+		commit, err := r.Commit(tagRef.Target())
 		require.NoError(t, err)
 
 		assert.Equal(t, targettedCommitID, commit.ID())
@@ -728,7 +728,7 @@ func TestRepositoryGetTag(t *testing.T) {
 			require.NoError(t, r.Close(), "failed closing repo")
 		})
 
-		_, err = r.GetTag("does-not-exist")
+		_, err = r.Tag("does-not-exist")
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, ErrTagNotFound), "invalid error type")
 	})
@@ -752,7 +752,7 @@ func TestRepositoryNewTag(t *testing.T) {
 		ref, err := r.dotGit.Reference(ginternals.LocalBranchFullName(ginternals.Master))
 		require.NoError(t, err)
 
-		headCommit, err := r.GetCommit(ref.Target())
+		headCommit, err := r.Commit(ref.Target())
 		require.NoError(t, err)
 
 		// Create the tag
@@ -770,10 +770,10 @@ func TestRepositoryNewTag(t *testing.T) {
 		assert.Equal(t, "v0.0.1-test", tag.Message())
 
 		// Retrieve the tag
-		tagRef, err := r.GetTag("v0.0.1-test")
+		tagRef, err := r.Tag("v0.0.1-test")
 		require.NoError(t, err)
 
-		rawTag, err := r.GetObject(tagRef.Target())
+		rawTag, err := r.Object(tagRef.Target())
 		require.NoError(t, err)
 		fetchedTag, err := rawTag.AsTag()
 		require.NoError(t, err)
@@ -798,7 +798,7 @@ func TestRepositoryNewTag(t *testing.T) {
 		ref, err := r.dotGit.Reference(ginternals.LocalBranchFullName(ginternals.Master))
 		require.NoError(t, err)
 
-		headCommit, err := r.GetCommit(ref.Target())
+		headCommit, err := r.Commit(ref.Target())
 		require.NoError(t, err)
 
 		// Create the tag

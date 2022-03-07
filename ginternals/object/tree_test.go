@@ -228,7 +228,7 @@ func TestNewTreeFromObject(t *testing.T) {
 		treeID, err := ginternals.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
 		require.NoError(t, err)
 
-		o, err := r.GetObject(treeID)
+		o, err := r.Object(treeID)
 		require.NoError(t, err, "failed getting the tree")
 
 		_, err = object.NewTreeFromObject(o)

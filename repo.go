@@ -273,66 +273,9 @@ func (r *Repository) IsBare() bool {
 	return r.workTree == nil
 }
 
-// GetObject returns the object matching the given ID
-func (r *Repository) GetObject(oid ginternals.Oid) (*object.Object, error) {
+// Object returns the object matching the given ID
+func (r *Repository) Object(oid ginternals.Oid) (*object.Object, error) {
 	return r.dotGit.Object(oid)
-}
-
-// GetBlob returns the blob matching the given ID
-// This method will always work as long as the OID points to a valid
-// object. Calling GetBlob with a commit OID, will return the raw data
-// of the commit.
-func (r *Repository) GetBlob(oid ginternals.Oid) (*object.Blob, error) {
-	o, err := r.dotGit.Object(oid)
-	if err != nil {
-		return nil, fmt.Errorf("could not get object: %w", err)
-	}
-	return o.AsBlob(), nil
-}
-
-// GetCommit returns the commit matching the given SHA
-func (r *Repository) GetCommit(oid ginternals.Oid) (*object.Commit, error) {
-	o, err := r.dotGit.Object(oid)
-	if err != nil {
-		return nil, fmt.Errorf("could not get object: %w", err)
-	}
-	return o.AsCommit()
-}
-
-// GetTree returns the tree matching the given SHA
-func (r *Repository) GetTree(oid ginternals.Oid) (*object.Tree, error) {
-	o, err := r.dotGit.Object(oid)
-	if err != nil {
-		return nil, fmt.Errorf("could not get object: %w", err)
-	}
-	return o.AsTree()
-}
-
-// GetTag returns the reference for the given tag
-// To know if the tag is annoted or lightweight, call repo.GetObject()
-// on the reference's target ad make sure that the returned object is
-// not a tag with the same name (note that it's technically possible for
-// a tag to target another tag)
-func (r *Repository) GetTag(name string) (*ginternals.Reference, error) {
-	ref, err := r.dotGit.Reference(ginternals.LocalTagFullName(name))
-	if err != nil {
-		return nil, ErrTagNotFound
-	}
-	return ref, nil
-}
-
-// GetReference returns the reference matching the given name
-func (r *Repository) GetReference(name string) (*ginternals.Reference, error) {
-	return r.dotGit.Reference(name)
-}
-
-// NewBlob creates, stores, and returns a new Blob object
-func (r *Repository) NewBlob(data []byte) (*object.Blob, error) {
-	o := object.New(object.TypeBlob, data)
-	if _, err := r.dotGit.WriteObject(o); err != nil {
-		return nil, fmt.Errorf("could not write object: %w", err)
-	}
-	return object.NewBlob(o), nil
 }
 
 // NewCommit creates, stores, and returns a new Commit object
@@ -373,6 +316,24 @@ func (r *Repository) NewCommit(refname string, tree *object.Tree, author object.
 // not attached to any reference
 func (r *Repository) NewDetachedCommit(tree *object.Tree, author object.Signature, opts *object.CommitOptions) (*object.Commit, error) {
 	return r.NewCommit("", tree, author, opts)
+}
+
+// Commit returns the commit matching the given SHA
+func (r *Repository) Commit(oid ginternals.Oid) (*object.Commit, error) {
+	o, err := r.dotGit.Object(oid)
+	if err != nil {
+		return nil, fmt.Errorf("could not get object: %w", err)
+	}
+	return o.AsCommit()
+}
+
+// Tree returns the tree matching the given SHA
+func (r *Repository) Tree(oid ginternals.Oid) (*object.Tree, error) {
+	o, err := r.dotGit.Object(oid)
+	if err != nil {
+		return nil, fmt.Errorf("could not get object: %w", err)
+	}
+	return o.AsTree()
 }
 
 // NewTag creates, stores, and returns a new annoted tag
@@ -435,6 +396,45 @@ func (r *Repository) NewLightweightTag(tag string, targetID ginternals.Oid) (*gi
 		return nil, fmt.Errorf("could not write the ref at %s: %w", refname, err)
 	}
 	return ref, nil
+}
+
+// Tag returns the reference for the given tag
+// To know if the tag is annoted or lightweight, call repo.GetObject()
+// on the reference's target ad make sure that the returned object is
+// not a tag with the same name (note that it's technically possible for
+// a tag to target another tag)
+func (r *Repository) Tag(name string) (*ginternals.Reference, error) {
+	ref, err := r.dotGit.Reference(ginternals.LocalTagFullName(name))
+	if err != nil {
+		return nil, ErrTagNotFound
+	}
+	return ref, nil
+}
+
+// Reference returns the reference matching the given name
+func (r *Repository) Reference(name string) (*ginternals.Reference, error) {
+	return r.dotGit.Reference(name)
+}
+
+// NewBlob creates, stores, and returns a new Blob object
+func (r *Repository) NewBlob(data []byte) (*object.Blob, error) {
+	o := object.New(object.TypeBlob, data)
+	if _, err := r.dotGit.WriteObject(o); err != nil {
+		return nil, fmt.Errorf("could not write object: %w", err)
+	}
+	return object.NewBlob(o), nil
+}
+
+// Blob returns the blob matching the given ID
+// This method will always work as long as the OID points to a valid
+// object. Calling Blob with a commit OID, will return the raw data
+// of the commit.
+func (r *Repository) Blob(oid ginternals.Oid) (*object.Blob, error) {
+	o, err := r.dotGit.Object(oid)
+	if err != nil {
+		return nil, fmt.Errorf("could not get object: %w", err)
+	}
+	return o.AsBlob(), nil
 }
 
 // Close frees the resources used by the repository

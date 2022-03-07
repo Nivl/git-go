@@ -93,7 +93,7 @@ func catFileCmd(out io.Writer, cfg *globalFlags, p catFileParams) (err error) {
 		}
 
 		for _, refName := range toTry {
-			ref, err := r.GetReference(refName)
+			ref, err := r.Reference(refName)
 			if err == nil {
 				oid = ref.Target()
 				break
@@ -110,7 +110,7 @@ func catFileCmd(out io.Writer, cfg *globalFlags, p catFileParams) (err error) {
 		}
 	}
 
-	o, err := r.GetObject(oid)
+	o, err := r.Object(oid)
 	if err != nil {
 		return fmt.Errorf("could not get object %s: %w", oid.String(), err)
 	}

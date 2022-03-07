@@ -86,7 +86,7 @@ func TestWorkingOnNewRepo(t *testing.T) {
 	require.NoError(t, err, "failed creating the commit with the fix")
 
 	// Make sure the merge worked
-	mainBranch, err := r.GetReference(mainBranchName)
+	mainBranch, err := r.Reference(mainBranchName)
 	require.NoError(t, err, "couldn't get the main branch")
 	require.Equal(t, mergeCommit.ID(), mainBranch.Target(), "the merge didn't work")
 }

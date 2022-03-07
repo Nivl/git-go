@@ -30,7 +30,7 @@ func TestNewTag(t *testing.T) {
 		commitOid, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
 		require.NoError(t, err)
 
-		commit, err := r.GetCommit(commitOid)
+		commit, err := r.Commit(commitOid)
 		require.NoError(t, err)
 
 		tag := object.NewTag(&object.TagParams{
@@ -65,9 +65,9 @@ func TestTagToObject(t *testing.T) {
 		})
 
 		// Find a tag
-		tagRef, err := r.GetTag("annotated")
+		tagRef, err := r.Tag("annotated")
 		require.NoError(t, err)
-		rawTag, err := r.GetObject(tagRef.Target())
+		rawTag, err := r.Object(tagRef.Target())
 		require.NoError(t, err)
 		tag, err := rawTag.AsTag()
 		require.NoError(t, err)
@@ -90,7 +90,7 @@ func TestTagToObject(t *testing.T) {
 		commitOid, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
 		require.NoError(t, err)
 
-		commit, err := r.GetCommit(commitOid)
+		commit, err := r.Commit(commitOid)
 		require.NoError(t, err)
 
 		tag := object.NewTag(&object.TagParams{
@@ -130,10 +130,10 @@ func TestNewTagFromObject(t *testing.T) {
 			require.NoError(t, r.Close())
 		})
 
-		tagRef, err := r.GetTag("annotated")
+		tagRef, err := r.Tag("annotated")
 		require.NoError(t, err)
 
-		o, err := r.GetObject(tagRef.Target())
+		o, err := r.Object(tagRef.Target())
 		require.NoError(t, err, "failed fetching a tag")
 
 		_, err = object.NewTagFromObject(o)

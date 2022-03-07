@@ -24,13 +24,13 @@ func TestWorkingOnExistingRepo(t *testing.T) {
 	})
 
 	defaultBranchName := ginternals.LocalBranchFullName("master")
-	defaultBranch, err := r.GetReference(defaultBranchName)
+	defaultBranch, err := r.Reference(defaultBranchName)
 	require.NoError(t, err, "couldn't get the default branch")
 
 	// Update repo's readme
-	headCommit, err := r.GetCommit(defaultBranch.Target())
+	headCommit, err := r.Commit(defaultBranch.Target())
 	require.NoError(t, err, "couldn't get the head commit")
-	rootTree, err := r.GetTree(headCommit.TreeID())
+	rootTree, err := r.Tree(headCommit.TreeID())
 	require.NoError(t, err, "couldn't get the head commit's tree")
 	rootTree.Entries()
 
@@ -39,10 +39,8 @@ func TestWorkingOnExistingRepo(t *testing.T) {
 	if !ok {
 		t.Fatal("couldn't find the readme in the tree")
 	}
-	// TODO(melvin): Add a convenience method to get a blob
-	readmeObj, err := r.GetObject(readmeEntry.ID)
-	require.NoError(t, err, "failed finding the readme object from it's oid")
-	readme := readmeObj.AsBlob()
+	readme, err := r.Blob(readmeEntry.ID)
+	require.NoError(t, err, "failed finding the readme blob")
 
 	tb := r.NewTreeBuilderFromTree(rootTree)
 	newReadme, err := r.NewBlob(append(readme.BytesCopy(), []byte("\nHello World\n")...))
@@ -79,7 +77,7 @@ func TestWorkingOnExistingRepo(t *testing.T) {
 	require.NoError(t, err, "failed creating the commit with the fix")
 
 	// Make sure the merge worked
-	mainBranch, err := r.GetReference(defaultBranchName)
+	mainBranch, err := r.Reference(defaultBranchName)
 	require.NoError(t, err, "couldn't get the main branch")
 	require.Equal(t, mergeCommit.ID(), mainBranch.Target(), "the merge didn't work")
 }
