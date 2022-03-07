@@ -435,7 +435,7 @@ func (r *Repository) NewReferenceSafe(name string, target ginternals.Oid) (*gint
 
 // NewSymbolicReference creates, stores, and returns a new symbolic reference
 // If the reference already exists, it will be overwritten
-func (r *Repository) NewSymbolicReference(name string, target string) (*ginternals.Reference, error) {
+func (r *Repository) NewSymbolicReference(name, target string) (*ginternals.Reference, error) {
 	ref := ginternals.NewSymbolicReference(name, target)
 	err := r.dotGit.WriteReference(ref)
 	if err != nil {
@@ -447,7 +447,7 @@ func (r *Repository) NewSymbolicReference(name string, target string) (*ginterna
 // NewSymbolicReferenceSafe creates, stores, and returns a new symbolic
 // reference.
 // If the reference already exists, the method will fail
-func (r *Repository) NewSymbolicReferenceSafe(name string, target string) (*ginternals.Reference, error) {
+func (r *Repository) NewSymbolicReferenceSafe(name, target string) (*ginternals.Reference, error) {
 	ref := ginternals.NewSymbolicReference(name, target)
 	err := r.dotGit.WriteReferenceSafe(ref)
 	if err != nil {
