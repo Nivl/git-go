@@ -411,6 +411,51 @@ func (r *Repository) Tag(name string) (*ginternals.Reference, error) {
 	return ref, nil
 }
 
+// NewReference creates, stores, and returns a new reference
+// If the reference already exists, it will be overwritten
+func (r *Repository) NewReference(name string, target ginternals.Oid) (*ginternals.Reference, error) {
+	ref := ginternals.NewReference(name, target)
+	err := r.dotGit.WriteReference(ref)
+	if err != nil {
+		return nil, err
+	}
+	return ref, nil
+}
+
+// NewReferenceSafe creates, stores, and returns a new reference
+// If the reference already exists, the method will fail
+func (r *Repository) NewReferenceSafe(name string, target ginternals.Oid) (*ginternals.Reference, error) {
+	ref := ginternals.NewReference(name, target)
+	err := r.dotGit.WriteReferenceSafe(ref)
+	if err != nil {
+		return nil, err
+	}
+	return ref, nil
+}
+
+// NewSymbolicReference creates, stores, and returns a new symbolic reference
+// If the reference already exists, it will be overwritten
+func (r *Repository) NewSymbolicReference(name string, target string) (*ginternals.Reference, error) {
+	ref := ginternals.NewSymbolicReference(name, target)
+	err := r.dotGit.WriteReference(ref)
+	if err != nil {
+		return nil, err
+	}
+	return ref, nil
+}
+
+// NewSymbolicReferenceSafe creates, stores, and returns a new symbolic
+// reference.
+// If the reference already exists, the method will fail
+func (r *Repository) NewSymbolicReferenceSafe(name string, target string) (*ginternals.Reference, error) {
+	ref := ginternals.NewSymbolicReference(name, target)
+	err := r.dotGit.WriteReferenceSafe(ref)
+	if err != nil {
+		return nil, err
+	}
+	return ref, nil
+}
+
 // Reference returns the reference matching the given name
 func (r *Repository) Reference(name string) (*ginternals.Reference, error) {
 	return r.dotGit.Reference(name)

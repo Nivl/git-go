@@ -906,3 +906,230 @@ func TestRepositoryNewLightweightTag(t *testing.T) {
 		require.True(t, errors.Is(err, object.ErrObjectInvalid), "got: %s", err.Error())
 	})
 }
+
+func TestNewReference(t *testing.T) {
+	t.Parallel()
+
+	t.Run("should create a new reference", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
+		t.Cleanup(cleanup)
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
+
+		oid, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
+		require.NoError(t, err)
+
+		ref, err := r.NewReference("refs/tests/my_ref", oid)
+		require.NoError(t, err)
+
+		assert.Equal(t, ginternals.OidReference, ref.Type())
+		assert.Equal(t, "refs/tests/my_ref", ref.Name())
+		assert.Equal(t, oid, ref.Target())
+		assert.Empty(t, ref.SymbolicTarget())
+
+		ref, err = r.Reference("refs/tests/my_ref")
+		require.NoError(t, err)
+		assert.Equal(t, ginternals.OidReference, ref.Type())
+		assert.Equal(t, "refs/tests/my_ref", ref.Name())
+		assert.Equal(t, oid, ref.Target())
+		assert.Empty(t, ref.SymbolicTarget())
+	})
+
+	t.Run("should overwrite a reference", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
+		t.Cleanup(cleanup)
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
+
+		oid, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
+		require.NoError(t, err)
+
+		ref, err := r.NewReference("HEAD", oid)
+		require.NoError(t, err)
+
+		assert.Equal(t, ginternals.OidReference, ref.Type())
+		assert.Equal(t, "HEAD", ref.Name())
+		assert.Equal(t, oid, ref.Target())
+		assert.Empty(t, ref.SymbolicTarget())
+
+		ref, err = r.Reference("HEAD")
+		require.NoError(t, err)
+		assert.Equal(t, ginternals.OidReference, ref.Type())
+		assert.Equal(t, "HEAD", ref.Name())
+		assert.Equal(t, oid, ref.Target())
+		assert.Empty(t, ref.SymbolicTarget())
+	})
+}
+
+func TestNewSymbolicReference(t *testing.T) {
+	t.Parallel()
+
+	t.Run("should create a new symbolic reference", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
+		t.Cleanup(cleanup)
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
+
+		ref, err := r.NewSymbolicReference("refs/tests/my_ref", "refs/heads/master")
+		require.NoError(t, err)
+
+		assert.Equal(t, ginternals.SymbolicReference, ref.Type())
+		assert.Equal(t, "refs/tests/my_ref", ref.Name())
+		assert.Equal(t, ginternals.NullOid, ref.Target())
+		assert.Equal(t, "refs/heads/master", ref.SymbolicTarget())
+
+		ref, err = r.Reference("refs/tests/my_ref")
+		require.NoError(t, err)
+		assert.Equal(t, ginternals.SymbolicReference, ref.Type())
+		assert.Equal(t, "refs/tests/my_ref", ref.Name())
+		assert.Equal(t, "bbb720a96e4c29b9950a4c577c98470a4d5dd089", ref.Target().String())
+		assert.Equal(t, "refs/heads/master", ref.SymbolicTarget())
+	})
+	t.Run("should overwrite a symbolic reference", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
+		t.Cleanup(cleanup)
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
+
+		ref, err := r.NewSymbolicReference("HEAD", "refs/heads/master")
+		require.NoError(t, err)
+
+		assert.Equal(t, ginternals.SymbolicReference, ref.Type())
+		assert.Equal(t, "HEAD", ref.Name())
+		assert.Equal(t, ginternals.NullOid, ref.Target())
+		assert.Equal(t, "refs/heads/master", ref.SymbolicTarget())
+
+		ref, err = r.Reference("HEAD")
+		require.NoError(t, err)
+		assert.Equal(t, ginternals.SymbolicReference, ref.Type())
+		assert.Equal(t, "HEAD", ref.Name())
+		assert.Equal(t, "bbb720a96e4c29b9950a4c577c98470a4d5dd089", ref.Target().String())
+		assert.Equal(t, "refs/heads/master", ref.SymbolicTarget())
+	})
+}
+
+func TestNewReferenceSafe(t *testing.T) {
+	t.Parallel()
+
+	t.Run("should create a new reference", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
+		t.Cleanup(cleanup)
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
+
+		oid, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
+		require.NoError(t, err)
+
+		ref, err := r.NewReferenceSafe("refs/tests/my_ref", oid)
+		require.NoError(t, err)
+
+		assert.Equal(t, ginternals.OidReference, ref.Type())
+		assert.Equal(t, "refs/tests/my_ref", ref.Name())
+		assert.Equal(t, oid, ref.Target())
+		assert.Empty(t, ref.SymbolicTarget())
+
+		ref, err = r.Reference("refs/tests/my_ref")
+		require.NoError(t, err)
+		assert.Equal(t, ginternals.OidReference, ref.Type())
+		assert.Equal(t, "refs/tests/my_ref", ref.Name())
+		assert.Equal(t, oid, ref.Target())
+		assert.Empty(t, ref.SymbolicTarget())
+	})
+
+	t.Run("should fail overwriting existing reference", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
+		t.Cleanup(cleanup)
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
+
+		oid, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
+		require.NoError(t, err)
+
+		_, err = r.NewReferenceSafe("HEAD", oid)
+		require.Error(t, err)
+	})
+}
+
+func TestNewSymbolicReferenceSafe(t *testing.T) {
+	t.Parallel()
+
+	t.Run("should create a new symbolic reference", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
+		t.Cleanup(cleanup)
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
+
+		ref, err := r.NewSymbolicReferenceSafe("refs/tests/my_ref", "refs/heads/master")
+		require.NoError(t, err)
+
+		assert.Equal(t, ginternals.SymbolicReference, ref.Type())
+		assert.Equal(t, "refs/tests/my_ref", ref.Name())
+		assert.Equal(t, ginternals.NullOid, ref.Target())
+		assert.Equal(t, "refs/heads/master", ref.SymbolicTarget())
+
+		ref, err = r.Reference("refs/tests/my_ref")
+		require.NoError(t, err)
+		assert.Equal(t, ginternals.SymbolicReference, ref.Type())
+		assert.Equal(t, "refs/tests/my_ref", ref.Name())
+		assert.Equal(t, "bbb720a96e4c29b9950a4c577c98470a4d5dd089", ref.Target().String())
+		assert.Equal(t, "refs/heads/master", ref.SymbolicTarget())
+	})
+
+	t.Run("should fail overwriting existing symbolic reference", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
+		t.Cleanup(cleanup)
+
+		r, err := OpenRepository(repoPath)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, r.Close(), "failed closing repo")
+		})
+
+		_, err = r.NewSymbolicReferenceSafe("HEAD", "refs/heads/master")
+		require.Error(t, err)
+	})
+}
