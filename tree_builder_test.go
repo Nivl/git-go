@@ -299,7 +299,7 @@ func TestTreeBuilderWrite(t *testing.T) {
 
 		oid, err := ginternals.NewOidFromStr("e5b9e846e1b468bc9597ff95d71dfacda8bd54e3")
 		require.NoError(t, err)
-		o, err := r.GetObject(oid)
+		o, err := r.Object(oid)
 		require.NoError(t, err)
 		tree, err := o.AsTree()
 		require.NoError(t, err)

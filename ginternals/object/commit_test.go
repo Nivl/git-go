@@ -281,7 +281,7 @@ func TestCommitToObject(t *testing.T) {
 		// Find a commit
 		commitOID, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
 		require.NoError(t, err)
-		commit, err := r.GetCommit(commitOID)
+		commit, err := r.Commit(commitOID)
 		require.NoError(t, err)
 
 		ci := object.NewCommit(commit.TreeID(), commit.Author(), &object.CommitOptions{
@@ -322,7 +322,7 @@ func TestCommitToObject(t *testing.T) {
 		// Find a commit
 		commitOID, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
 		require.NoError(t, err)
-		commit, err := r.GetCommit(commitOID)
+		commit, err := r.Commit(commitOID)
 		require.NoError(t, err)
 
 		o := commit.ToObject()
@@ -388,7 +388,7 @@ func TestNewCommitFromObject(t *testing.T) {
 		commitID, err := ginternals.NewOidFromStr("bbb720a96e4c29b9950a4c577c98470a4d5dd089")
 		require.NoError(t, err)
 
-		o, err := r.GetObject(commitID)
+		o, err := r.Object(commitID)
 		require.NoError(t, err, "failed loading a repo")
 
 		_, err = object.NewCommitFromObject(o)
