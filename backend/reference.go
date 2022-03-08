@@ -163,16 +163,50 @@ func (b *Backend) writeReference(ref *ginternals.Reference) error {
 		return fmt.Errorf("reference type %d: %w", ref.Type(), ginternals.ErrUnknownRefType)
 	}
 
-	refPath := b.systemPath(ref.Name())
 	// Since we can have `/` in the ref name, we need to create
-	// the path on the FS
-	dir := filepath.Dir(refPath)
-	err := b.fs.MkdirAll(dir, 0o755)
+	// the path on the FS. But first, we need to make sure that there are
+	// no conflicts with any existing refs.
+	// For example, if we have a ref named `refs/heads/master`
+	// We cannot create a ref named `refs/heads/master/foo` since
+	// master is already a file, it cannot be a directory to store foo.
+	conflictsOn := ""
+	b.refs.Range(func(key, value interface{}) bool {
+		name := key.(string)
+
+		// No need to check for conflict if we're rewriting an existing ref
+		if name == ref.Name() {
+			return false
+		}
+
+		// We want the shortest name as base, that way it's much easier
+		// to validate the result
+		base := name
+		cmp := ref.Name()
+		if len(name) > len(ref.Name()) {
+			base = ref.Name()
+			cmp = name
+		}
+
+		rel, err := filepath.Rel(base, cmp)
+		// an error or a path that starts with `..` means that the
+		// 2 paths are not relative to each other
+		if err != nil || strings.HasPrefix(rel, "..") {
+			return true
+		}
+
+		conflictsOn = name
+		return false
+	})
+
+	if conflictsOn != "" {
+		return fmt.Errorf("reference %s conflicts with %s: %w", ref.Name(), conflictsOn, ginternals.ErrRefInvalid)
+	}
+
+	// Let's persist the ref on disk
+	refPath := b.systemPath(ref.Name())
+	refDir := filepath.Dir(refPath)
+	err := b.fs.MkdirAll(refDir, 0o755)
 	if err != nil {
-		// TODO(melvin): This fails if someone creates a ref
-		// named ml/foo and then another ref named ml/foo/bar since
-		// foo is a file. We should probably return a better error
-		// message in this case (and potentially check this in IsRefNameValid?)
 		return fmt.Errorf("could not persist reference to disk: %w", err)
 	}
 	// We can now create the actual file
