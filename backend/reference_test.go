@@ -2,6 +2,7 @@ package backend
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -372,6 +373,61 @@ func TestWriteReference(t *testing.T) {
 		// TODO(melvin): check error type. Windows doesn't fail on the MkdirAll
 		// Making it hard to have a cross-platform test right now.
 		// require.Contains(t, err.Error(), "not a directory")
+	})
+
+	t.Run("validate name", func(t *testing.T) {
+		t.Parallel()
+
+		repoPath, cleanup := testutil.UnTar(t, testutil.RepoSmall)
+		t.Cleanup(cleanup)
+
+		cfg := confutil.NewCommonConfig(t, repoPath)
+		b, err := NewFS(cfg)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, b.Close())
+		})
+
+		testCases := []struct {
+			name        string
+			expectError bool
+		}{
+			{
+				name:        "refs/heads/master/2",
+				expectError: true,
+			},
+			{
+				name:        "refs/heads",
+				expectError: true,
+			},
+			{
+				name:        "refs/heads/master2",
+				expectError: false,
+			},
+			{
+				name:        "refs/heads2",
+				expectError: false,
+			},
+			{
+				name:        "refs/heads/master",
+				expectError: false,
+			},
+		}
+		for i, tc := range testCases {
+			tc := tc
+			i := i
+			t.Run(fmt.Sprintf("%d/%s", i, tc.name), func(t *testing.T) {
+				t.Parallel()
+
+				ref := ginternals.NewSymbolicReference(tc.name, "refs/heads/master")
+				err := b.WriteReference(ref)
+				if tc.expectError {
+					require.Error(t, err)
+				} else {
+					require.NoError(t, err)
+				}
+			})
+		}
 	})
 }
 
