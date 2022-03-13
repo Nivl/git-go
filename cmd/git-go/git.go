@@ -35,6 +35,7 @@ func newRootCmd(cwd string, e *env.Env) *cobra.Command {
 
 	// porcelain
 	cmd.AddCommand(newInitCmd(cfg))
+	cmd.AddCommand(newSwitchCmd(cfg))
 
 	// plumbing
 	cmd.AddCommand(newCatFileCmd(cfg))

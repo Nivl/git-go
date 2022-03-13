@@ -93,13 +93,11 @@ func initCmd(out io.Writer, cfg *globalFlags, flags initCmdFlags, optionalDirect
 		return err
 	}
 
-	if !flags.quiet {
-		switch newRepo {
-		case true:
-			fmt.Fprintln(out, "Initialized empty Git repository in", ginternals.DotGitPath(r.Config))
-		case false:
-			fmt.Fprintln(out, "Reinitialized existing Git repository in", ginternals.DotGitPath(r.Config))
-		}
+	switch newRepo {
+	case true:
+		fprintln(flags.quiet, out, "Initialized empty Git repository in", ginternals.DotGitPath(r.Config))
+	case false:
+		fprintln(flags.quiet, out, "Reinitialized existing Git repository in", ginternals.DotGitPath(r.Config))
 	}
 
 	return r.Close()
