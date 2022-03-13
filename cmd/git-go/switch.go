@@ -58,7 +58,7 @@ func newSwitchCmd(cfg *globalFlags) *cobra.Command {
 // --conflict=<style>
 // -f, --force, --discard-changes
 // --guess, --no-guess
-func switchCmd(out io.Writer, cfg *globalFlags, flags switchCmdFlags, starterPoint string) (err error) {
+func switchCmd(out io.Writer, cfg *globalFlags, flags switchCmdFlags, starterPointOrBranch string) (err error) {
 	r, err := loadRepository(cfg)
 	if err != nil {
 		return fmt.Errorf("could not create param: %w", err)
@@ -75,7 +75,7 @@ func switchCmd(out io.Writer, cfg *globalFlags, flags switchCmdFlags, starterPoi
 		if flags.createBranch != "" || flags.forceCreateBranch != "" {
 			return errors.New("options '-c', and '--orphan' cannot be used together")
 		}
-		if starterPoint != "" {
+		if starterPointOrBranch != "" {
 			return errors.New("'--orphan' cannot take <start-point>")
 		}
 
@@ -88,13 +88,48 @@ func switchCmd(out io.Writer, cfg *globalFlags, flags switchCmdFlags, starterPoi
 		}
 
 		// TODO(melvin): remove all tracked files before switching
-		// Let's create the new branch
+		// Let's set the current branch as current
+		// The ref will be dangling since it doesn't have commits
 		_, err = r.NewSymbolicReference(ginternals.Head, ginternals.LocalBranchFullName(flags.orphan))
 		if err != nil {
-			return fmt.Errorf("couldn't load HEAD: %w", err)
+			return fmt.Errorf("couldn't update HEAD: %w", err)
 		}
 
 		fprintf(flags.quiet, out, "Switched to a new branch '%s'\n", flags.orphan)
+	default:
+		if starterPointOrBranch == "" {
+			return errors.New("missing branch or commit argument")
+		}
+		// TODO(melvin): handle dangling refs
+
+		// We make sure we're not already on the branch
+		head, err := r.Reference(ginternals.Head)
+		if err != nil {
+			return fmt.Errorf("couldn't load %s: %w", ginternals.Head, err)
+		}
+		if head.SymbolicTarget() == ginternals.LocalBranchFullName(starterPointOrBranch) {
+			fprintf(flags.quiet, out, "Already on '%s'\n", starterPointOrBranch)
+			// TODO(melvin): check if branch is up-to-date with remote
+			return nil
+		}
+
+		// We make sure the target branch already exists
+		_, err = r.Reference(ginternals.LocalBranchFullName(starterPointOrBranch))
+		if err != nil {
+			return fmt.Errorf("couldn't load %s: %w", starterPointOrBranch, err)
+		}
+
+		// TODO(melvin): abort if there are conflicts between the wt/index
+		// of the branches
+
+		// Set the current branch
+		_, err = r.NewSymbolicReference(ginternals.Head, ginternals.LocalBranchFullName(starterPointOrBranch))
+		if err != nil {
+			return fmt.Errorf("couldn't update HEAD: %w", err)
+		}
+
+		// TODO(melvin): check if branch is up-to-date with remote
+		fprintf(flags.quiet, out, "Switched to branch '%s'\n", starterPointOrBranch)
 	}
 
 	return nil

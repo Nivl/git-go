@@ -13,9 +13,10 @@ import (
 // this way. The backend is in charge to convert this to the current
 // system when needed
 const (
-	refsDirName      = "refs"
-	refsTagsRelPath  = refsDirName + "/tags"
-	refsHeadsRelPath = refsDirName + "/heads"
+	refsDirName       = "refs"
+	refsTagsRelPath   = refsDirName + "/tags"
+	refsHeadsRelPath  = refsDirName + "/heads"
+	refsRemoteRelPath = refsDirName + "/remotes"
 )
 
 // LocalTagFullName returns the full name of a tag
@@ -34,6 +35,12 @@ func LocalTagShortName(fullName string) string {
 // ex. for `main` returns `refs/heads/main`
 func LocalBranchFullName(shortName string) string {
 	return path.Join(refsHeadsRelPath, shortName)
+}
+
+// RemoteBranchFullName returns the full name of a remote branch
+// ex. for `main` returns `refs/remotes/origin/main`
+func RemoteBranchFullName(remoteName, shortName string) string {
+	return path.Join(refsRemoteRelPath, remoteName, shortName)
 }
 
 // LocalBranchShortName returns the short name of a branch
