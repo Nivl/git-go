@@ -71,6 +71,42 @@ func switchCmd(out io.Writer, cfg *globalFlags, flags switchCmdFlags, starterPoi
 		if flags.createBranch != "" || flags.forceCreateBranch != "" || flags.orphan != "" {
 			return errors.New("'--detach' cannot be used with '-c/-C/--orphan'")
 		}
+
+		refName := "HEAD"
+		if starterPointOrBranch != "" {
+			refName = ginternals.LocalBranchFullName(starterPointOrBranch)
+		}
+
+		ref, err := r.Reference(refName)
+		if err != nil && !errors.Is(err, ginternals.ErrRefNotFound) {
+			return fmt.Errorf("couldn't get '%s': %w", flags.orphan, err)
+		}
+
+		isRef := err == nil
+		oid := ginternals.NullOid
+		switch isRef {
+		case true:
+			oid = ref.Target()
+		case false: // We either have a commit, or something invalid
+			oid, err = ginternals.NewOidFromStr(starterPointOrBranch)
+			if err != nil {
+				return fmt.Errorf("invalid branch or sha '%s'", flags.orphan)
+			}
+		}
+
+		c, err := r.Commit(oid)
+		if err != nil {
+			return fmt.Errorf("couldn't get commit '%s': %w", oid.String(), err)
+		}
+
+		_, err = r.NewReference(ginternals.Head, oid)
+		if err != nil {
+			return fmt.Errorf("couldn't update HEAD: %w", err)
+		}
+
+		// TODO(melvin): clean the index
+
+		fprintf(flags.quiet, out, "HEAD is now at %s %s", oid.String(), c.Message())
 	case flags.orphan != "":
 		if flags.createBranch != "" || flags.forceCreateBranch != "" {
 			return errors.New("options '-c', and '--orphan' cannot be used together")
@@ -85,6 +121,7 @@ func switchCmd(out io.Writer, cfg *globalFlags, flags switchCmdFlags, starterPoi
 			if err == nil {
 				return fmt.Errorf("a branch named '%s' already exists", flags.orphan)
 			}
+			return fmt.Errorf("couldn't get '%s': %w", flags.orphan, err)
 		}
 
 		// TODO(melvin): remove all tracked files before switching
@@ -94,6 +131,8 @@ func switchCmd(out io.Writer, cfg *globalFlags, flags switchCmdFlags, starterPoi
 		if err != nil {
 			return fmt.Errorf("couldn't update HEAD: %w", err)
 		}
+
+		// TODO(melvin): clean the index
 
 		fprintf(flags.quiet, out, "Switched to a new branch '%s'\n", flags.orphan)
 	default:
@@ -127,6 +166,8 @@ func switchCmd(out io.Writer, cfg *globalFlags, flags switchCmdFlags, starterPoi
 		if err != nil {
 			return fmt.Errorf("couldn't update HEAD: %w", err)
 		}
+
+		// TODO(melvin): clean the index
 
 		// TODO(melvin): check if branch is up-to-date with remote
 		fprintf(flags.quiet, out, "Switched to branch '%s'\n", starterPointOrBranch)
