@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/gogf/gf v1.16.6
+	github.com/gogf/gf v1.16.7
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/spf13/afero v1.8.2
