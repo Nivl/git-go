@@ -13,7 +13,7 @@ jobs:
       - name: Get Go version
         id: gover
         run: echo "::set-output name=value::^$(grep 'go 1.' go.mod | cut -d ' ' -f 2)"
-      - uses: actions/setup-go@v2
+      - uses: actions/setup-go@v3
         with:
           go-version: ${{ steps.gover.outputs.value }}
 
@@ -32,7 +32,7 @@ jobs:
       - name: Get Go version
         id: gover
         run: echo "::set-output name=value::^$(grep 'go 1.' go.mod | cut -d ' ' -f 2)"
-      - uses: actions/setup-go@v2
+      - uses: actions/setup-go@v3
         with:
           go-version: ${{ steps.gover.outputs.value }}
 
