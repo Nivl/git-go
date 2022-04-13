@@ -14,6 +14,7 @@ Basic git implementation in pure Go
 #### Porcelain
 
 - [x] init
+- [x] switch
 
 #### Plumbing
 
