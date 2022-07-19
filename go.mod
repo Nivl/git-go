@@ -7,7 +7,7 @@ require (
 	github.com/gogf/gf v1.16.7
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/kr/pretty v0.2.0 // indirect
-	github.com/spf13/afero v1.8.2
+	github.com/spf13/afero v1.9.2
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.1
