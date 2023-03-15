@@ -8,6 +8,6 @@ jobs:
   update-goproxy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-go@v2
+      - uses: actions/setup-go@v4
       - name: download latest version
         run: GOPROXY=https://proxy.golang.org GO111MODULE=on go get -d github.com/Nivl/git-go@main
